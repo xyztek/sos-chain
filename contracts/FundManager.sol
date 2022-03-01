@@ -36,7 +36,7 @@ contract FundManager is Initializable, OwnableUpgradeable {
      * @dev             setup a new fund
      * @param id        unique identifier of the fund
      * @param name      name of the fund
-     * @param owners    array of owners for the fund
+     * @param owners    array of owner addresses for the fund
      */
     function setupFund(
         bytes id,
@@ -63,17 +63,23 @@ contract FundManager is Initializable, OwnableUpgradeable {
      * @dev             pause a fund
      * @param id        unique identifier of the fund
      */
-    function pauseFund(bytes id) external onlyOwner returns (bool) {}
+    function pauseFund(bytes id) external onlyOwner returns (bool) {
+        require(!funds[id].isPaused);
+    }
 
     /**
      * @dev             resume a fund
      * @param id        unique identifier of the fund
      */
-    function resumeFund(bytes id) external onlyOwner returns (bool) {}
+    function resumeFund(bytes id) external onlyOwner returns (bool) {
+        require(funds[id].isPaused);
+    }
 
     /**
      * @dev             close a fund
      * @param id        unique identifier of the fund
      */
-    function closeFund(bytes id) external onlyOwner returns (bool) {}
+    function closeFund(bytes id) external onlyOwner returns (bool) {
+        require(!funds[id].isClosed);
+    }
 }
