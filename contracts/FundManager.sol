@@ -21,8 +21,8 @@ contract FundManager is Initializable, OwnableUpgradeable {
         bytes32 id;
         string name;
         address safeAddress;
-        bool isPaused;
-        bool isClosed;
+        bool paused;
+        bool closed;
     }
 
     mapping(bytes32 => Fund) private funds;
@@ -39,20 +39,20 @@ contract FundManager is Initializable, OwnableUpgradeable {
      * @param owners    array of owner addresses for the fund
      */
     function setupFund(
-        bytes id,
-        string name,
-        address[] owners
-    ) external onlyOwner returns (string, address) {}
+        bytes32 id,
+        string memory name,
+        address[] memory owners
+    ) external onlyOwner returns (string memory, address) {}
 
     /**
      * @dev             get fund by id
      * @param id        unique identifier of the fund
      */
-    function getFund(bytes id)
+    function getFund(bytes32 id)
         public
         view
         returns (
-            string,
+            string memory,
             address,
             bool,
             bool
@@ -63,23 +63,32 @@ contract FundManager is Initializable, OwnableUpgradeable {
      * @dev             pause a fund
      * @param id        unique identifier of the fund
      */
-    function pauseFund(bytes id) external onlyOwner returns (bool) {
-        require(!funds[id].isPaused);
+    function pauseFund(bytes32 id) external onlyOwner returns (bool) {
+        require(!funds[id].paused, "Fund is already paused.");
+        require(!funds[id].closed, "Fund is closed.");
+        funds[id].paused = true;
+        return true;
     }
 
     /**
      * @dev             resume a fund
      * @param id        unique identifier of the fund
      */
-    function resumeFund(bytes id) external onlyOwner returns (bool) {
-        require(funds[id].isPaused);
+    function resumeFund(bytes32 id) external onlyOwner returns (bool) {
+        require(funds[id].paused, "Fund is not paused.");
+
+        funds[id].paused = false;
+        return true;
     }
 
     /**
      * @dev             close a fund
      * @param id        unique identifier of the fund
      */
-    function closeFund(bytes id) external onlyOwner returns (bool) {
-        require(!funds[id].isClosed);
+    function closeFund(bytes32 id) external onlyOwner returns (bool) {
+        require(!funds[id].closed, "Fund is already closed.");
+
+        funds[id].closed = true;
+        return true;
     }
 }
