@@ -3,6 +3,12 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+
+//import "@uniswap/v3-periphery/contracts/libraries/NFTDescriptor.sol"
 
 import "hardhat/console.sol";
 
@@ -56,6 +62,7 @@ contract Deposit is Ownable {
         emit Support(msg.sender, _fundId, _tokenAddress, _amount);
 
         // TODO mint ERC721
+        delete (allowedTokens[symbol]);
 
         return true;
     }
@@ -70,4 +77,21 @@ contract Deposit is Ownable {
         address indexed tokenAddress,
         uint256 value
     );
+    /**
+     * @dev                 mint an nft for an address
+     * @param recipient     recipient address for the nft
+     * @param tokenURI      token uri of the hashed attributes of the nft
+     */
+    function mintNFT(address recipient, string memory tokenURI)
+        internal
+        returns (uint256)
+    {
+        _tokenIds.increment();
+
+        uint256 newItemId = _tokenIds.current();
+        _mint(recipient, newItemId);
+        _setTokenURI(newItemId, tokenURI);
+
+        return newItemId;
+    }
 }

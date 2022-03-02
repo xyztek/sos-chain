@@ -5,10 +5,13 @@ import { HardhatUserConfig, task } from "hardhat/config";
 import "@openzeppelin/hardhat-upgrades";
 
 import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+
+import { HardhatUserConfig, task } from "hardhat/config";
 
 dotenv.config();
 
@@ -32,6 +35,11 @@ const config: HardhatUserConfig = {
       url: process.env.ROPSTEN_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    hardhat: {
+      throwOnTransactionFailures: false,
+      throwOnCallFailures: false,
+      allowUnlimitedContractSize: true,
     },
   },
   gasReporter: {
