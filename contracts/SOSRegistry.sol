@@ -33,6 +33,6 @@ contract SOSRegistry is Ownable {
     }
 
     function get(bytes32 _name) public view returns (address) {
-        return registry[_name].contractAddress;
+        return registry[_name];
     }
 }
