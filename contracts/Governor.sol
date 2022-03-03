@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
 
 contract DynamicChecks is AccessControl {
+    error NoZeroChecks();
+
     bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
     bytes32[] internal checks;
 
@@ -33,7 +35,8 @@ contract DynamicChecks is AccessControl {
         onlyRole(AUDIT_ROLE)
         returns (bool)
     {
-        require(checks.length > 1, "CANT_REMOVE_ALL_CHECKS");
+        if (checks.length <= 1) revert NoZeroChecks();
+
         _shiftPop(checks, _index);
         return true;
     }
@@ -51,6 +54,10 @@ contract DynamicChecks is AccessControl {
 
 contract Governor is AccessControl, DynamicChecks {
     using SafeMath for uint256;
+
+    error DisallowedStatusChange();
+    error NotAllowedForRequestStatus();
+    error RequestAlreadyApproved();
 
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
@@ -83,7 +90,7 @@ contract Governor is AccessControl, DynamicChecks {
     Request[] private requests;
 
     constructor(bytes32[] memory _initialChecks) {
-        require(_initialChecks.length > 0);
+        if (_initialChecks.length > 0) revert NoZeroChecks();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
@@ -162,23 +169,37 @@ contract Governor is AccessControl, DynamicChecks {
     // INTERNAL
     // -----------------------------------------------------------------
 
+    function _bumpRequestStatus(uint256 _requestId) internal {
+        if (requests[_requestId].requestStatus == RequestStatus.Pending) {
+            requests[_requestId].requestStatus = RequestStatus.Approved;
+        } else if (
+            requests[_requestId].requestStatus == RequestStatus.Approved
+        ) {
+            requests[_requestId].requestStatus = RequestStatus.Finalized;
+        } else if (
+            requests[_requestId].requestStatus == RequestStatus.Finalized
+        ) {
+            requests[_requestId].requestStatus = RequestStatus.Executed;
+        } else {
+            revert DisallowedStatusChange();
+        }
+    }
+
     function _approveRequest(uint256 _requestId, uint256 _checkIndex)
         internal
         onlyRequestsWithStatus(RequestStatus.Pending, _requestId)
     {
         bytes32 check = requests[_requestId].remainingChecks[_checkIndex];
 
-        require(
-            requests[_requestId].approvals[check] != address(0x0),
-            "ALREADY_APPROVED"
-        );
+        if (requests[_requestId].approvals[check] != address(0x0))
+            revert RequestAlreadyApproved();
 
         requests[_requestId].approvals[check] = msg.sender;
 
         _shiftPop(requests[_requestId].remainingChecks, _checkIndex);
 
         if (requests[_requestId].remainingChecks.length == 0) {
-            requests[_requestId].requestStatus = RequestStatus.Approved;
+            _bumpRequestStatus(_requestId);
         }
     }
 
@@ -188,17 +209,16 @@ contract Governor is AccessControl, DynamicChecks {
     {
         // TODO: INTERNAL FINALIZE FLOW
 
-        requests[_requestId].requestStatus = RequestStatus.Finalized;
+        _bumpRequestStatus(_requestId);
     }
 
     function _signRequest(uint256 _requestId)
         internal
         onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
-        returns (bool)
     {
         // TODO: INTERNAL SIGN FLOW
 
-        requests[_requestId].requestStatus = RequestStatus.Executed;
+        _bumpRequestStatus(_requestId);
     }
 
     // -----------------------------------------------------------------
@@ -206,10 +226,7 @@ contract Governor is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
 
     modifier requireChecks() {
-        require(
-            checks.length > 0,
-            "NO_REQUESTS_ALLOWED_WITHOUT_PREDEFINED_CHECKS"
-        );
+        if (checks.length < 1) revert NoZeroChecks();
         _;
     }
 
@@ -217,11 +234,8 @@ contract Governor is AccessControl, DynamicChecks {
         RequestStatus _requestStatus,
         uint256 _requestId
     ) {
-        require(
-            requests[_requestId].requestStatus == _requestStatus,
-            "CALL_NOT_ALLOWED_FOR_REQUEST_STATUS"
-        );
-
+        if (requests[_requestId].requestStatus != _requestStatus)
+            revert NotAllowedForRequestStatus();
         _;
     }
 }
