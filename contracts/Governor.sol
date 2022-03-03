@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
 
 contract DynamicChecks is AccessControl {
+    bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
     bytes32[] internal checks;
 
     function getCheck(uint256 _index) public view returns (bytes32) {
@@ -19,7 +20,7 @@ contract DynamicChecks is AccessControl {
 
     function addCheck(bytes32 _check)
         public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(AUDIT_ROLE)
         returns (bool)
     {
         checks.push(_check);
@@ -29,7 +30,7 @@ contract DynamicChecks is AccessControl {
 
     function removeCheck(uint256 _index)
         public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(AUDIT_ROLE)
         returns (bool)
     {
         require(checks.length > 1, "CANT_REMOVE_ALL_CHECKS");
