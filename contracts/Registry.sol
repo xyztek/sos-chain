@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "hardhat/console.sol";
 
-contract SOSRegistry is Ownable {
+contract Registry is Ownable {
     mapping(bytes32 => address) private registry;
 
     function register(bytes32 _name, address _address)

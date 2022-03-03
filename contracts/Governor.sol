@@ -48,7 +48,7 @@ contract DynamicChecks is AccessControl {
     }
 }
 
-contract SOSGovernor is AccessControl, DynamicChecks {
+contract Governor is AccessControl, DynamicChecks {
     using SafeMath for uint256;
 
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
