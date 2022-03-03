@@ -61,6 +61,7 @@ contract Deposit is Ownable {
 
         address tokenAddress = allowedTokens[symbol];
 
+        // SPENDING APPROVAL?
         IERC20(tokenAddress).safeTransferFrom(msg.sender, fundAddress, amount);
 
         emit Support(msg.sender, fundId, tokenAddress, amount);

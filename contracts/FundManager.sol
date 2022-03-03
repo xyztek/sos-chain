@@ -42,7 +42,16 @@ contract FundManager is Initializable, OwnableUpgradeable {
         bytes32 id,
         string memory name,
         address[] memory owners
-    ) external onlyOwner returns (string memory, address) {}
+    )
+        external
+        // address safeAddress
+        onlyOwner
+        returns (string memory, address)
+    {
+        // 1 DEPLOY GNOSIS SAFE via Gnosis Safe Proxy Factory
+        // 2 DEPLOY GNOSIS SAFE BEFORE
+        //   SET ADDRESS
+    }
 
     /**
      * @dev             get fund by id
@@ -66,7 +75,9 @@ contract FundManager is Initializable, OwnableUpgradeable {
     function pauseFund(bytes32 id) external onlyOwner returns (bool) {
         require(!funds[id].paused, "Fund is already paused.");
         require(!funds[id].closed, "Fund is closed.");
+
         funds[id].paused = true;
+
         return true;
     }
 
@@ -78,6 +89,7 @@ contract FundManager is Initializable, OwnableUpgradeable {
         require(funds[id].paused, "Fund is not paused.");
 
         funds[id].paused = false;
+
         return true;
     }
 
@@ -89,6 +101,7 @@ contract FundManager is Initializable, OwnableUpgradeable {
         require(!funds[id].closed, "Fund is already closed.");
 
         funds[id].closed = true;
+
         return true;
     }
 }
