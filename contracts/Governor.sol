@@ -83,6 +83,7 @@ contract Governor is AccessControl, DynamicChecks {
         Coordinates requestLocation;
         RequestStatus requestStatus;
         address recipient;
+        bytes32 fundId;
         bytes32[] remainingChecks;
         mapping(bytes32 => address) approvals;
     }
@@ -104,8 +105,11 @@ contract Governor is AccessControl, DynamicChecks {
     function initRequest(
         bytes32 _requestType,
         address _recipient,
+        bytes32 _fundId,
         uint256[2] memory coordinates
     ) public requireChecks returns (uint256) {
+        // TODO: CHECK FUND IS OPEN
+
         // pre-allocate storage location for the new Request
         uint256 index = requests.length;
         requests.push();
@@ -120,6 +124,7 @@ contract Governor is AccessControl, DynamicChecks {
             lon: coordinates[1]
         });
         request.recipient = _recipient;
+        request.fundId = _fundId;
         request.remainingChecks = checks;
 
         return index;
