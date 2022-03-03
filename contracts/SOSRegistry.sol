@@ -15,14 +15,14 @@ contract SOSRegistry is Ownable {
         uint256 version;
     }
 
-    mapping(string => Record) private registry;
+    mapping(bytes32 => Record) private registry;
 
-    function register(string memory _name, address _address)
+    function register(bytes32 _name, address _address)
         public
         onlyOwner
         returns (bool)
     {
-        require(registry[_name].contractAddress != address(0x0));
+        require(registry[_name].contractAddress == address(0x0));
 
         Record memory record = Record({
             owner: msg.sender,
@@ -35,26 +35,20 @@ contract SOSRegistry is Ownable {
         return true;
     }
 
-    function update(string memory _name, address _address)
+    function update(bytes32 _name, address _address)
         public
         onlyOwner
         returns (bool)
     {
-        Record memory record = registry[_name];
+        require(registry[_name].contractAddress != address(0x0));
 
-        require(record.owner == msg.sender);
-
-        record.contractAddress = _address;
-        record.version = record.version.add(1);
-
-        registry[_name] = record;
+        registry[_name].contractAddress = _address;
+        registry[_name].version = registry[_name].version.add(1);
 
         return true;
     }
 
-    function get(string memory _name) public view returns (address, uint256) {
-        Record memory record = registry[_name];
-
-        return (record.contractAddress, record.version);
+    function get(bytes32 _name) public view returns (address, uint256) {
+        return (registry[_name].contractAddress, registry[_name].version);
     }
 }
