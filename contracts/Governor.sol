@@ -128,7 +128,11 @@ contract Governor is AccessControl, DynamicChecks {
         onlyRequestsWithStatus(RequestStatus.Pending, _requestId)
         returns (bool)
     {
-        _approve(_requestId, _checkIndex);
+        _approveRequest(_requestId, _checkIndex);
+
+        if (requests[_requestId].requestStatus == RequestStatus.Approved) {
+            _finalizeRequest(_requestId);
+        }
 
         return true;
     }
@@ -136,11 +140,11 @@ contract Governor is AccessControl, DynamicChecks {
     function finalizeRequest(uint256 _requestId)
         public
         onlyRole(FINALIZER_ROLE)
-        onlyRequestsWithStatus(RequestStatus.Pending, _requestId)
+        onlyRequestsWithStatus(RequestStatus.Approved, _requestId)
         returns (bool)
     {
-        // TODO: FINALIZE FLOW
-        requests[_requestId].requestStatus = RequestStatus.Finalized;
+        _finalizeRequest(_requestId);
+
         return true;
     }
 
@@ -150,8 +154,7 @@ contract Governor is AccessControl, DynamicChecks {
         onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
         returns (bool)
     {
-        // TODO: SIGN FLOW
-        requests[_requestId].requestStatus = RequestStatus.Executed;
+        _signRequest(_requestId);
         return true;
     }
 
@@ -159,16 +162,10 @@ contract Governor is AccessControl, DynamicChecks {
     // INTERNAL
     // -----------------------------------------------------------------
 
-    function _signRequest(uint256 _requestId)
+    function _approveRequest(uint256 _requestId, uint256 _checkIndex)
         internal
-        onlyRole(EXECUTOR_ROLE)
-        onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
-        returns (bool)
+        onlyRequestsWithStatus(RequestStatus.Pending, _requestId)
     {
-        // TODO: INTERNAL SIGN FLOW
-    }
-
-    function _approve(uint256 _requestId, uint256 _checkIndex) internal {
         bytes32 check = requests[_requestId].remainingChecks[_checkIndex];
 
         require(
@@ -179,6 +176,29 @@ contract Governor is AccessControl, DynamicChecks {
         requests[_requestId].approvals[check] = msg.sender;
 
         _shiftPop(requests[_requestId].remainingChecks, _checkIndex);
+
+        if (requests[_requestId].remainingChecks.length == 0) {
+            requests[_requestId].requestStatus = RequestStatus.Approved;
+        }
+    }
+
+    function _finalizeRequest(uint256 _requestId)
+        internal
+        onlyRequestsWithStatus(RequestStatus.Approved, _requestId)
+    {
+        // TODO: INTERNAL FINALIZE FLOW
+
+        requests[_requestId].requestStatus = RequestStatus.Finalized;
+    }
+
+    function _signRequest(uint256 _requestId)
+        internal
+        onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
+        returns (bool)
+    {
+        // TODO: INTERNAL SIGN FLOW
+
+        requests[_requestId].requestStatus = RequestStatus.Executed;
     }
 
     // -----------------------------------------------------------------
