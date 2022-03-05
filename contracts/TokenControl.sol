@@ -9,6 +9,8 @@ import "hardhat/console.sol";
 contract TokenControl is AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    error TokenNotAllowed();
+
     EnumerableSet.AddressSet private allowedTokens;
 
     // -----------------------------------------------------------------
