@@ -11,17 +11,35 @@ contract TokenControl is AccessControl {
 
     EnumerableSet.AddressSet private allowedTokens;
 
+    // -----------------------------------------------------------------
+    // PUBLIC API
+    // -----------------------------------------------------------------
+
     /**
-     * @dev             return a list of allowed token
-                        contract addresses
+     * @dev             list of allowed token contract addresses
+     * @return          return a list of allowed token contract addresses
      */
-    function getTokens() public view returns (address[] memory) {
+    function getAllowedTokens() public view returns (address[] memory) {
         return allowedTokens.values();
     }
 
     /**
-     * @dev             add a token to the list of allowed tokens
-     * @param _address  token contract address
+     * @dev              add a token to the list of allowed tokens
+     * @param  _address  tracker address of the token
+     * @return           boolean indicating if a token is allowed for deposit
+     */
+    function isTokenAllowed(address _tokenAddress) public view returns (bool) {
+        return allowedTokens.contains(_tokenAddress);
+    }
+
+    // -----------------------------------------------------------------
+    // ADMIN API
+    // -----------------------------------------------------------------
+
+    /**
+     * @dev               add a token to the list of allowed tokens
+     * @param   _address  tracker address of the token
+     * @return            boolean indicating result of the operation
      */
     function addToken(address _address)
         public
@@ -32,8 +50,9 @@ contract TokenControl is AccessControl {
     }
 
     /**
-     * @dev             remove a token from the list of allowed tokens
-     * @param _address  token contract address
+     * @dev              remove a token from the list of allowed tokens
+     * @param  _address  tracker address of the token
+     * @return           boolean indicating result of the operation
      */
     function removeToken(address _address)
         public
