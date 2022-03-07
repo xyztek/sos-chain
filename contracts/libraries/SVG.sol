@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./BitMath.sol";
 import "base64-sol/base64.sol";
 
-library NFTSVG {
+library SVG {
     using Strings for uint256;
 
     struct SVGParams {
@@ -225,10 +225,10 @@ library NFTSVG {
     function generateSVGRareSparkle(uint256 tokenId, address poolAddress)
         private
         pure
-        returns (string memory svg)
+        returns (string memory)
     {
-        if (isRare(tokenId, poolAddress)) {
-            svg = string(
+        return
+            string(
                 abi.encodePacked(
                     '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
                     '<g><path style="transform:translate(6px,6px)" d="M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',
@@ -237,19 +237,79 @@ library NFTSVG {
                     '<animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="10s" repeatCount="indefinite"/></g></g>'
                 )
             );
-        } else {
-            svg = "";
-        }
     }
 
-    function isRare(uint256 tokenId, address poolAddress)
-        internal
-        pure
-        returns (bool)
-    {
-        bytes32 h = keccak256(abi.encodePacked(tokenId, poolAddress));
+    function drawText(
+        string memory contents,
+        string memory x,
+        string memory y,
+        string memory fontSize,
+        string memory stroke,
+        string memory fill
+    ) public pure returns (string memory) {
         return
-            uint256(h) <
-            type(uint256).max / (1 + BitMath.mostSignificantBit(tokenId) * 2);
+            string(
+                abi.encodePacked(
+                    "<text ",
+                    toRPaddedAttributePair("x", x),
+                    toRPaddedAttributePair("y", y),
+                    toRPaddedAttributePair("font-size", fontSize),
+                    toRPaddedAttributePair("stroke", stroke),
+                    toRPaddedAttributePair("fill", fill),
+                    ">",
+                    contents,
+                    "</text>"
+                )
+            );
+    }
+
+    function drawRect(
+        string memory x,
+        string memory y,
+        string memory width,
+        string memory height,
+        string memory rounding,
+        string memory stroke,
+        string memory fill
+    ) public pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    "<rect ",
+                    toRPaddedAttributePair("x", x),
+                    toRPaddedAttributePair("y", y),
+                    toRPaddedAttributePair("width", width),
+                    toRPaddedAttributePair("height", height),
+                    toRPaddedAttributePair("rx", rounding),
+                    toRPaddedAttributePair("ry", rounding),
+                    toRPaddedAttributePair("stroke", stroke),
+                    toRPaddedAttributePair("fill", fill),
+                    "/>"
+                )
+            );
+    }
+
+    function toRGBA(
+        string memory r,
+        string memory b,
+        string memory g,
+        string memory a
+    ) public pure returns (string memory) {
+        return
+            string(abi.encodePacked("rgba(", r, ",", b, ",", g, ",", a, ")"));
+    }
+
+    function toPixelValue(uint256 value) public pure returns (string memory) {
+        return string(abi.encodePacked(value.toString(), "px"));
+    }
+
+    function toRPaddedAttributePair(
+        string memory attributeName,
+        string memory attributeValue
+    ) public pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(attributeName, "=", '"', attributeValue, '" ')
+            );
     }
 }

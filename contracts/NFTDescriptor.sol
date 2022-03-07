@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "base64-sol/base64.sol";
 
-import "./libraries/NFTSVG.sol";
+import "./libraries/SVG.sol";
 import "./libraries/HexStrings.sol";
 
 contract NFTDescriptor {
@@ -240,7 +240,7 @@ contract NFTDescriptor {
         pure
         returns (string memory svg)
     {
-        NFTSVG.SVGParams memory svgParams = NFTSVG.SVGParams({
+        SVG.SVGParams memory svgParams = SVG.SVGParams({
             tokenAddress: addressToString(params.tokenAddress),
             poolAddress: params.gnosisSafeAddress,
             tokenSymbol: params.tokenSymbol,
@@ -289,7 +289,7 @@ contract NFTDescriptor {
             )
         });
 
-        return NFTSVG.generateSVG(svgParams);
+        return SVG.generateSVG(svgParams);
     }
 
     function scale(
