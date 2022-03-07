@@ -1,107 +1,66 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./TokenControl.sol";
+import "./Fund.sol";
 
 import "hardhat/console.sol";
 
-// UPGRADEABLE CONTRACT
-// ----
-// ! CANNOT CHANGE, when upgrading, the declaration ORDER or TYPE of STATES VARIABLES.
-// ! CANNOT USE a constructor method.
-// ! CANNOT USE initial values for variables (akin to constructor method).
-// ----
-// - CAN USE `initialize()` method instead of a constructor. Make sure to inherit from
-//   Initializable and use initializer modifier on the `initialize()` method.
-// - ENSURE to use `_Upgradeable` variants from @openzeppelin/contracts-upgradeable.
+contract FundManager is AccessControl, TokenControl {
+    mapping(string => address) private funds;
 
-contract FundManager is Initializable, OwnableUpgradeable {
-    struct Fund {
-        bytes32 id;
-        string name;
-        address safeAddress;
-        bool paused;
-        bool closed;
+    constructor() {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    mapping(bytes32 => Fund) private funds;
+    // -----------------------------------------------------------------
+    // PUBLIC API
+    // -----------------------------------------------------------------
 
-    // No constructors in upgradeable contracts.
-    // see https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
-    //
-    function initialize() public initializer {}
+    /**
+     * @dev                   get a fund's deposit address
+     * @param  _id            unique identifier of the fund
+     * @param  _tokenAddress  address of token tracker
+     * @return                address of the fund
+     */
+    function getDepositAddressFor(string memory _id, address _tokenAddress)
+        public
+        view
+        returns (address)
+    {
+        return Fund(funds[_id]).getDepositAddressFor(_tokenAddress);
+    }
+
+    /**
+     * @dev          get a fund's deposit address
+     * @param  _id   unique identifier of a fund
+     * @return       deposit address for a fund
+     */
+    function getFundAddress(string memory _id) public view returns (address) {
+        return funds[_id];
+    }
+
+    // -----------------------------------------------------------------
+    // ADMIN API
+    // -----------------------------------------------------------------
 
     /**
      * @dev             setup a new fund
-     * @param id        unique identifier of the fund
-     * @param name      name of the fund
-     * @param owners    array of owner addresses for the fund
+     * @param  _id      unique identifier of the fund
+     * @param  _name    name of the fund
+     * @param  _owners  array of owner addresses for the fund
+     * @return          address of the deployed fund
      */
     function setupFund(
-        bytes32 id,
-        string memory name,
-        address[] memory owners
-    )
-        external
-        // address safeAddress
-        onlyOwner
-        returns (string memory, address)
-    {
-        // 1 DEPLOY GNOSIS SAFE via Gnosis Safe Proxy Factory
-        // 2 DEPLOY GNOSIS SAFE BEFORE
-        //   SET ADDRESS
-    }
+        string memory _id,
+        string memory _name,
+        address[] memory _owners,
+        address[] memory _tokens
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
+        Fund fund = new Fund(_id, _name, _owners, _tokens);
+        funds[_id] = address(fund);
 
-    /**
-     * @dev             get fund by id
-     * @param id        unique identifier of the fund
-     */
-    function getFund(bytes32 id)
-        public
-        view
-        returns (
-            string memory,
-            address,
-            bool,
-            bool
-        )
-    {}
-
-    /**
-     * @dev             pause a fund
-     * @param id        unique identifier of the fund
-     */
-    function pauseFund(bytes32 id) external onlyOwner returns (bool) {
-        require(!funds[id].paused, "Fund is already paused.");
-        require(!funds[id].closed, "Fund is closed.");
-
-        funds[id].paused = true;
-
-        return true;
-    }
-
-    /**
-     * @dev             resume a fund
-     * @param id        unique identifier of the fund
-     */
-    function resumeFund(bytes32 id) external onlyOwner returns (bool) {
-        require(funds[id].paused, "Fund is not paused.");
-
-        funds[id].paused = false;
-
-        return true;
-    }
-
-    /**
-     * @dev             close a fund
-     * @param id        unique identifier of the fund
-     */
-    function closeFund(bytes32 id) external onlyOwner returns (bool) {
-        require(!funds[id].closed, "Fund is already closed.");
-
-        funds[id].closed = true;
-
-        return true;
+        return address(fund);
     }
 }

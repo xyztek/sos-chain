@@ -6,14 +6,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract Registry is Ownable {
-    bytes32[] private contracts;
-    mapping(bytes32 => address) private registry;
+    bytes[] private contracts;
+    mapping(bytes => address) private registry;
 
     /**
      * @dev              get a list of registered contract names
      * @return           a list of registered contract names
      */
-    function registered() public view returns (bytes32[] memory) {
+    function registered() public view returns (bytes[] memory) {
         return contracts;
     }
 
@@ -22,7 +22,7 @@ contract Registry is Ownable {
      * @param _name      name of the contract
      * @return           address of the queried contract
      */
-    function get(bytes32 _name) public view returns (address) {
+    function get(bytes memory _name) public view returns (address) {
         return registry[_name];
     }
 
@@ -32,7 +32,7 @@ contract Registry is Ownable {
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
      */
-    function register(bytes32 _name, address _address)
+    function register(bytes memory _name, address _address)
         public
         onlyOwner
         returns (bool)
@@ -51,7 +51,7 @@ contract Registry is Ownable {
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
      */
-    function update(bytes32 _name, address _address)
+    function update(bytes memory _name, address _address)
         public
         onlyOwner
         returns (bool)

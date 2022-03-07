@@ -18,8 +18,8 @@ contract TokenControl is AccessControl {
     // -----------------------------------------------------------------
 
     /**
-     * @dev             list of allowed token contract addresses
-     * @return          return a list of allowed token contract addresses
+     * @dev     list of allowed token contract addresses
+     * @return  return a list of allowed token contract addresses
      */
     function getAllowedTokens() public view returns (address[] memory) {
         return allowedTokens.values();
@@ -30,8 +30,8 @@ contract TokenControl is AccessControl {
      * @param  _address  tracker address of the token
      * @return           boolean indicating if a token is allowed for deposit
      */
-    function isTokenAllowed(address _tokenAddress) public view returns (bool) {
-        return allowedTokens.contains(_tokenAddress);
+    function isTokenAllowed(address _address) public view returns (bool) {
+        return allowedTokens.contains(_address);
     }
 
     // -----------------------------------------------------------------
@@ -39,9 +39,9 @@ contract TokenControl is AccessControl {
     // -----------------------------------------------------------------
 
     /**
-     * @dev               add a token to the list of allowed tokens
-     * @param   _address  tracker address of the token
-     * @return            boolean indicating result of the operation
+     * @dev              add a token to the list of allowed tokens
+     * @param  _address  tracker address of the token
+     * @return           boolean indicating result of the operation
      */
     function addToken(address _address)
         public
@@ -61,6 +61,6 @@ contract TokenControl is AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
         returns (bool)
     {
-        return allowedTokens.add(_address);
+        return allowedTokens.remove(_address);
     }
 }
