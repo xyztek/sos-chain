@@ -1,19 +1,22 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "hardhat/console.sol";
 
 contract Registry is Ownable {
-    bytes[] private contracts;
-    mapping(bytes => address) private registry;
+    error AlreadyRegistered();
+    error NotFound();
+
+    string[] private contracts;
+    mapping(string => address) private registry;
 
     /**
      * @dev              get a list of registered contract names
      * @return           a list of registered contract names
      */
-    function registered() public view returns (bytes[] memory) {
+    function registered() public view returns (string[] memory) {
         return contracts;
     }
 
@@ -22,7 +25,7 @@ contract Registry is Ownable {
      * @param _name      name of the contract
      * @return           address of the queried contract
      */
-    function get(bytes memory _name) public view returns (address) {
+    function get(string memory _name) public view returns (address) {
         return registry[_name];
     }
 
@@ -32,12 +35,12 @@ contract Registry is Ownable {
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
      */
-    function register(bytes memory _name, address _address)
+    function register(string memory _name, address _address)
         public
         onlyOwner
         returns (bool)
     {
-        require(registry[_name] == address(0x0));
+        if (registry[_name] != address(0x0)) revert AlreadyRegistered();
 
         registry[_name] = _address;
         contracts.push(_name);
@@ -51,12 +54,12 @@ contract Registry is Ownable {
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
      */
-    function update(bytes memory _name, address _address)
+    function update(string memory _name, address _address)
         public
         onlyOwner
         returns (bool)
     {
-        require(registry[_name] != address(0x0));
+        if (registry[_name] == address(0x0)) revert NotFound();
 
         registry[_name] = _address;
 
