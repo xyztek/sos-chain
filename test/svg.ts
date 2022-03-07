@@ -21,25 +21,21 @@ describe("SVG", function () {
     );
   });
 
-  it("should build a padded key=value string", async function () {
-    expect(await this.svg.toRPaddedAttributePair("width", "250px")).to.equal(
-      'width="250px" '
+  it("should build a tag with empty content", async function () {
+    const tag = await this.svg.tag(
+      "svg",
+      'width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
+      ""
+    );
+
+    expect(tag).to.equal(
+      '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"></svg>'
     );
   });
 
-  it("should draw a rectangle", async function () {
-    expect(
-      await this.svg.drawRect(
-        "50",
-        "50",
-        "250px",
-        "250px",
-        "20px",
-        "none",
-        "none"
-      )
-    ).to.equal(
-      '<rect x="50" y="50" width="250px" height="250px" rx="20px" ry="20px" stroke="none" fill="none" />'
-    );
+  it("should build a tag with content", async function () {
+    const tag = await this.svg.tag("text", 'font-size="1rem"', "ID #2929920");
+
+    expect(tag).to.equal('<text font-size="1rem">ID #2929920</text>');
   });
 });

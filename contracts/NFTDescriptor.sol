@@ -1,15 +1,19 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "base64-sol/base64.sol";
-
 import "./libraries/SVG.sol";
 import "./libraries/HexStrings.sol";
 
-contract NFTDescriptor {
+import "./SVGConstants.sol";
+import "./SVGComponents.sol";
+
+contract NFTDescriptor is SVGConstants, SVGComponents {
     using Strings for uint256;
     using SafeMath for uint256;
     using SafeMath for uint160;
@@ -23,11 +27,84 @@ contract NFTDescriptor {
         uint256 tokenId;
         address tokenAddress;
         string tokenSymbol;
-        uint8 tokenDecimals;
+        string fundName;
+        string fundFocus;
+        uint256 supportAmount;
         bool flipRatio;
         address gnosisSafeAddress;
         string organization;
         string cause;
+    }
+
+    function _constructTokenURI(
+        uint256 _tokenId,
+        address _tokenAddress,
+        string memory _fundName,
+        string memory _fundFocus,
+        uint256 _supportAmount
+    ) public pure returns (string memory) {
+        string memory tokenColorA = tokenToColorHex(_tokenAddress, 0);
+        string memory tokenColorB = tokenToColorHex(_tokenAddress, 136);
+
+        string memory supportAsString = (_supportAmount / 1e18).toString();
+
+        string memory staticLayer = string(
+            abi.encodePacked(styleConstant, background(), logoConstant)
+        );
+
+        string memory dynamicLayer = string(
+            abi.encodePacked(
+                sideText(
+                    _tokenId.toString(),
+                    "rotate(90 132.5 142.5)",
+                    "text-anchor:start"
+                ),
+                sideText(
+                    addressToString(_tokenAddress),
+                    "rotate(90 -107.5 382.5)",
+                    "text-anchor:end"
+                ),
+                titleStack(20, 100, "Fund", _fundName),
+                titleStack(20, 150, "Focus", _fundFocus),
+                titleStack(20, 200, "Support", supportAsString),
+                SVG.tag(
+                    "rect",
+                    string(
+                        abi.encodePacked(
+                            'x="235" y="480" width="10" height="10" ',
+                            SVG.keyValue(
+                                "fill",
+                                string(abi.encodePacked("#", tokenColorA))
+                            )
+                        )
+                    ),
+                    ""
+                ),
+                SVG.tag(
+                    "rect",
+                    string(
+                        abi.encodePacked(
+                            'x="250" y="480" width="10" height="10" ',
+                            SVG.keyValue(
+                                "fill",
+                                string(abi.encodePacked("#", tokenColorB))
+                            )
+                        )
+                    ),
+                    ""
+                )
+            )
+        );
+
+        return
+            string(
+                abi.encodePacked(
+                    '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg">',
+                    staticLayer,
+                    dynamicLayer,
+                    "</svg>"
+                )
+            );
     }
 
     function constructTokenURI(ConstructTokenURIParams memory params)
@@ -36,16 +113,16 @@ contract NFTDescriptor {
         returns (string memory)
     {
         string memory name = generateName(params);
-        string memory nftDescription = nftDescription(
+        string memory _nftDescription = nftDescription(
             escapeQuotes(params.tokenSymbol),
             addressToString(params.gnosisSafeAddress)
         );
-        string memory nftDetails = nftDetails(
+        string memory _nftDetails = nftDetails(
             params.tokenId.toString(),
             escapeQuotes(params.tokenSymbol),
             addressToString(params.tokenAddress)
         );
-        string memory image = Base64.encode(bytes(generateSVGImage(params)));
+        //string memory image = Base64.encode(bytes(generateSVGImage(params)));
 
         return
             string(
@@ -57,11 +134,11 @@ contract NFTDescriptor {
                                 '{"name":"',
                                 name,
                                 '", "description":"',
-                                nftDescription,
-                                nftDetails,
+                                _nftDescription,
+                                _nftDetails,
                                 '", "image": "',
                                 "data:image/svg+xml;base64,",
-                                image,
+                                // image,
                                 '"}'
                             )
                         )
@@ -235,63 +312,6 @@ contract NFTDescriptor {
         return (uint256(uint160(addr))).toHexStringASCII(20);
     }
 
-    function generateSVGImage(ConstructTokenURIParams memory params)
-        internal
-        pure
-        returns (string memory svg)
-    {
-        SVG.SVGParams memory svgParams = SVG.SVGParams({
-            tokenAddress: addressToString(params.tokenAddress),
-            poolAddress: params.gnosisSafeAddress,
-            tokenSymbol: params.tokenSymbol,
-            organization: params.organization,
-            cause: params.cause,
-            tokenId: params.tokenId,
-            color0: "330066",
-            color1: tokenToColorHex(uint256(uint160(params.tokenAddress)), 136),
-            color2: "b0e0e6",
-            color3: tokenToColorHex(uint256(uint160(params.tokenAddress)), 0),
-            x1: scale(0, 0, 255, 16, 274),
-            y1: scale(
-                getCircleCoord(
-                    uint256(uint160(params.tokenAddress)),
-                    16,
-                    params.tokenId
-                ),
-                0,
-                255,
-                100,
-                484
-            ),
-            x2: scale(0, 0, 255, 16, 274),
-            y2: scale(
-                getCircleCoord(
-                    uint256(uint160(params.tokenAddress)),
-                    32,
-                    params.tokenId
-                ),
-                0,
-                255,
-                100,
-                484
-            ),
-            x3: scale(0, 0, 255, 16, 274),
-            y3: scale(
-                getCircleCoord(
-                    uint256(uint160(params.tokenAddress)),
-                    48,
-                    params.tokenId
-                ),
-                0,
-                255,
-                100,
-                484
-            )
-        });
-
-        return SVG.generateSVG(svgParams);
-    }
-
     function scale(
         uint256 n,
         uint256 inMn,
@@ -304,27 +324,14 @@ contract NFTDescriptor {
                 .toString();
     }
 
-    function tokenToColorHex(uint256 token, uint256 offset)
+    function tokenToColorHex(address token, uint256 offset)
         internal
         pure
         returns (string memory str)
     {
-        return string((token >> offset).toHexStringASCIINoPrefix(3));
-    }
-
-    function getCircleCoord(
-        uint256 tokenAddress,
-        uint256 offset,
-        uint256 tokenId
-    ) internal pure returns (uint256) {
-        return (sliceTokenHex(tokenAddress, offset) * tokenId) % 255;
-    }
-
-    function sliceTokenHex(uint256 token, uint256 offset)
-        internal
-        pure
-        returns (uint256)
-    {
-        return uint256(uint8(token >> offset));
+        return
+            string(
+                (uint256(uint160(token)) >> offset).toHexStringASCIINoPrefix(3)
+            );
     }
 }
