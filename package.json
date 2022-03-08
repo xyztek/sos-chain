@@ -2,11 +2,11 @@
   "name": "sos-chain",
   "version": "0.0.1",
   "description": "",
+  "author": "XYZ Teknoloji <info@xyzteknoloji.com>",
+  "license": "MIT",
   "main": "index.js",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.5.0",
-    "@openzeppelin/contracts-upgradeable": "^4.5.1"
-    "@uniswap/v3-periphery": "^1.4.0"
+    "@openzeppelin/contracts": "^4.5.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
@@ -43,7 +43,5 @@
   },
   "scripts": {
     "test": "mocha"
-  },
-  "author": "",
-  "license": "ISC"
+  }
 }

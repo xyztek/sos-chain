@@ -38,11 +38,49 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
 
     function _constructTokenURI(
         uint256 _tokenId,
+        uint256 _supportAmount,
         address _tokenAddress,
         string memory _fundName,
-        string memory _fundFocus,
-        uint256 _supportAmount
+        string memory _fundFocus
     ) public pure returns (string memory) {
+        return
+            Base64.encode(
+                _buildSVGBytes(
+                    _tokenId,
+                    _supportAmount,
+                    _tokenAddress,
+                    _fundName,
+                    _fundFocus
+                )
+            );
+    }
+
+    function toSVG(
+        uint256 _tokenId,
+        uint256 _supportAmount,
+        address _tokenAddress,
+        string memory _fundName,
+        string memory _fundFocus
+    ) public pure returns (string memory) {
+        return
+            string(
+                _buildSVGBytes(
+                    _tokenId,
+                    _supportAmount,
+                    _tokenAddress,
+                    _fundName,
+                    _fundFocus
+                )
+            );
+    }
+
+    function _buildSVGBytes(
+        uint256 _tokenId,
+        uint256 _supportAmount,
+        address _tokenAddress,
+        string memory _fundName,
+        string memory _fundFocus
+    ) public pure returns (bytes memory) {
         string memory tokenColorA = tokenToColorHex(_tokenAddress, 0);
         string memory tokenColorB = tokenToColorHex(_tokenAddress, 136);
 
@@ -97,13 +135,11 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         );
 
         return
-            string(
-                abi.encodePacked(
-                    '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg">',
-                    staticLayer,
-                    dynamicLayer,
-                    "</svg>"
-                )
+            abi.encodePacked(
+                '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg">',
+                staticLayer,
+                dynamicLayer,
+                "</svg>"
             );
     }
 

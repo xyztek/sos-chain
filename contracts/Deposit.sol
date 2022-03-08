@@ -1,14 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-//import "@uniswap/v3-periphery/contracts/libraries/NFTDescriptor.sol"
+import "./Fund.sol";
+import "./FundManager.sol";
+import "./Registry.sol";
 
 import "hardhat/console.sol";
 
@@ -19,9 +20,10 @@ contract Deposit is Ownable {
     using SafeERC20 for IERC20;
     error AllowanceIsNotRegistered();
 
+    Counters.Counter private _tokenIds;
     Registry private registry;
 
-    constructor(address _registryAddress) {
+    constructor(address _registryAddress) ERC721("SOS chain token", "SOS") {
         registry = Registry(_registryAddress);
     }
 
@@ -49,7 +51,6 @@ contract Deposit is Ownable {
         }
 
         address fundManagerAddress = registry.get("FUND_MANAGER");
-
         address depositAddress = FundManager(fundManagerAddress)
             .getDepositAddressFor(_fundId, _tokenAddress);
 
@@ -62,21 +63,14 @@ contract Deposit is Ownable {
         emit Support(msg.sender, _fundId, _tokenAddress, _amount);
 
         // TODO mint ERC721
-        delete (allowedTokens[symbol]);
 
         return true;
     }
 
     // -----------------------------------------------------------------
-    // EVENTS
+    // INTERNAL API
     // -----------------------------------------------------------------
 
-    event Support(
-        address indexed from,
-        string indexed fundId,
-        address indexed tokenAddress,
-        uint256 value
-    );
     /**
      * @dev                 mint an nft for an address
      * @param recipient     recipient address for the nft
@@ -94,4 +88,15 @@ contract Deposit is Ownable {
 
         return newItemId;
     }
+
+    // -----------------------------------------------------------------
+    // EVENTS
+    // -----------------------------------------------------------------
+
+    event Support(
+        address indexed from,
+        string indexed fundId,
+        address indexed tokenAddress,
+        uint256 value
+    );
 }
