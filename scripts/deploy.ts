@@ -3,7 +3,25 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
+
+import { Contract } from "ethers";
 import { ethers } from "hardhat";
+
+async function deploy(
+  artifact: string,
+  params?: Array<unknown>
+): Promise<Contract> {
+  const Contract = await ethers.getContractFactory(artifact);
+  const contract = params
+    ? await Contract.deploy(...params)
+    : await Contract.deploy();
+
+  await contract.deployed();
+
+  console.log(`${artifact} contract deployed to: ${contract.address}`);
+
+  return contract;
+}
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -13,13 +31,13 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  // We get the contract to deploy
-  const Greeter = await ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+  const registry = await deploy("contracts/Registry.sol:Registry");
 
-  await greeter.deployed();
+  const fundManager = await deploy("contracts/FundManager.sol:FundManager");
+  await registry.register("FUND_MANAGER", fundManager.address);
 
-  console.log("Greeter deployed to:", greeter.address);
+  const deposit = await deploy("contracts/Deposit.sol:Deposit");
+  await registry.register("DEPOSIT", deposit.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
