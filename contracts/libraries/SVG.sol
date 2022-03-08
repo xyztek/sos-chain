@@ -8,23 +8,21 @@ library SVG {
     using Strings for uint256;
 
     function tag(
-        string memory _name,
-        string memory _attributes,
-        string memory _contents
-    ) public pure returns (string memory) {
+        bytes memory _name,
+        bytes memory _attributes,
+        bytes memory _contents
+    ) public pure returns (bytes memory) {
         return
-            string(
-                abi.encodePacked(
-                    "<",
-                    _name,
-                    " ",
-                    _attributes,
-                    ">",
-                    _contents,
-                    "</",
-                    _name,
-                    ">"
-                )
+            abi.encodePacked(
+                "<",
+                _name,
+                " ",
+                _attributes,
+                ">",
+                _contents,
+                "</",
+                _name,
+                ">"
             );
     }
 
@@ -33,24 +31,23 @@ library SVG {
         string memory b,
         string memory g,
         string memory a
-    ) public pure returns (string memory) {
-        return
-            string(abi.encodePacked("rgba(", r, ",", b, ",", g, ",", a, ")"));
+    ) public pure returns (bytes memory) {
+        return abi.encodePacked("rgba(", r, ",", b, ",", g, ",", a, ")");
     }
 
-    function keyValue(string memory _key, string memory _value)
+    function keyValue(bytes memory _key, bytes memory _value)
         public
         pure
-        returns (string memory)
+        returns (bytes memory)
     {
-        return string(abi.encodePacked(_key, "=", '"', _value, '"'));
+        return abi.encodePacked(_key, "=", '"', _value, '"');
     }
 
-    function toPixelValue(uint256 value) public pure returns (string memory) {
-        return string(abi.encodePacked(value.toString(), "px"));
+    function toPixelValue(uint256 value) public pure returns (bytes memory) {
+        return abi.encodePacked(value.toString(), "px");
     }
 
-    function rPad(string memory str) public pure returns (string memory) {
-        return string(abi.encodePacked(str, " "));
+    function rPad(bytes memory str) public pure returns (bytes memory) {
+        return abi.encodePacked(str, " ");
     }
 }

@@ -45,7 +45,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
     ) public pure returns (string memory) {
         return
             Base64.encode(
-                _buildSVGBytes(
+                _buildSVG(
                     _tokenId,
                     _supportAmount,
                     _tokenAddress,
@@ -55,7 +55,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             );
     }
 
-    function toSVG(
+    function buildSVG(
         uint256 _tokenId,
         uint256 _supportAmount,
         address _tokenAddress,
@@ -64,7 +64,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
     ) public pure returns (string memory) {
         return
             string(
-                _buildSVGBytes(
+                _buildSVG(
                     _tokenId,
                     _supportAmount,
                     _tokenAddress,
@@ -74,7 +74,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             );
     }
 
-    function _buildSVGBytes(
+    function _buildSVG(
         uint256 _tokenId,
         uint256 _supportAmount,
         address _tokenAddress,
@@ -84,53 +84,45 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         string memory tokenColorA = tokenToColorHex(_tokenAddress, 0);
         string memory tokenColorB = tokenToColorHex(_tokenAddress, 136);
 
-        string memory supportAsString = (_supportAmount / 1e18).toString();
-
-        string memory staticLayer = string(
-            abi.encodePacked(styleConstant, background(), logoConstant)
+        bytes memory supportAsBytes = abi.encodePacked(
+            (_supportAmount / 1e18).toString()
         );
 
-        string memory dynamicLayer = string(
-            abi.encodePacked(
-                sideText(
-                    _tokenId.toString(),
-                    "rotate(90 132.5 142.5)",
-                    "text-anchor:start"
+        bytes memory staticLayer = abi.encodePacked(
+            styleConstant,
+            background(),
+            logoConstant
+        );
+
+        bytes memory dynamicLayer = abi.encodePacked(
+            sideText(
+                abi.encodePacked(_tokenId.toString()),
+                abi.encodePacked("rotate(90 132.5 142.5)"),
+                abi.encodePacked("text-anchor:start")
+            ),
+            sideText(
+                addressToBytes(_tokenAddress),
+                abi.encodePacked("rotate(90 -107.5 382.5)"),
+                abi.encodePacked("text-anchor:end")
+            ),
+            titleStack(20, 100, "Fund", abi.encodePacked(_fundName)),
+            titleStack(20, 150, "Focus", abi.encodePacked(_fundFocus)),
+            titleStack(20, 200, "Support", supportAsBytes),
+            SVG.tag(
+                abi.encodePacked("rect"),
+                abi.encodePacked(
+                    'x="235" y="480" width="10" height="10" ',
+                    SVG.keyValue("fill", abi.encodePacked("#", tokenColorA))
                 ),
-                sideText(
-                    addressToString(_tokenAddress),
-                    "rotate(90 -107.5 382.5)",
-                    "text-anchor:end"
+                abi.encodePacked("")
+            ),
+            SVG.tag(
+                abi.encodePacked("rect"),
+                abi.encodePacked(
+                    'x="250" y="480" width="10" height="10" ',
+                    SVG.keyValue("fill", abi.encodePacked("#", tokenColorB))
                 ),
-                titleStack(20, 100, "Fund", _fundName),
-                titleStack(20, 150, "Focus", _fundFocus),
-                titleStack(20, 200, "Support", supportAsString),
-                SVG.tag(
-                    "rect",
-                    string(
-                        abi.encodePacked(
-                            'x="235" y="480" width="10" height="10" ',
-                            SVG.keyValue(
-                                "fill",
-                                string(abi.encodePacked("#", tokenColorA))
-                            )
-                        )
-                    ),
-                    ""
-                ),
-                SVG.tag(
-                    "rect",
-                    string(
-                        abi.encodePacked(
-                            'x="250" y="480" width="10" height="10" ',
-                            SVG.keyValue(
-                                "fill",
-                                string(abi.encodePacked("#", tokenColorB))
-                            )
-                        )
-                    ),
-                    ""
-                )
+                abi.encodePacked("")
             )
         );
 
@@ -165,18 +157,16 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
                 abi.encodePacked(
                     "data:application/json;base64,",
                     Base64.encode(
-                        bytes(
-                            abi.encodePacked(
-                                '{"name":"',
-                                name,
-                                '", "description":"',
-                                _nftDescription,
-                                _nftDetails,
-                                '", "image": "',
-                                "data:image/svg+xml;base64,",
-                                // image,
-                                '"}'
-                            )
+                        abi.encodePacked(
+                            '{"name":"',
+                            name,
+                            '", "description":"',
+                            _nftDescription,
+                            _nftDetails,
+                            '", "image": "',
+                            "data:image/svg+xml;base64,",
+                            // image,
+                            '"}'
                         )
                     )
                 )
@@ -340,12 +330,20 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         return uint256(x >= 0 ? x : -x);
     }
 
-    function addressToString(address addr)
+    function addressToString(address _address)
         internal
         pure
         returns (string memory)
     {
-        return (uint256(uint160(addr))).toHexStringASCII(20);
+        return (uint256(uint160(_address))).toHexStringASCII(20);
+    }
+
+    function addressToBytes(address _address)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(addressToString(_address));
     }
 
     function scale(

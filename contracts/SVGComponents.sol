@@ -9,37 +9,42 @@ import "./libraries/SVG.sol";
 contract SVGComponents {
     using Strings for uint256;
 
-    function background() internal pure returns (string memory) {
+    function background() internal pure returns (bytes memory) {
         return
-            string(
-                abi.encodePacked(
-                    SVG.tag("path", 'fill="#22225E" d="M0 0h290v500H0z"', ""),
-                    SVG.tag("path", 'fill="#FFF" d="M270 1h19v498h-19z"', "")
+            abi.encodePacked(
+                SVG.tag(
+                    abi.encodePacked("path"),
+                    abi.encodePacked('fill="#22225E" d="M0 0h290v500H0z"'),
+                    abi.encodePacked("")
+                ),
+                SVG.tag(
+                    abi.encodePacked("path"),
+                    abi.encodePacked('fill="#FFF" d="M270 1h19v498h-19z"'),
+                    abi.encodePacked("")
                 )
             );
     }
 
     function sideText(
-        string memory _text,
-        string memory _transform,
-        string memory _style
-    ) internal pure returns (string memory) {
+        bytes memory _text,
+        bytes memory _transform,
+        bytes memory _style
+    ) internal pure returns (bytes memory) {
         return
-            string(
-                abi.encodePacked(
-                    SVG.tag(
-                        "text",
-                        string(
-                            abi.encodePacked(
-                                SVG.keyValue("class", "small"),
-                                " ",
-                                SVG.keyValue("transform", _transform),
-                                " ",
-                                SVG.keyValue("style", _style)
-                            )
+            abi.encodePacked(
+                SVG.tag(
+                    abi.encodePacked("text"),
+                    abi.encodePacked(
+                        SVG.keyValue(
+                            abi.encodePacked("class"),
+                            abi.encodePacked("small")
                         ),
-                        _text
-                    )
+                        " ",
+                        SVG.keyValue(abi.encodePacked("transform"), _transform),
+                        " ",
+                        SVG.keyValue(abi.encodePacked("style"), _style)
+                    ),
+                    _text
                 )
             );
     }
@@ -47,26 +52,30 @@ contract SVGComponents {
     function titleStack(
         uint256 _x,
         uint256 _y,
-        string memory _sub,
-        string memory _title
-    ) internal pure returns (string memory) {
+        bytes memory _sub,
+        bytes memory _title
+    ) internal pure returns (bytes memory) {
         return
             SVG.tag(
-                "text",
-                string(
-                    abi.encodePacked(
-                        'class="title" transform=',
-                        '"translate(',
-                        _x.toString(),
-                        ",",
-                        _y.toString(),
-                        ')"'
-                    )
+                abi.encodePacked("text"),
+                abi.encodePacked(
+                    'class="title" transform=',
+                    '"translate(',
+                    _x.toString(),
+                    ",",
+                    _y.toString(),
+                    ')"'
                 ),
-                string(
-                    abi.encodePacked(
-                        SVG.tag("tspan", 'class="small alpha" x="0"', _sub),
-                        SVG.tag("tspan", 'class="large" x="0" dy="20"', _title)
+                abi.encodePacked(
+                    SVG.tag(
+                        abi.encodePacked("tspan"),
+                        abi.encodePacked('class="small alpha" x="0"'),
+                        _sub
+                    ),
+                    SVG.tag(
+                        abi.encodePacked("tspan"),
+                        abi.encodePacked('class="large" x="0" dy="20"'),
+                        _title
                     )
                 )
             );
