@@ -6,20 +6,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "hardhat/console.sol";
 
-interface Registry {
-    function get(bytes32) external view returns (address);
-}
-
-interface FundManager {
-    function getFundAddress(bytes32) external view returns (address);
-}
-
-interface Fund {
-    function getDepositAddressFor(address) external view returns (address);
-}
+import "./Registry.sol";
+import "./FundManager.sol";
 
 contract Deposit is Ownable {
     using SafeERC20 for IERC20;
+    error AllowanceIsNotRegistered();
 
     Registry private registry;
 
@@ -38,14 +30,22 @@ contract Deposit is Ownable {
      * @param  _amount        amount to deposit
      */
     function deposit(
-        bytes32 _fundId,
+        string memory _fundId,
         address _tokenAddress,
         uint256 _amount
     ) external returns (bool) {
         // HOW EXPENSIVE?
+
+        if (
+            IERC20(_tokenAddress).allowance(msg.sender, address(this)) < _amount
+        ) {
+            revert AllowanceIsNotRegistered();
+        }
+
         address fundManagerAddress = registry.get("FUND_MANAGER");
-        address fund = FundManager(fundManagerAddress).getFundAddress(_fundId);
-        address depositAddress = Fund(fund).getDepositAddressFor(_tokenAddress);
+
+        address depositAddress = FundManager(fundManagerAddress)
+            .getDepositAddressFor(_fundId, _tokenAddress);
 
         IERC20(_tokenAddress).safeTransferFrom(
             msg.sender,
@@ -66,7 +66,7 @@ contract Deposit is Ownable {
 
     event Support(
         address indexed from,
-        bytes32 indexed fundId,
+        string indexed fundId,
         address indexed tokenAddress,
         uint256 value
     );

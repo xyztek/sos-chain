@@ -9,6 +9,7 @@ import "hardhat/console.sol";
 
 contract Fund is AccessControl, TokenControl {
     error NotAllowedForStatus();
+    error NotSet();
 
     enum Status {
         Open,
@@ -25,13 +26,16 @@ contract Fund is AccessControl, TokenControl {
     constructor(
         string memory _id,
         string memory _name,
-        address[] memory _owners,
-        address[] memory _allowedTokens
+        address[] memory _allowedTokens,
+        address _safe,
+        address _owner
     ) {
+        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         id = _id;
         name = _name;
+        safeAddress = _safe;
 
         uint256 i = 0;
         while (i < _allowedTokens.length) {
@@ -57,8 +61,8 @@ contract Fund is AccessControl, TokenControl {
     {
         if (status != Status.Open) revert NotAllowedForStatus();
         if (!isTokenAllowed(_tokenAddress)) revert TokenNotAllowed();
-
-        return address(this);
+        if (safeAddress == address(0x0)) revert NotSet();
+        return safeAddress;
     }
 
     // -----------------------------------------------------------------

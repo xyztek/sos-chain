@@ -26,6 +26,9 @@ contract Registry is Ownable {
      * @return           address of the queried contract
      */
     function get(string memory _name) public view returns (address) {
+        if (registry[_name] == address(0x0)) {
+            revert NotFound();
+        }
         return registry[_name];
     }
 

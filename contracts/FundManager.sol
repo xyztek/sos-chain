@@ -9,6 +9,7 @@ import "hardhat/console.sol";
 
 contract FundManager is AccessControl, TokenControl {
     mapping(string => address) private funds;
+    error NotFound();
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -24,11 +25,10 @@ contract FundManager is AccessControl, TokenControl {
      * @param  _tokenAddress  address of token tracker
      * @return                address of the fund
      */
-    function getDepositAddressFor(string memory _id, address _tokenAddress)
-        public
-        view
-        returns (address)
-    {
+    function getDepositAddressFor(
+        string memory _id,
+        address _tokenAddress // usdc
+    ) public view returns (address) {
         return Fund(funds[_id]).getDepositAddressFor(_tokenAddress);
     }
 
@@ -38,6 +38,9 @@ contract FundManager is AccessControl, TokenControl {
      * @return       deposit address for a fund
      */
     function getFundAddress(string memory _id) public view returns (address) {
+        if (funds[_id] == address(0x0)) {
+            revert NotFound();
+        }
         return funds[_id];
     }
 
@@ -49,16 +52,17 @@ contract FundManager is AccessControl, TokenControl {
      * @dev             setup a new fund
      * @param  _id      unique identifier of the fund
      * @param  _name    name of the fund
-     * @param  _owners  array of owner addresses for the fund
+     * @param  _tokens  array of token addresses for the fund
+     * @param  _safe    safe address of the fund
      * @return          address of the deployed fund
      */
     function setupFund(
         string memory _id,
         string memory _name,
-        address[] memory _owners,
-        address[] memory _tokens
+        address[] memory _tokens,
+        address _safe
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
-        Fund fund = new Fund(_id, _name, _owners, _tokens);
+        Fund fund = new Fund(_id, _name, _tokens, _safe, msg.sender);
         funds[_id] = address(fund);
 
         return address(fund);
