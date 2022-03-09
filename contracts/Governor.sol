@@ -14,7 +14,7 @@ contract Governor is AccessControl, DynamicChecks {
     error MissingRole(bytes32);
     error DisallowedStatusChange();
     error NotAllowedForRequest(RequestStatus);
-    error NotAllowedForFund(bytes32);
+    error NotAllowedForFund(uint256);
     error CheckAlreadyApproved();
 
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
@@ -42,7 +42,7 @@ contract Governor is AccessControl, DynamicChecks {
         Coordinates requestLocation;
         RequestStatus requestStatus;
         address recipient;
-        bytes32 fundId;
+        uint256 fundId;
         bytes32[] remainingChecks;
         mapping(bytes32 => address) approvals;
     }
@@ -66,7 +66,7 @@ contract Governor is AccessControl, DynamicChecks {
     function initRequest(
         bytes32 _requestType,
         address _recipient,
-        bytes32 _fundId,
+        uint256 _fundId,
         uint256[2] memory coordinates
     ) public requireChecks onlyOpenFunds(_fundId) returns (uint256) {
         // pre-allocate storage location for the new Request
@@ -94,7 +94,7 @@ contract Governor is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
 
     function approveRequest(
-        bytes32 _fundId,
+        uint256 _fundId,
         uint256 _requestId,
         uint256 _checkIndex
     )
@@ -112,7 +112,7 @@ contract Governor is AccessControl, DynamicChecks {
         return true;
     }
 
-    function finalizeRequest(bytes32 _fundId, uint256 _requestId)
+    function finalizeRequest(uint256 _fundId, uint256 _requestId)
         public
         onlyFundRole(_fundId, FINALIZER_ROLE)
         onlyRequestsWithStatus(RequestStatus.Approved, _requestId)
@@ -123,7 +123,7 @@ contract Governor is AccessControl, DynamicChecks {
         return true;
     }
 
-    function signRequest(bytes32 _fundId, uint256 _requestId)
+    function signRequest(uint256 _fundId, uint256 _requestId)
         public
         onlyFundRole(_fundId, EXECUTOR_ROLE)
         onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
@@ -136,7 +136,7 @@ contract Governor is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
     // INTERNAL
     // -----------------------------------------------------------------
-    function _getFund(bytes32 _fundId) internal returns (Fund) {
+    function _getFund(uint256 _fundId) internal returns (Fund) {
         address fundManagerAddress = registry.get("FUND_MANAGER");
         address fundAddress = FundManager(fundManagerAddress).getFundAddress(
             _fundId
@@ -206,13 +206,13 @@ contract Governor is AccessControl, DynamicChecks {
         _;
     }
 
-    modifier onlyOpenFunds(bytes32 _fundId) {
+    modifier onlyOpenFunds(uint256 _fundId) {
         Fund fund = _getFund(_fundId);
         if (!fund.isOpen()) revert NotAllowedForFund(_fundId);
         _;
     }
 
-    modifier onlyFundRole(bytes32 _fundId, bytes32 _role) {
+    modifier onlyFundRole(uint256 _fundId, bytes32 _role) {
         Fund fund = _getFund(_fundId);
         if (!fund.hasRole(_role, msg.sender)) revert MissingRole(_role);
         _;

@@ -8,8 +8,7 @@ import "./Fund.sol";
 import "hardhat/console.sol";
 
 contract FundManager is AccessControl, TokenControl {
-    mapping(string => address) private funds;
-    error NotFound();
+    address[] private funds;
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -25,10 +24,11 @@ contract FundManager is AccessControl, TokenControl {
      * @param  _tokenAddress  address of token tracker
      * @return                address of the fund
      */
-    function getDepositAddressFor(
-        string memory _id,
-        address _tokenAddress // usdc
-    ) public view returns (address) {
+    function getDepositAddressFor(uint256 _id, address _tokenAddress)
+        public
+        view
+        returns (address)
+    {
         return Fund(funds[_id]).getDepositAddressFor(_tokenAddress);
     }
 
@@ -37,10 +37,7 @@ contract FundManager is AccessControl, TokenControl {
      * @param  _id   unique identifier of a fund
      * @return       deposit address for a fund
      */
-    function getFundAddress(string memory _id) public view returns (address) {
-        if (funds[_id] == address(0x0)) {
-            revert NotFound();
-        }
+    function getFundAddress(uint256 _id) public view returns (address) {
         return funds[_id];
     }
 
@@ -57,7 +54,6 @@ contract FundManager is AccessControl, TokenControl {
      * @return                 address of the deployed fund
      */
     function setupFund(
-        string memory _id,
         string memory _name,
         string memory _focus,
         address[] memory _allowedTokens,

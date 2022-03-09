@@ -34,11 +34,13 @@ contract Deposit is Ownable {
      * @param  _amount        amount to deposit
      */
     function deposit(
-        string memory _fundId,
+        uint256 _fundId,
         address _tokenAddress,
         uint256 _amount
     ) external returns (bool) {
-        if (_allowance(_tokenAddress) < _amount) revert InsufficientAllowance();
+        address fundManagerAddress = registry.get("FUND_MANAGER");
+        address fund = FundManager(fundManagerAddress).getFundAddress(_fundId);
+        address depositAddress = Fund(fund).getDepositAddressFor(_tokenAddress);
 
         _donate(
             _fundId,
@@ -136,6 +138,9 @@ contract Deposit is Ownable {
     event Donation(
         address indexed from,
         string indexed fundId,
+    event Support(
+        uint256 indexed fundId,
+        address indexed from,
         address indexed tokenAddress,
         uint256 value
     );

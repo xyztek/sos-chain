@@ -17,7 +17,7 @@ contract Fund is AccessControl, TokenControl {
         Closed
     }
 
-    string public id;
+    uint256 public id;
     string public name;
     string public focus;
     Status public status;
@@ -29,7 +29,7 @@ contract Fund is AccessControl, TokenControl {
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 
     constructor(
-        string memory _id,
+        uint256 _id,
         string memory _name,
         string memory _focus,
         address[] memory _allowedTokens,
