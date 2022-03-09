@@ -24,6 +24,10 @@ contract Fund is AccessControl, TokenControl {
 
     address private safeAddress;
 
+    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
+    bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
+    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+
     constructor(
         string memory _id,
         string memory _name,
@@ -74,6 +78,14 @@ contract Fund is AccessControl, TokenControl {
         if (!isTokenAllowed(_tokenAddress)) revert TokenNotAllowed();
         if (safeAddress == address(0x0)) revert NotSet();
         return safeAddress;
+    }
+
+    /**
+     * @dev                   check if a fund is open for donations
+     * @return                boolean indicating status
+     */
+    function isOpen() external view returns (bool) {
+        return status == Status.Open;
     }
 
     // -----------------------------------------------------------------
