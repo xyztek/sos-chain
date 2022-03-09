@@ -17,11 +17,11 @@ describe("SOS", function () {
     );
 
     this.fundManager = await this.fundManagerFactory.deploy();
+    await this.fundManager.deployed();
 
     await this.registry.register("FUND_MANAGER", this.fundManager.address);
 
     await this.fundManager.setupFund(
-      "UNICEF_011",
       "UNICEF Test Fund",
       "Test",
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
@@ -56,7 +56,7 @@ describe("SOS", function () {
     await expect(
       this.contract.mint(
         "0xEcdA812a67Ff9EB0257732D6a361008864275fCC",
-        "UNICEF_011",
+        0,
         ethers.constants.WeiPerEther.mul(1000),
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
       )
@@ -66,7 +66,7 @@ describe("SOS", function () {
   it("should return a token URI for an ERC721", async function () {
     const tx = await this.contract.mint(
       "0xEcdA812a67Ff9EB0257732D6a361008864275fCC",
-      "UNICEF_011",
+      0,
       ethers.constants.WeiPerEther.mul(1000),
       "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
     );

@@ -38,10 +38,6 @@ contract Deposit is Ownable {
         address _tokenAddress,
         uint256 _amount
     ) external returns (bool) {
-        address fundManagerAddress = registry.get("FUND_MANAGER");
-        address fund = FundManager(fundManagerAddress).getFundAddress(_fundId);
-        address depositAddress = Fund(fund).getDepositAddressFor(_tokenAddress);
-
         _donate(
             _fundId,
             _getDepositAddress(_fundId, _tokenAddress),
@@ -81,7 +77,7 @@ contract Deposit is Ownable {
      * @param  _tokenAddress  ERC20 address
      * @return                contract address
      */
-    function _getDepositAddress(string memory _fundId, address _tokenAddress)
+    function _getDepositAddress(uint256 _fundId, address _tokenAddress)
         internal
         view
         returns (address)
@@ -103,14 +99,14 @@ contract Deposit is Ownable {
      * @param  _tokenAddress  ERC20 address
      */
     function _donate(
-        string memory _fundId,
+        uint256 _fundId,
         address _to,
         uint256 _amount,
         address _tokenAddress
     ) internal {
         IERC20(_tokenAddress).safeTransferFrom(msg.sender, _to, _amount);
 
-        emit Donation(msg.sender, _fundId, _tokenAddress, _amount);
+        emit Donate(msg.sender, _fundId, _tokenAddress, _amount);
     }
 
     /**
@@ -123,7 +119,7 @@ contract Deposit is Ownable {
      */
     function _mint(
         address _recipient,
-        string memory _fundId,
+        uint256 _fundId,
         uint256 _amount,
         address _tokenAddress
     ) internal returns (uint256) {
@@ -135,12 +131,9 @@ contract Deposit is Ownable {
     // EVENTS
     // -----------------------------------------------------------------
 
-    event Donation(
+    event Donate(
         address indexed from,
-        string indexed fundId,
-    event Support(
         uint256 indexed fundId,
-        address indexed from,
         address indexed tokenAddress,
         uint256 value
     );

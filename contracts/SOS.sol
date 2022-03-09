@@ -13,8 +13,8 @@ import "./Registry.sol";
 
 import "hardhat/console.sol";
 
-struct Support {
-    string fundId;
+struct Donation {
+    uint256 fundId;
     uint256 amount;
     address tokenAddress;
 }
@@ -24,7 +24,7 @@ contract SOS is ERC721, AccessControl {
 
     Registry private registry;
     Counters.Counter private _tokenIds;
-    mapping(uint256 => Support) public metadata;
+    mapping(uint256 => Donation) public metadata;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -56,10 +56,10 @@ contract SOS is ERC721, AccessControl {
         override
         returns (string memory)
     {
-        Support storage support = metadata[_tokenId];
+        Donation storage donation = metadata[_tokenId];
 
         address fundAddress = FundManager(registry.get("FUND_MANAGER"))
-            .getFundAddress(support.fundId);
+            .getFundAddress(donation.fundId);
 
         (string memory fundName, string memory fundFocus) = Fund(fundAddress)
             .getMeta();
@@ -71,8 +71,8 @@ contract SOS is ERC721, AccessControl {
         return
             descriptor.constructTokenURI(
                 _tokenId,
-                support.amount,
-                support.tokenAddress,
+                donation.amount,
+                donation.tokenAddress,
                 fundName,
                 fundFocus
             );
@@ -92,7 +92,7 @@ contract SOS is ERC721, AccessControl {
      */
     function mint(
         address _recipient,
-        string memory _fundId,
+        uint256 _fundId,
         uint256 _amount,
         address _tokenAddress
     ) public onlyRole(MINTER_ROLE) returns (uint256) {
@@ -101,7 +101,7 @@ contract SOS is ERC721, AccessControl {
         uint256 tokenId = _tokenIds.current();
         _mint(_recipient, tokenId);
 
-        metadata[tokenId] = Support({
+        metadata[tokenId] = Donation({
             fundId: _fundId,
             amount: _amount,
             tokenAddress: _tokenAddress

@@ -17,7 +17,6 @@ describe("FundManager", function () {
     await contract.deployed();
 
     await contract.setupFund(
-      "T01",
       "Test Fund",
       "Test",
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
@@ -26,12 +25,12 @@ describe("FundManager", function () {
   });
 
   it("should deploy a new fund", async function () {
-    expect(await contract.getFundAddress("T01")).to.be.properAddress;
+    expect(await contract.getFundAddress(0)).to.be.properAddress;
   });
 
   it("should return deposit address for a fund if token is allowed", async function () {
     const depositAddress = await contract.getDepositAddressFor(
-      "T01",
+      0,
       "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
     );
 
@@ -41,7 +40,7 @@ describe("FundManager", function () {
   it("should revert if token is not allowed for deposit", async function () {
     await expect(
       contract.getDepositAddressFor(
-        "T01",
+        0,
         "0xC250f11eD2989BB9A64f0BEDA9310CC33FD10D06"
       )
     ).to.be.reverted;

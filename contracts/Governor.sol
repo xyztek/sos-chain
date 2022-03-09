@@ -4,7 +4,10 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import "./Fund.sol";
+import "./FundManager.sol";
 import "./DynamicChecks.sol";
+import "./Registry.sol";
 
 import "hardhat/console.sol";
 
@@ -136,7 +139,7 @@ contract Governor is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
     // INTERNAL
     // -----------------------------------------------------------------
-    function _getFund(uint256 _fundId) internal returns (Fund) {
+    function _getFund(uint256 _fundId) internal view returns (Fund) {
         address fundManagerAddress = registry.get("FUND_MANAGER");
         address fundAddress = FundManager(fundManagerAddress).getFundAddress(
             _fundId

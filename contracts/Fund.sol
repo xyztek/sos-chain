@@ -33,7 +33,7 @@ contract Fund is AccessControl, TokenControl {
         string memory _name,
         string memory _focus,
         address[] memory _allowedTokens,
-        address _safe,
+        address _safeAddress,
         address _owner
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
@@ -42,7 +42,7 @@ contract Fund is AccessControl, TokenControl {
         id = _id;
         name = _name;
         focus = _focus;
-        safeAddress = _safe;
+        safeAddress = _safeAddress;
 
         uint256 i = 0;
         while (i < _allowedTokens.length) {

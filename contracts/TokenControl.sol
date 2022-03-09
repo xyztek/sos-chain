@@ -13,14 +13,6 @@ contract TokenControl is AccessControl {
 
     EnumerableSet.AddressSet private allowedTokens;
 
-    constructor(address[] memory _allowedTokens) {
-        uint256 i = 0;
-        while (i < _allowedTokens.length) {
-            allowedTokens.add(_allowedTokens[i]);
-            i++;
-        }
-    }
-
     // -----------------------------------------------------------------
     // PUBLIC API
     // -----------------------------------------------------------------

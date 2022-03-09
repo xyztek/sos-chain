@@ -47,8 +47,8 @@ contract FundManager is AccessControl, TokenControl {
 
     /**
      * @dev                    setup a new fund
-     * @param  _id             unique identifier of the fund
      * @param  _name           name of the fund
+     * @param  _focus          focus of the fund
      * @param  _allowedTokens  array of allowed token addresses
      * @param  _safeAddress    address of underlying Gnosis Safe
      * @return                 address of the deployed fund
@@ -58,9 +58,11 @@ contract FundManager is AccessControl, TokenControl {
         string memory _focus,
         address[] memory _allowedTokens,
         address _safeAddress
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256, address) {
+        uint256 index = funds.length;
+
         Fund fund = new Fund(
-            _id,
+            index,
             _name,
             _focus,
             _allowedTokens,
@@ -68,8 +70,8 @@ contract FundManager is AccessControl, TokenControl {
             msg.sender
         );
 
-        funds[_id] = address(fund);
+        funds.push(address(fund));
 
-        return address(fund);
+        return (index, address(fund));
     }
 }
