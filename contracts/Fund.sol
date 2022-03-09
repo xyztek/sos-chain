@@ -9,6 +9,7 @@ import "hardhat/console.sol";
 
 contract Fund is AccessControl, TokenControl {
     error NotAllowedForStatus();
+    error NotSet();
 
     enum Status {
         Open,
@@ -60,7 +61,7 @@ contract Fund is AccessControl, TokenControl {
     {
         if (status != Status.Open) revert NotAllowedForStatus();
         if (!isTokenAllowed(_tokenAddress)) revert TokenNotAllowed();
-
+        if (safeAddress == address(0x0)) revert NotSet();
         return safeAddress;
     }
 

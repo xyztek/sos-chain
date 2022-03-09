@@ -33,16 +33,17 @@ contract Deposit is Ownable {
         string memory _fundId,
         address _tokenAddress,
         uint256 _amount
-    ) external payable returns (bool) {
+    ) external returns (bool) {
         // HOW EXPENSIVE?
+
         if (
-            IERC20(_tokenAddress).allowance(msg.sender, address(this)) >=
-            _amount
+            IERC20(_tokenAddress).allowance(msg.sender, address(this)) < _amount
         ) {
             revert AllowanceIsNotRegistered();
         }
 
         address fundManagerAddress = registry.get("FUND_MANAGER");
+
         address depositAddress = FundManager(fundManagerAddress)
             .getDepositAddressFor(_fundId, _tokenAddress);
 

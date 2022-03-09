@@ -9,6 +9,7 @@ import "hardhat/console.sol";
 
 contract FundManager is AccessControl, TokenControl {
     mapping(string => address) private funds;
+    error NotFound();
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -37,6 +38,9 @@ contract FundManager is AccessControl, TokenControl {
      * @return       deposit address for a fund
      */
     function getFundAddress(string memory _id) public view returns (address) {
+        if (funds[_id] == address(0x0)) {
+            revert NotFound();
+        }
         return funds[_id];
     }
 
