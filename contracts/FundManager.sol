@@ -49,20 +49,29 @@ contract FundManager is AccessControl, TokenControl {
     // -----------------------------------------------------------------
 
     /**
-     * @dev             setup a new fund
-     * @param  _id      unique identifier of the fund
-     * @param  _name    name of the fund
-     * @param  _tokens  array of token addresses for the fund
-     * @param  _safe    safe address of the fund
-     * @return          address of the deployed fund
+     * @dev                    setup a new fund
+     * @param  _id             unique identifier of the fund
+     * @param  _name           name of the fund
+     * @param  _allowedTokens  array of allowed token addresses
+     * @param  _safeAddress    address of underlying Gnosis Safe
+     * @return                 address of the deployed fund
      */
     function setupFund(
         string memory _id,
         string memory _name,
-        address[] memory _tokens,
-        address _safe
+        string memory _focus,
+        address[] memory _allowedTokens,
+        address _safeAddress
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (address) {
-        Fund fund = new Fund(_id, _name, _tokens, _safe, msg.sender);
+        Fund fund = new Fund(
+            _id,
+            _name,
+            _focus,
+            _allowedTokens,
+            _safeAddress,
+            msg.sender
+        );
+
         funds[_id] = address(fund);
 
         return address(fund);

@@ -19,6 +19,7 @@ contract Fund is AccessControl, TokenControl {
 
     string public id;
     string public name;
+    string public focus;
     Status public status;
 
     address private safeAddress;
@@ -26,6 +27,7 @@ contract Fund is AccessControl, TokenControl {
     constructor(
         string memory _id,
         string memory _name,
+        string memory _focus,
         address[] memory _allowedTokens,
         address _safe,
         address _owner
@@ -35,6 +37,7 @@ contract Fund is AccessControl, TokenControl {
 
         id = _id;
         name = _name;
+        focus = _focus;
         safeAddress = _safe;
 
         uint256 i = 0;
@@ -47,6 +50,14 @@ contract Fund is AccessControl, TokenControl {
     // -----------------------------------------------------------------
     // PUBLIC API
     // -----------------------------------------------------------------
+
+    /**
+     * @dev                   get metadata for a fund
+     * @return                metadata of the fund
+     */
+    function getMeta() external view returns (string memory, string memory) {
+        return (name, focus);
+    }
 
     /**
      * @dev                   get deposit address for a token

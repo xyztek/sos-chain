@@ -26,14 +26,13 @@ contract Registry is Ownable {
      * @return           address of the queried contract
      */
     function get(string memory _name) public view returns (address) {
-        if (registry[_name] == address(0x0)) {
-            revert NotFound();
-        }
+        if (registry[_name] == address(0x0)) revert NotFound();
+
         return registry[_name];
     }
 
     /**
-     * @dev              register contract address in the registry
+     * @dev              register contract address
      * @param _name      name of the contract
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
@@ -43,7 +42,7 @@ contract Registry is Ownable {
         onlyOwner
         returns (bool)
     {
-        if (registry[_name] != address(0x0)) revert AlreadyRegistered();
+        if (registry[_name] != address(0)) revert AlreadyRegistered();
 
         registry[_name] = _address;
         contracts.push(_name);
@@ -52,7 +51,7 @@ contract Registry is Ownable {
     }
 
     /**
-     * @dev              update contract address in the registry
+     * @dev              update contract address
      * @param _name      name of the contract
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
