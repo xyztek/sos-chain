@@ -11,9 +11,11 @@ import "hardhat/console.sol";
 contract Governor is AccessControl, DynamicChecks {
     using SafeMath for uint256;
 
+    error MissingRole(bytes32);
     error DisallowedStatusChange();
-    error NotAllowedForRequestStatus();
-    error RequestAlreadyApproved();
+    error NotAllowedForRequest(RequestStatus);
+    error NotAllowedForFund(bytes32);
+    error CheckAlreadyApproved();
 
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
@@ -27,6 +29,7 @@ contract Governor is AccessControl, DynamicChecks {
     }
 
     // This will be used for coordinate math.
+    // Does this RESOLUTION value make sense?
     uint256 private constant RESOLUTION = 1000000000000000;
 
     struct Coordinates {
@@ -45,13 +48,15 @@ contract Governor is AccessControl, DynamicChecks {
     }
 
     Request[] private requests;
+    Registry private registry;
 
-    constructor(bytes32[] memory _initialChecks) {
+    constructor(address _registry, bytes32[] memory _initialChecks) {
         if (_initialChecks.length > 0) revert NoZeroChecks();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         checks = _initialChecks;
+        registry = Registry(_registry);
     }
 
     // -----------------------------------------------------------------
@@ -63,9 +68,7 @@ contract Governor is AccessControl, DynamicChecks {
         address _recipient,
         bytes32 _fundId,
         uint256[2] memory coordinates
-    ) public requireChecks returns (uint256) {
-        // TODO: CHECK FUND IS OPEN
-
+    ) public requireChecks onlyOpenFunds(_fundId) returns (uint256) {
         // pre-allocate storage location for the new Request
         uint256 index = requests.length;
         requests.push();
@@ -90,9 +93,13 @@ contract Governor is AccessControl, DynamicChecks {
     // OWNER API
     // -----------------------------------------------------------------
 
-    function approveRequest(uint256 _requestId, uint256 _checkIndex)
+    function approveRequest(
+        bytes32 _fundId,
+        uint256 _requestId,
+        uint256 _checkIndex
+    )
         public
-        onlyRole(APPROVER_ROLE)
+        onlyFundRole(_fundId, APPROVER_ROLE)
         onlyRequestsWithStatus(RequestStatus.Pending, _requestId)
         returns (bool)
     {
@@ -105,9 +112,9 @@ contract Governor is AccessControl, DynamicChecks {
         return true;
     }
 
-    function finalizeRequest(uint256 _requestId)
+    function finalizeRequest(bytes32 _fundId, uint256 _requestId)
         public
-        onlyRole(FINALIZER_ROLE)
+        onlyFundRole(_fundId, FINALIZER_ROLE)
         onlyRequestsWithStatus(RequestStatus.Approved, _requestId)
         returns (bool)
     {
@@ -116,9 +123,9 @@ contract Governor is AccessControl, DynamicChecks {
         return true;
     }
 
-    function signRequest(uint256 _requestId)
+    function signRequest(bytes32 _fundId, uint256 _requestId)
         public
-        onlyRole(EXECUTOR_ROLE)
+        onlyFundRole(_fundId, EXECUTOR_ROLE)
         onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
         returns (bool)
     {
@@ -129,6 +136,14 @@ contract Governor is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
     // INTERNAL
     // -----------------------------------------------------------------
+    function _getFund(bytes32 _fundId) internal returns (Fund) {
+        address fundManagerAddress = registry.get("FUND_MANAGER");
+        address fundAddress = FundManager(fundManagerAddress).getFundAddress(
+            _fundId
+        );
+
+        return Fund(fundAddress);
+    }
 
     function _bumpRequestStatus(uint256 _requestId) internal {
         if (requests[_requestId].requestStatus == RequestStatus.Pending) {
@@ -153,7 +168,7 @@ contract Governor is AccessControl, DynamicChecks {
         bytes32 check = requests[_requestId].remainingChecks[_checkIndex];
 
         if (requests[_requestId].approvals[check] != address(0x0))
-            revert RequestAlreadyApproved();
+            revert CheckAlreadyApproved();
 
         requests[_requestId].approvals[check] = msg.sender;
 
@@ -191,12 +206,24 @@ contract Governor is AccessControl, DynamicChecks {
         _;
     }
 
+    modifier onlyOpenFunds(bytes32 _fundId) {
+        Fund fund = _getFund(_fundId);
+        if (!fund.isOpen()) revert NotAllowedForFund(_fundId);
+        _;
+    }
+
+    modifier onlyFundRole(bytes32 _fundId, bytes32 _role) {
+        Fund fund = _getFund(_fundId);
+        if (!fund.hasRole(_role, msg.sender)) revert MissingRole(_role);
+        _;
+    }
+
     modifier onlyRequestsWithStatus(
         RequestStatus _requestStatus,
         uint256 _requestId
     ) {
         if (requests[_requestId].requestStatus != _requestStatus)
-            revert NotAllowedForRequestStatus();
+            revert NotAllowedForRequest(_requestStatus);
         _;
     }
 }
