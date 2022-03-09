@@ -83,12 +83,12 @@ contract SOS is ERC721, AccessControl {
     // -----------------------------------------------------------------
 
     /**
-     * @dev                  mint an nft for an address
-     * @param _recipient     address of the recipient
-     * @param _fundId        id of the fund
-     * @param _amount        amount deposited
-     * @param _tokenAddress  tracked address of the deposited token
-     * @return               id of the minted ERC721
+     * @dev                   mint an nft
+     * @param  _recipient     address of the recipient
+     * @param  _fundId        id of the fund
+     * @param  _amount        amount deposited
+     * @param  _tokenAddress  tracked address of the deposited token
+     * @return                id of the minted ERC721
      */
     function mint(
         address _recipient,

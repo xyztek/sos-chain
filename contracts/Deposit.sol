@@ -4,26 +4,22 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "./Fund.sol";
 import "./FundManager.sol";
 import "./Registry.sol";
+import "./SOS.sol";
 
 import "hardhat/console.sol";
 
-import "./Registry.sol";
-import "./FundManager.sol";
-
 contract Deposit is Ownable {
     using SafeERC20 for IERC20;
-    error AllowanceIsNotRegistered();
+    error InsufficientAllowance();
 
     Counters.Counter private _tokenIds;
     Registry private registry;
 
-    constructor(address _registryAddress) ERC721("SOS chain token", "SOS") {
+    constructor(address _registryAddress) {
         registry = Registry(_registryAddress);
     }
 
@@ -34,7 +30,7 @@ contract Deposit is Ownable {
     /**
      * @dev                   deposit into the safe
      * @param  _fundId        unique identifier of the fund to deposit into
-     * @param  _tokenAddress  token symbol (must be an allowed token)
+     * @param  _tokenAddress  ERC20 address
      * @param  _amount        amount to deposit
      */
     function deposit(
@@ -42,27 +38,16 @@ contract Deposit is Ownable {
         address _tokenAddress,
         uint256 _amount
     ) external returns (bool) {
-        // HOW EXPENSIVE?
+        if (_allowance(_tokenAddress) < _amount) revert InsufficientAllowance();
 
-        if (
-            IERC20(_tokenAddress).allowance(msg.sender, address(this)) < _amount
-        ) {
-            revert AllowanceIsNotRegistered();
-        }
-
-        address fundManagerAddress = registry.get("FUND_MANAGER");
-        address depositAddress = FundManager(fundManagerAddress)
-            .getDepositAddressFor(_fundId, _tokenAddress);
-
-        IERC20(_tokenAddress).safeTransferFrom(
-            msg.sender,
-            depositAddress,
-            _amount
+        _donate(
+            _fundId,
+            _getDepositAddress(_fundId, _tokenAddress),
+            _amount,
+            _tokenAddress
         );
 
-        emit Support(msg.sender, _fundId, _tokenAddress, _amount);
-
-        // TODO mint ERC721
+        _mint(msg.sender, _fundId, _amount, _tokenAddress);
 
         return true;
     }
@@ -72,28 +57,83 @@ contract Deposit is Ownable {
     // -----------------------------------------------------------------
 
     /**
-     * @dev                 mint an nft for an address
-     * @param recipient     recipient address for the nft
-     * @param tokenURI      token uri of the hashed attributes of the nft
+     * @dev                   check ERC20 allowance()
+     * @param  _tokenAddress  ERC20 address
+     * @return                contract address
      */
-    function mintNFT(address recipient, string memory tokenURI)
+    function _allowance(address _tokenAddress) internal view returns (uint256) {
+        return IERC20(_tokenAddress).allowance(msg.sender, address(this));
+    }
+
+    /**
+     * @dev                   get address of the ERC721 minter contract
+     * @return                contract address
+     */
+    function _getMinter() internal view returns (SOS) {
+        return SOS(registry.get("SOS"));
+    }
+
+    /**
+     * @dev                   get address of the ERC721 minter contract
+     * @param  _fundId        id of the fund
+     * @param  _tokenAddress  ERC20 address
+     * @return                contract address
+     */
+    function _getDepositAddress(string memory _fundId, address _tokenAddress)
         internal
-        returns (uint256)
+        view
+        returns (address)
     {
-        _tokenIds.increment();
+        address fundManagerAddress = registry.get("FUND_MANAGER");
 
-        uint256 newItemId = _tokenIds.current();
-        _mint(recipient, newItemId);
-        _setTokenURI(newItemId, tokenURI);
+        return
+            FundManager(fundManagerAddress).getDepositAddressFor(
+                _fundId,
+                _tokenAddress
+            );
+    }
 
-        return newItemId;
+    /**
+     * @dev                   donate to the fund
+     * @param  _fundId        fund id
+     * @param  _to            deposit address of the fund
+     * @param  _amount        amount to donate
+     * @param  _tokenAddress  ERC20 address
+     */
+    function _donate(
+        string memory _fundId,
+        address _to,
+        uint256 _amount,
+        address _tokenAddress
+    ) internal {
+        IERC20(_tokenAddress).safeTransferFrom(msg.sender, _to, _amount);
+
+        emit Donation(msg.sender, _fundId, _tokenAddress, _amount);
+    }
+
+    /**
+     * @dev                   mint an ERC721
+     * @param  _recipient     address of the recipient
+     * @param  _fundId        fund id
+     * @param  _amount        amount donated
+     * @param  _tokenAddress  ERC20 address
+     * @return                id of the minted ERC721
+     */
+    function _mint(
+        address _recipient,
+        string memory _fundId,
+        uint256 _amount,
+        address _tokenAddress
+    ) internal returns (uint256) {
+        SOS minter = _getMinter();
+        return minter.mint(_recipient, _fundId, _amount, _tokenAddress);
     }
 
     // -----------------------------------------------------------------
     // EVENTS
     // -----------------------------------------------------------------
 
-    event Support(
+    event Donation(
         address indexed from,
         string indexed fundId,
         address indexed tokenAddress,

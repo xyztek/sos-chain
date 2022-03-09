@@ -27,6 +27,7 @@ contract Fund is AccessControl, TokenControl {
     constructor(
         string memory _id,
         string memory _name,
+        string memory _focus,
         address[] memory _allowedTokens,
         address _safe,
         address _owner
@@ -36,6 +37,7 @@ contract Fund is AccessControl, TokenControl {
 
         id = _id;
         name = _name;
+        focus = _focus;
         safeAddress = _safe;
 
         uint256 i = 0;
