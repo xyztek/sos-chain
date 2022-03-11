@@ -6,43 +6,25 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./libraries/SVG.sol";
 import "./libraries/HexStrings.sol";
 
 import "./SVGConstants.sol";
 import "./SVGComponents.sol";
 
+
 contract NFTDescriptor is SVGConstants, SVGComponents {
     using Strings for uint256;
-    using SafeMath for uint256;
-    using SafeMath for uint160;
-    using SafeMath for uint8;
-    using SignedSafeMath for int256;
     using HexStrings for uint256;
 
-    //uint256 constant sqrt10X128 = 1076067327063303206878105757264492625226;
-
-    struct ConstructTokenURIParams {
-        uint256 tokenId;
-        address tokenAddress;
-        string tokenSymbol;
-        string fundName;
-        string fundFocus;
-        uint256 supportAmount;
-        bool flipRatio;
-        address gnosisSafeAddress;
-        string organization;
-        string cause;
-    }
-
-    function _constructTokenURI(
+    function constructTokenURI(
         uint256 _tokenId,
         uint256 _supportAmount,
         address _tokenAddress,
         string memory _fundName,
         string memory _fundFocus
-    ) public pure returns (string memory) {
+    ) public view returns (string memory) {
         return
             Base64.encode(
                 _buildSVG(
@@ -61,7 +43,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         address _tokenAddress,
         string memory _fundName,
         string memory _fundFocus
-    ) public pure returns (string memory) {
+    ) public view returns (string memory) {
         return
             string(
                 _buildSVG(
@@ -80,12 +62,12 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         address _tokenAddress,
         string memory _fundName,
         string memory _fundFocus
-    ) public pure returns (bytes memory) {
-        string memory tokenColorA = tokenToColorHex(_tokenAddress, 0);
+    ) public view returns (bytes memory) {
+        string memory tokenColorA = tokenToColorHex(_tokenAddress, 77);
         string memory tokenColorB = tokenToColorHex(_tokenAddress, 136);
 
         bytes memory supportAsBytes = abi.encodePacked(
-            (_supportAmount / 1e18).toString()
+            (_supportAmount / 10**18).toString()// USE ERC20(_tokenAddress).decimals() insted of 18
         );
 
         bytes memory staticLayer = abi.encodePacked(
@@ -98,32 +80,25 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             sideText(
                 abi.encodePacked(_tokenId.toString()),
                 abi.encodePacked("rotate(90 132.5 142.5)"),
-                abi.encodePacked("text-anchor:start")
+                abi.encodePacked("text-anchor:start"),
+                abi.encodePacked("small"),
+                abi.encodePacked("#FFF")
             ),
             sideText(
                 addressToBytes(_tokenAddress),
                 abi.encodePacked("rotate(90 -107.5 382.5)"),
-                abi.encodePacked("text-anchor:end")
+                abi.encodePacked("text-anchor:end"),
+                abi.encodePacked("small"),
+                abi.encodePacked("#FFF")
             ),
-            titleStack(20, 100, "Fund", abi.encodePacked(_fundName)),
-            titleStack(20, 150, "Focus", abi.encodePacked(_fundFocus)),
-            titleStack(20, 200, "Support", supportAsBytes),
-            SVG.tag(
-                abi.encodePacked("rect"),
-                abi.encodePacked(
-                    'x="235" y="480" width="10" height="10" ',
-                    SVG.keyValue("fill", abi.encodePacked("#", tokenColorA))
-                ),
-                abi.encodePacked("")
-            ),
-            SVG.tag(
-                abi.encodePacked("rect"),
-                abi.encodePacked(
-                    'x="250" y="480" width="10" height="10" ',
-                    SVG.keyValue("fill", abi.encodePacked("#", tokenColorB))
-                ),
-                abi.encodePacked("")
-            )
+            titleStack(30, 110, "Fund", abi.encodePacked(_fundName)),
+            titleStack(30, 180, "Focus", abi.encodePacked(_fundFocus)),
+            titleStackTokenSymbol(30, 250, "Donation", supportAsBytes, abi.encodePacked("USDC")),//use ERC20(_tokenAddress).symbol() instead of usdc
+            colorToGridAnim(tokenColorA,tokenColorB),
+            animRect,
+            pathConstant,
+            animCircle1,
+            animCircle2
         );
 
         return
@@ -133,72 +108,6 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
                 dynamicLayer,
                 "</svg>"
             );
-    }
-
-    function constructTokenURI(ConstructTokenURIParams memory params)
-        public
-        pure
-        returns (string memory)
-    {
-        string memory name = generateName(params);
-        string memory _nftDescription = nftDescription(
-            escapeQuotes(params.tokenSymbol),
-            addressToString(params.gnosisSafeAddress)
-        );
-        string memory _nftDetails = nftDetails(
-            params.tokenId.toString(),
-            escapeQuotes(params.tokenSymbol),
-            addressToString(params.tokenAddress)
-        );
-        //string memory image = Base64.encode(bytes(generateSVGImage(params)));
-
-        return
-            string(
-                abi.encodePacked(
-                    "data:application/json;base64,",
-                    Base64.encode(
-                        abi.encodePacked(
-                            '{"name":"',
-                            name,
-                            '", "description":"',
-                            _nftDescription,
-                            _nftDetails,
-                            '", "image": "',
-                            "data:image/svg+xml;base64,",
-                            // image,
-                            '"}'
-                        )
-                    )
-                )
-            );
-    }
-
-    function escapeQuotes(string memory symbol)
-        internal
-        pure
-        returns (string memory)
-    {
-        bytes memory symbolBytes = bytes(symbol);
-        uint8 quotesCount = 0;
-        for (uint8 i = 0; i < symbolBytes.length; i++) {
-            if (symbolBytes[i] == '"') {
-                quotesCount++;
-            }
-        }
-        if (quotesCount > 0) {
-            bytes memory escapedBytes = new bytes(
-                symbolBytes.length + (quotesCount)
-            );
-            uint256 index;
-            for (uint8 i = 0; i < symbolBytes.length; i++) {
-                if (symbolBytes[i] == '"') {
-                    escapedBytes[index++] = "\\";
-                }
-                escapedBytes[index++] = symbolBytes[i];
-            }
-            return string(escapedBytes);
-        }
-        return symbol;
     }
 
     function nftDescription(
@@ -236,100 +145,6 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             );
     }
 
-    function generateName(ConstructTokenURIParams memory params)
-        private
-        pure
-        returns (string memory)
-    {
-        return
-            string(
-                abi.encodePacked("SOS - ", escapeQuotes(params.tokenSymbol))
-            );
-    }
-
-    struct DecimalStringParams {
-        // significant figures of decimal
-        uint256 sigfigs;
-        // length of decimal string
-        uint8 bufferLength;
-        // ending index for significant figures (funtion works backwards when copying sigfigs)
-        uint8 sigfigIndex;
-        // index of decimal place (0 if no decimal)
-        uint8 decimalIndex;
-        // start index for trailing/leading 0's for very small/large numbers
-        uint8 zerosStartIndex;
-        // end index for trailing/leading 0's for very small/large numbers
-        uint8 zerosEndIndex;
-        // true if decimal number is less than one
-        bool isLessThanOne;
-        // true if string should include "%"
-        bool isPercent;
-    }
-
-    function generateDecimalString(DecimalStringParams memory params)
-        private
-        pure
-        returns (string memory)
-    {
-        bytes memory buffer = new bytes(params.bufferLength);
-        if (params.isPercent) {
-            buffer[buffer.length - 1] = "%";
-        }
-        if (params.isLessThanOne) {
-            buffer[0] = "0";
-            buffer[1] = ".";
-        }
-
-        // add leading/trailing 0's
-        for (
-            uint256 zerosCursor = params.zerosStartIndex;
-            zerosCursor < params.zerosEndIndex.add(1);
-            zerosCursor++
-        ) {
-            buffer[zerosCursor] = bytes1(uint8(48));
-        }
-        // add sigfigs
-        while (params.sigfigs > 0) {
-            if (
-                params.decimalIndex > 0 &&
-                params.sigfigIndex == params.decimalIndex
-            ) {
-                buffer[params.sigfigIndex--] = ".";
-            }
-            buffer[params.sigfigIndex--] = bytes1(
-                uint8(uint256(48).add(params.sigfigs % 10))
-            );
-            params.sigfigs /= 10;
-        }
-        return string(buffer);
-    }
-
-    function sigfigsRounded(uint256 value, uint8 digits)
-        private
-        pure
-        returns (uint256, bool)
-    {
-        bool extraDigit;
-        if (digits > 5) {
-            value = value.div((10**(digits - 5)));
-        }
-        bool roundUp = value % 10 > 4;
-        value = value.div(10);
-        if (roundUp) {
-            value = value + 1;
-        }
-        // 99999 -> 100000 gives an extra sigfig
-        if (value == 100000) {
-            value /= 10;
-            extraDigit = true;
-        }
-        return (value, extraDigit);
-    }
-
-    function abs(int256 x) private pure returns (uint256) {
-        return uint256(x >= 0 ? x : -x);
-    }
-
     function addressToString(address _address)
         internal
         pure
@@ -344,18 +159,6 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         returns (bytes memory)
     {
         return abi.encodePacked(addressToString(_address));
-    }
-
-    function scale(
-        uint256 n,
-        uint256 inMn,
-        uint256 inMx,
-        uint256 outMn,
-        uint256 outMx
-    ) private pure returns (string memory) {
-        return
-            (n.sub(inMn).mul(outMx.sub(outMn)).div(inMx.sub(inMn)).add(outMn))
-                .toString();
     }
 
     function tokenToColorHex(address token, uint256 offset)
