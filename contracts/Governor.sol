@@ -4,14 +4,16 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import "./Fund.sol";
+import "./libraries/Geo.sol";
+
+import "./FundV1.sol";
 import "./FundManager.sol";
 import "./DynamicChecks.sol";
 import "./Registry.sol";
 
 import "hardhat/console.sol";
 
-contract Governor is AccessControl, DynamicChecks {
+abstract contract Governor is AccessControl, DynamicChecks {
     using SafeMath for uint256;
 
     error MissingRole(bytes32);
@@ -31,18 +33,9 @@ contract Governor is AccessControl, DynamicChecks {
         Executed
     }
 
-    // This will be used for coordinate math.
-    // Does this RESOLUTION value make sense?
-    uint256 private constant RESOLUTION = 1000000000000000;
-
-    struct Coordinates {
-        uint256 lat;
-        uint256 lon;
-    }
-
     struct Request {
         bytes32 requestType;
-        Coordinates requestLocation;
+        Geo.Coordinates requestLocation;
         RequestStatus requestStatus;
         address recipient;
         uint256 fundId;
@@ -54,8 +47,6 @@ contract Governor is AccessControl, DynamicChecks {
     Registry private registry;
 
     constructor(address _registry, bytes32[] memory _initialChecks) {
-        if (_initialChecks.length > 0) revert NoZeroChecks();
-
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         checks = _initialChecks;
@@ -81,10 +72,7 @@ contract Governor is AccessControl, DynamicChecks {
 
         request.requestType = _requestType;
         request.requestStatus = RequestStatus.Pending;
-        request.requestLocation = Coordinates({
-            lat: coordinates[0],
-            lon: coordinates[1]
-        });
+        request.requestLocation = Geo.coordinatesFromPair(coordinates);
         request.recipient = _recipient;
         request.fundId = _fundId;
         request.remainingChecks = checks;
@@ -139,13 +127,13 @@ contract Governor is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
     // INTERNAL
     // -----------------------------------------------------------------
-    function _getFund(uint256 _fundId) internal view returns (Fund) {
+    function _getFund(uint256 _fundId) internal view returns (FundV1) {
         address fundManagerAddress = registry.get("FUND_MANAGER");
         address fundAddress = FundManager(fundManagerAddress).getFundAddress(
             _fundId
         );
 
-        return Fund(fundAddress);
+        return FundV1(fundAddress);
     }
 
     function _bumpRequestStatus(uint256 _requestId) internal {
@@ -210,13 +198,13 @@ contract Governor is AccessControl, DynamicChecks {
     }
 
     modifier onlyOpenFunds(uint256 _fundId) {
-        Fund fund = _getFund(_fundId);
+        FundV1 fund = _getFund(_fundId);
         if (!fund.isOpen()) revert NotAllowedForFund(_fundId);
         _;
     }
 
     modifier onlyFundRole(uint256 _fundId, bytes32 _role) {
-        Fund fund = _getFund(_fundId);
+        FundV1 fund = _getFund(_fundId);
         if (!fund.hasRole(_role, msg.sender)) revert MissingRole(_role);
         _;
     }

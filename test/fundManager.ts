@@ -6,25 +6,38 @@ describe("FundManager", function () {
   let factory: ContractFactory;
   let contract: Contract;
 
+  let implementationAddress: string;
+
   before(async () => {
+    const implementationFactory = await ethers.getContractFactory(
+      "contracts/FundV1.sol:FundV1"
+    );
+
+    const implementation = await implementationFactory.deploy();
+    await implementation.deployed();
+
+    implementationAddress = implementation.address;
+
     factory = await ethers.getContractFactory(
       "contracts/FundManager.sol:FundManager"
     );
   });
 
   beforeEach(async () => {
-    contract = await factory.deploy();
+    contract = await factory.deploy(implementationAddress);
     await contract.deployed();
 
-    await contract.setupFund(
-      "Test Fund",
-      "Test",
-      ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-    );
+    await expect(
+      contract.createFund(
+        "Test Fund",
+        "Test",
+        ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
+        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+      )
+    ).to.emit(contract, "FundCreated");
   });
 
-  it("should deploy a new fund", async function () {
+  it("should return the address of a fund", async function () {
     expect(await contract.getFundAddress(0)).to.be.properAddress;
   });
 

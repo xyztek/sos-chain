@@ -11,7 +11,7 @@ contract TokenControl is AccessControl {
 
     error TokenNotAllowed();
 
-    EnumerableSet.AddressSet private allowedTokens;
+    EnumerableSet.AddressSet internal allowedTokens;
 
     // -----------------------------------------------------------------
     // PUBLIC API

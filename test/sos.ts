@@ -12,16 +12,27 @@ describe("SOS", function () {
 
     this.registry = await this.registryFactory.deploy();
 
+    const implementationFactory = await ethers.getContractFactory(
+      "contracts/FundV1.sol:FundV1"
+    );
+
+    const implementation = await implementationFactory.deploy();
+    await implementation.deployed();
+
+    const implementationAddress = implementation.address;
+
     this.fundManagerFactory = await ethers.getContractFactory(
       "contracts/FundManager.sol:FundManager"
     );
 
-    this.fundManager = await this.fundManagerFactory.deploy();
+    this.fundManager = await this.fundManagerFactory.deploy(
+      implementationAddress
+    );
     await this.fundManager.deployed();
 
     await this.registry.register("FUND_MANAGER", this.fundManager.address);
 
-    await this.fundManager.setupFund(
+    await this.fundManager.createFund(
       "UNICEF Test Fund",
       "Test",
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],

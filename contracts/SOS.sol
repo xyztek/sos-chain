@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "./FundManager.sol";
-import "./Fund.sol";
+import "./FundV1.sol";
 import "./NFTDescriptor.sol";
 import "./Registry.sol";
 
@@ -23,7 +23,7 @@ contract SOS is ERC721, AccessControl {
     using Counters for Counters.Counter;
 
     Registry private registry;
-    Counters.Counter private _tokenIds;
+    Counters.Counter private tokenIds;
     mapping(uint256 => Donation) public metadata;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -41,13 +41,13 @@ contract SOS is ERC721, AccessControl {
     // PUBLIC API
     // -----------------------------------------------------------------
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         override(ERC721, AccessControl)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     function tokenURI(uint256 _tokenId)
@@ -61,7 +61,7 @@ contract SOS is ERC721, AccessControl {
         address fundAddress = FundManager(registry.get("FUND_MANAGER"))
             .getFundAddress(donation.fundId);
 
-        (string memory fundName, string memory fundFocus) = Fund(fundAddress)
+        (string memory fundName, string memory fundFocus) = FundV1(fundAddress)
             .getMeta();
 
         NFTDescriptor descriptor = NFTDescriptor(
@@ -96,9 +96,9 @@ contract SOS is ERC721, AccessControl {
         uint256 _amount,
         address _tokenAddress
     ) public onlyRole(MINTER_ROLE) returns (uint256) {
-        _tokenIds.increment();
+        tokenIds.increment();
 
-        uint256 tokenId = _tokenIds.current();
+        uint256 tokenId = tokenIds.current();
         _mint(_recipient, tokenId);
 
         metadata[tokenId] = Donation({

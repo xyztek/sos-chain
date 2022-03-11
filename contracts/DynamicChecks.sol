@@ -11,6 +11,11 @@ contract DynamicChecks is AccessControl {
     bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
     bytes32[] internal checks;
 
+    constructor(bytes32[] memory _initialChecks) {
+        if (_initialChecks.length < 1) revert NoZeroChecks();
+        checks = _initialChecks;
+    }
+
     function getCheck(uint256 _index) public view returns (bytes32) {
         return checks[_index];
     }

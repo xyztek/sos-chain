@@ -3,15 +3,17 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./TokenControl.sol";
-import "./Fund.sol";
+import "./FundV1.sol";
 
 import "hardhat/console.sol";
 
-contract FundManager is AccessControl, TokenControl {
+contract FundManager is AccessControl {
+    address public fundImplementation;
     address[] private funds;
 
-    constructor() {
+    constructor(address _impl) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        fundImplementation = _impl;
     }
 
     // -----------------------------------------------------------------
@@ -29,7 +31,7 @@ contract FundManager is AccessControl, TokenControl {
         view
         returns (address)
     {
-        return Fund(funds[_id]).getDepositAddressFor(_tokenAddress);
+        return FundV1(funds[_id]).getDepositAddressFor(_tokenAddress);
     }
 
     /**
@@ -51,17 +53,18 @@ contract FundManager is AccessControl, TokenControl {
      * @param  _focus          focus of the fund
      * @param  _allowedTokens  array of allowed token addresses
      * @param  _safeAddress    address of underlying Gnosis Safe
-     * @return                 address of the deployed fund
      */
-    function setupFund(
+    function createFund(
         string memory _name,
         string memory _focus,
         address[] memory _allowedTokens,
         address _safeAddress
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256, address) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
 
-        Fund fund = new Fund(
+        address cloneAddress = Clones.clone(fundImplementation);
+
+        FundV1(cloneAddress).initialize(
             index,
             _name,
             _focus,
@@ -70,8 +73,33 @@ contract FundManager is AccessControl, TokenControl {
             msg.sender
         );
 
-        funds.push(address(fund));
+        funds.push(cloneAddress);
 
-        return (index, address(fund));
+        emit FundCreated(index, cloneAddress, _name);
     }
+
+    /**
+     * @dev           set implementation address
+     * @param  _impl  address of underlying Gnosis Safe
+     * @return        boolean indicating op. result
+     */
+
+    function setImplementation(address _impl)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        returns (bool)
+    {
+        fundImplementation = _impl;
+        return true;
+    }
+
+    // -----------------------------------------------------------------
+    // EVENTS
+    // -----------------------------------------------------------------
+
+    event FundCreated(
+        uint256 indexed id,
+        address indexed at,
+        string indexed name
+    );
 }

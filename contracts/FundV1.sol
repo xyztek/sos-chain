@@ -2,51 +2,60 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
 import "./TokenControl.sol";
 
 import "hardhat/console.sol";
 
-contract Fund is AccessControl, TokenControl {
-    error NotAllowedForStatus();
-    error NotSet();
+error Forbidden();
+error NotAllowedForStatus();
+error NotSet();
 
-    enum Status {
-        Open,
-        Paused,
-        Closed
-    }
+enum Status {
+    Open,
+    Paused,
+    Closed
+}
+
+// Master Fund (v1) Contract
+// FundManager create clones of this contract.
+contract FundV1 is AccessControl, TokenControl {
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public id;
+
     string public name;
     string public focus;
     Status public status;
 
+    address private factory;
     address private safeAddress;
 
-    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
-    bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
-    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-
-    constructor(
+    // called once by the factory at time of deployment
+    // any subsequent calls will revert with Forbidden()
+    function initialize(
         uint256 _id,
         string memory _name,
         string memory _focus,
         address[] memory _allowedTokens,
         address _safeAddress,
         address _owner
-    ) {
+    ) external {
+        if (factory != address(0)) revert Forbidden();
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         id = _id;
+        factory = msg.sender;
+
         name = _name;
         focus = _focus;
         safeAddress = _safeAddress;
 
         uint256 i = 0;
         while (i < _allowedTokens.length) {
-            addToken(_allowedTokens[i]);
+            allowedTokens.add(_allowedTokens[i]);
             i++;
         }
     }
