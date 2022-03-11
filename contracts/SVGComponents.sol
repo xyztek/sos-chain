@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 contract SVGComponents {
     using Strings for uint256;
 
-    function colorToGridAnim(string memory colorA, string memory colorB)
+    function colorToGridAnim(string memory colorA, string memory colorB, string memory colorC)
         internal
         pure
         returns (bytes memory)
@@ -34,8 +34,8 @@ contract SVGComponents {
                                 keyValue("y2", "100%")
                             ),
                             abi.encodePacked(
-                                colorToGridAnimHelper(colorA, colorB, "0%"),
-                                colorToGridAnimHelper(colorB, colorA, "100%")
+                                colorToGridAnimHelper(colorA, colorB, colorC, "0%"),
+                                colorToGridAnimHelper(colorB, colorA, colorC, "100%")
                             )
                         )
                     )
@@ -46,6 +46,7 @@ contract SVGComponents {
     function colorToGridAnimHelper(
         string memory colorA,
         string memory colorB,
+        string memory colorC,
         string memory offset
     ) internal pure returns (bytes memory) {
         return
@@ -64,14 +65,7 @@ contract SVGComponents {
                             " ",
                             keyValue(
                                 "values",
-                                
-                                    abi.encodePacked("#",colorA,";#",colorB,";#",colorA)
-                                    /*abi.encodePacked("#", colorA),
-                                    ";",
-                                    abi.encodePacked("#", colorB),
-                                    ";",
-                                    abi.encodePacked("#", colorA)*/
-                                
+                                abi.encodePacked("#",colorA,";#",colorC,";#",colorB,";#",colorA)                              
                             ),
                             " ",
                             keyValue("dur", "7s"),
