@@ -1,16 +1,16 @@
 import { expect } from "chai";
-import { ContractReceipt, Event } from "ethers";
+import { Contract, ContractReceipt, Event } from "ethers";
 import { ethers } from "hardhat";
 
+import { asBytes32, deployRegistry } from "./helpers";
+
 describe("SOS", function () {
+  let registry: Contract;
+
   before(async function () {
     this.factory = await ethers.getContractFactory("SOS");
 
-    this.registryFactory = await ethers.getContractFactory(
-      "contracts/Registry.sol:Registry"
-    );
-
-    this.registry = await this.registryFactory.deploy();
+    registry = await deployRegistry();
 
     const implementationFactory = await ethers.getContractFactory(
       "contracts/FundV1.sol:FundV1"
@@ -28,9 +28,13 @@ describe("SOS", function () {
     this.fundManager = await this.fundManagerFactory.deploy(
       implementationAddress
     );
+
     await this.fundManager.deployed();
 
-    await this.registry.register("FUND_MANAGER", this.fundManager.address);
+    await registry.register(
+      asBytes32("FUND_MANAGER"),
+      this.fundManager.address
+    );
 
     await this.fundManager.createFund(
       "UNICEF Test Fund",
@@ -49,16 +53,16 @@ describe("SOS", function () {
 
     this.descriptor = await this.descriptorFactory.deploy();
 
-    await this.registry.register("NFT_DESCRIPTOR", this.descriptor.address);
+    await registry.register(
+      asBytes32("NFT_DESCRIPTOR"),
+      this.descriptor.address
+    );
   });
 
   beforeEach(async function () {
     const [owner] = await ethers.getSigners();
 
-    this.contract = await this.factory.deploy(
-      this.registry.address,
-      owner.address
-    );
+    this.contract = await this.factory.deploy(registry.address, owner.address);
 
     await this.contract.deployed();
   });

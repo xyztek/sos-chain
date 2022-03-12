@@ -7,13 +7,15 @@ import "./FundV1.sol";
 
 import "hardhat/console.sol";
 
+error NotFound();
+
 contract FundManager is AccessControl {
-    address public fundImplementation;
+    address public baseFund;
     address[] private funds;
 
     constructor(address _impl) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        fundImplementation = _impl;
+        baseFund = _impl;
     }
 
     // -----------------------------------------------------------------
@@ -37,10 +39,23 @@ contract FundManager is AccessControl {
     /**
      * @dev          get a fund's deposit address
      * @param  _id   unique identifier of a fund
-     * @return       deposit address for a fund
+     * @return       address
      */
     function getFundAddress(uint256 _id) public view returns (address) {
         return funds[_id];
+    }
+
+    /**
+     * @dev          get a list of allowed tokens for a fund
+     * @param  _id   unique identifier of a fund
+     * @return       list of addresses
+     */
+    function getAllowedTokens(uint256 _id)
+        public
+        view
+        returns (address[] memory)
+    {
+        return FundV1(funds[_id]).getAllowedTokens();
     }
 
     // -----------------------------------------------------------------
@@ -62,7 +77,7 @@ contract FundManager is AccessControl {
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
 
-        address cloneAddress = Clones.clone(fundImplementation);
+        address cloneAddress = Clones.clone(baseFund);
 
         FundV1(cloneAddress).initialize(
             index,
@@ -89,7 +104,7 @@ contract FundManager is AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
         returns (bool)
     {
-        fundImplementation = _impl;
+        baseFund = _impl;
         return true;
     }
 

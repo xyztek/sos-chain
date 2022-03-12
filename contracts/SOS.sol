@@ -13,7 +13,7 @@ import "./Registry.sol";
 
 import "hardhat/console.sol";
 
-struct Donation {
+struct DonationRecord {
     uint256 fundId;
     uint256 amount;
     address tokenAddress;
@@ -24,7 +24,7 @@ contract SOS is ERC721, AccessControl {
 
     Registry private registry;
     Counters.Counter private tokenIds;
-    mapping(uint256 => Donation) public metadata;
+    mapping(uint256 => DonationRecord) public metadata;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -56,7 +56,7 @@ contract SOS is ERC721, AccessControl {
         override
         returns (string memory)
     {
-        Donation storage donation = metadata[_tokenId];
+        DonationRecord storage donation = metadata[_tokenId];
 
         address fundAddress = FundManager(registry.get("FUND_MANAGER"))
             .getFundAddress(donation.fundId);
@@ -101,7 +101,7 @@ contract SOS is ERC721, AccessControl {
         uint256 tokenId = tokenIds.current();
         _mint(_recipient, tokenId);
 
-        metadata[tokenId] = Donation({
+        metadata[tokenId] = DonationRecord({
             fundId: _fundId,
             amount: _amount,
             tokenAddress: _tokenAddress

@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./FundManager.sol";
+import "./FundV1.sol";
 import "./Registry.sol";
 import "./SOS.sol";
 
@@ -12,8 +13,9 @@ import "hardhat/console.sol";
 
 error InsufficientAllowance();
 
-contract Deposit is Ownable {
+contract Donation is Ownable {
     using SafeERC20 for IERC20;
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     Registry private registry;
 
@@ -31,7 +33,7 @@ contract Deposit is Ownable {
      * @param  _tokenAddress  ERC20 address
      * @param  _amount        amount to deposit
      */
-    function deposit(
+    function donate(
         uint256 _fundId,
         address _tokenAddress,
         uint256 _amount
@@ -104,7 +106,7 @@ contract Deposit is Ownable {
     ) internal {
         IERC20(_tokenAddress).safeTransferFrom(msg.sender, _to, _amount);
 
-        emit Donate(msg.sender, _fundId, _tokenAddress, _amount);
+        emit Donated(msg.sender, _fundId, _tokenAddress, _amount);
     }
 
     /**
@@ -129,7 +131,7 @@ contract Deposit is Ownable {
     // EVENTS
     // -----------------------------------------------------------------
 
-    event Donate(
+    event Donated(
         address indexed from,
         uint256 indexed fundId,
         address indexed tokenAddress,

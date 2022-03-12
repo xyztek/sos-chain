@@ -10,8 +10,7 @@ import "./TokenControl.sol";
 import "hardhat/console.sol";
 
 error Forbidden();
-error NotAllowedForStatus();
-error NotSet();
+error NotAllowed();
 
 enum Status {
     Open,
@@ -52,6 +51,7 @@ contract FundV1 is AccessControl, TokenControl {
         name = _name;
         focus = _focus;
         safeAddress = _safeAddress;
+        status = Status.Open;
 
         uint256 i = 0;
         while (i < _allowedTokens.length) {
@@ -83,9 +83,9 @@ contract FundV1 is AccessControl, TokenControl {
         view
         returns (address)
     {
-        if (status != Status.Open) revert NotAllowedForStatus();
-        if (!isTokenAllowed(_tokenAddress)) revert TokenNotAllowed();
-        if (safeAddress == address(0x0)) revert NotSet();
+        if (status != Status.Open) revert NotAllowed();
+        if (!isTokenAllowed(_tokenAddress)) revert NotAllowed();
+        if (safeAddress == address(0)) revert NotAllowed();
         return safeAddress;
     }
 
@@ -106,7 +106,7 @@ contract FundV1 is AccessControl, TokenControl {
      * @return          boolean indicating result of the operation
      */
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
-        if (status != Status.Open) revert NotAllowedForStatus();
+        if (status != Status.Open) revert NotAllowed();
 
         return _setStatus(Status.Paused);
     }
@@ -116,7 +116,7 @@ contract FundV1 is AccessControl, TokenControl {
      * @return          boolean indicating result of the operation
      */
     function resume() external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
-        if (status != Status.Paused) revert NotAllowedForStatus();
+        if (status != Status.Paused) revert NotAllowed();
 
         return _setStatus(Status.Open);
     }
@@ -127,7 +127,7 @@ contract FundV1 is AccessControl, TokenControl {
      * @return          boolean indicating result of the operation
      */
     function close() external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
-        if (status == Status.Closed) revert NotAllowedForStatus();
+        if (status == Status.Closed) revert NotAllowed();
         return _setStatus(Status.Closed);
     }
 
