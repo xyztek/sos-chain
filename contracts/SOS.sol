@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./FundManager.sol";
 import "./FundV1.sol";
 import "./NFTDescriptor.sol";
-import "./Registry.sol";
+import "./Registered.sol";
 
 import "hardhat/console.sol";
 
@@ -19,22 +19,20 @@ struct DonationRecord {
     address tokenAddress;
 }
 
-contract SOS is ERC721, AccessControl {
+contract SOS is AccessControl, ERC721, Registered {
     using Counters for Counters.Counter;
 
-    Registry private registry;
     Counters.Counter private tokenIds;
     mapping(uint256 => DonationRecord) public metadata;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    constructor(address _registryAddress, address _minterAddress)
+    constructor(address _registry, address _minterAddress)
         ERC721("SOS Chain", "SOS")
+        Registered(_registry)
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, _minterAddress);
-
-        registry = Registry(_registryAddress);
     }
 
     // -----------------------------------------------------------------
@@ -58,15 +56,13 @@ contract SOS is ERC721, AccessControl {
     {
         DonationRecord storage donation = metadata[_tokenId];
 
-        address fundAddress = FundManager(registry.get("FUND_MANAGER"))
+        address fundAddress = FundManager(getAddress("FUND_MANAGER"))
             .getFundAddress(donation.fundId);
 
         (string memory fundName, string memory fundFocus) = FundV1(fundAddress)
             .getMeta();
 
-        NFTDescriptor descriptor = NFTDescriptor(
-            registry.get("NFT_DESCRIPTOR")
-        );
+        NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
 
         return
             descriptor.constructTokenURI(

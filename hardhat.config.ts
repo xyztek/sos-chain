@@ -27,6 +27,7 @@ task("accounts", "Prints the list of accounts", async (_taskArgs, hre) => {
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
+  defaultNetwork: "hardhat",
   solidity: "0.8.10",
   networks: {
     ropsten: {
@@ -35,9 +36,9 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     hardhat: {
-      throwOnTransactionFailures: false,
-      throwOnCallFailures: false,
-      allowUnlimitedContractSize: true,
+      throwOnTransactionFailures: true,
+      throwOnCallFailures: true,
+      allowUnlimitedContractSize: false,
     },
   },
   gasReporter: {

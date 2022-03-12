@@ -6,22 +6,16 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./FundManager.sol";
 import "./FundV1.sol";
-import "./Registry.sol";
+import "./Registered.sol";
 import "./SOS.sol";
 
 import "hardhat/console.sol";
 
-error InsufficientAllowance();
-
-contract Donation is Ownable {
+contract Donation is Registered, Ownable {
     using SafeERC20 for IERC20;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    Registry private registry;
-
-    constructor(address _registryAddress) {
-        registry = Registry(_registryAddress);
-    }
+    constructor(address _registry) Registered(_registry) {}
 
     // -----------------------------------------------------------------
     // PUBLIC API
@@ -55,23 +49,6 @@ contract Donation is Ownable {
     // -----------------------------------------------------------------
 
     /**
-     * @dev                   check ERC20 allowance()
-     * @param  _tokenAddress  ERC20 address
-     * @return                contract address
-     */
-    function _allowance(address _tokenAddress) internal view returns (uint256) {
-        return IERC20(_tokenAddress).allowance(msg.sender, address(this));
-    }
-
-    /**
-     * @dev                   get address of the ERC721 minter contract
-     * @return                contract address
-     */
-    function _getMinter() internal view returns (SOS) {
-        return SOS(registry.get("SOS"));
-    }
-
-    /**
      * @dev                   get address of the ERC721 minter contract
      * @param  _fundId        id of the fund
      * @param  _tokenAddress  ERC20 address
@@ -82,10 +59,8 @@ contract Donation is Ownable {
         view
         returns (address)
     {
-        address fundManagerAddress = registry.get("FUND_MANAGER");
-
         return
-            FundManager(fundManagerAddress).getDepositAddressFor(
+            FundManager(getAddress("FUND_MANAGER")).getDepositAddressFor(
                 _fundId,
                 _tokenAddress
             );
@@ -123,8 +98,13 @@ contract Donation is Ownable {
         uint256 _amount,
         address _tokenAddress
     ) internal returns (uint256) {
-        SOS minter = _getMinter();
-        return minter.mint(_recipient, _fundId, _amount, _tokenAddress);
+        return
+            SOS(getAddress("SOS")).mint(
+                _recipient,
+                _fundId,
+                _amount,
+                _tokenAddress
+            );
     }
 
     // -----------------------------------------------------------------

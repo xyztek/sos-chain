@@ -15,6 +15,7 @@ describe("Donation.sol", function () {
   let factory: ContractFactory;
   let contract: Contract;
 
+  let fundManager: Contract;
   let ERC20: Contract;
   let SOS: Contract;
 
@@ -22,10 +23,10 @@ describe("Donation.sol", function () {
     registry = await deployRegistry();
     ERC20 = await deployERC20();
 
-    const fundManager = await deployFundManager();
+    fundManager = await deployFundManager();
     await registry.register(asBytes32("FUND_MANAGER"), fundManager.address);
 
-    const [owner, EOA1, EOA2] = await ethers.getSigners();
+    const [_owner, _EOA1, EOA2] = await ethers.getSigners();
 
     await fundManager.createFund(
       "Test Fund",
@@ -54,15 +55,15 @@ describe("Donation.sol", function () {
 
     SOS = await deployContract("SOS", [registry.address, contract.address]);
     await registry.register(asBytes32("SOS"), SOS.address);
-
-    await ERC20.transfer(EOA1.address, 3000000);
-    await ERC20.connect(EOA1).approve(contract.address, 3000000);
   });
 
   beforeEach(async function () {});
 
   it("should accept a donation and deposit into the safe", async function () {
     const [_owner, EOA1, EOA2] = await ethers.getSigners();
+
+    await ERC20.transfer(EOA1.address, 1000000);
+    await ERC20.connect(EOA1).approve(contract.address, 1000000);
 
     await expect(() =>
       contract.connect(EOA1).donate(0, ERC20.address, 1000000)
@@ -72,16 +73,40 @@ describe("Donation.sol", function () {
   it("should mint an ERC721 and transfer to donator", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
+    await ERC20.transfer(EOA1.address, 1000000);
+    await ERC20.connect(EOA1).approve(contract.address, 1000000);
+
     await expect(() =>
       contract.connect(EOA1).donate(0, ERC20.address, 1000000)
     ).to.changeTokenBalance(SOS, EOA1, 1);
   });
 
   it("should emit a Donated event", async function () {
-    const [_owner, EOA] = await ethers.getSigners();
+    const [_owner, EOA1] = await ethers.getSigners();
+
+    await ERC20.transfer(EOA1.address, 1000000);
+    await ERC20.connect(EOA1).approve(contract.address, 1000000);
 
     await expect(
-      contract.connect(EOA).donate(0, ERC20.address, 1000000)
+      contract.connect(EOA1).donate(0, ERC20.address, 1000000)
     ).to.emit(contract, "Donated");
+  });
+
+  it("should revert early if allowance is insufficient", async function () {
+    const [_owner, EOA1] = await ethers.getSigners();
+
+    await ERC20.transfer(EOA1.address, 1000000);
+
+    await expect(
+      contract.connect(EOA1).donate(0, ERC20.address, 1000000)
+    ).to.be.revertedWith("ERC20: insufficient allowance");
+  });
+
+  it("should revert early if token is not allowed", async function () {
+    const anotherERC20 = await deployERC20();
+
+    await expect(
+      contract.donate(0, anotherERC20.address, 1000000)
+    ).to.be.revertedWith("NotAllowed");
   });
 });

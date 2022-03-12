@@ -9,11 +9,11 @@ import "./libraries/Geo.sol";
 import "./FundV1.sol";
 import "./FundManager.sol";
 import "./DynamicChecks.sol";
-import "./Registry.sol";
+import "./Registered.sol";
 
 import "hardhat/console.sol";
 
-abstract contract Governor is AccessControl, DynamicChecks {
+abstract contract Governor is AccessControl, DynamicChecks, Registered {
     using SafeMath for uint256;
 
     error MissingRole(bytes32);
@@ -44,13 +44,13 @@ abstract contract Governor is AccessControl, DynamicChecks {
     }
 
     Request[] private requests;
-    Registry private registry;
 
-    constructor(address _registry, bytes32[] memory _initialChecks) {
+    constructor(address _registry, bytes32[] memory _initialChecks)
+        Registered(_registry)
+    {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         checks = _initialChecks;
-        registry = Registry(_registry);
     }
 
     // -----------------------------------------------------------------
@@ -128,10 +128,8 @@ abstract contract Governor is AccessControl, DynamicChecks {
     // INTERNAL
     // -----------------------------------------------------------------
     function _getFund(uint256 _fundId) internal view returns (FundV1) {
-        address fundManagerAddress = registry.get("FUND_MANAGER");
-        address fundAddress = FundManager(fundManagerAddress).getFundAddress(
-            _fundId
-        );
+        address fundAddress = FundManager(getAddress("FUND_MANAGER"))
+            .getFundAddress(_fundId);
 
         return FundV1(fundAddress);
     }

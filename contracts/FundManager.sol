@@ -58,6 +58,20 @@ contract FundManager is AccessControl {
         return FundV1(funds[_id]).getAllowedTokens();
     }
 
+    /**
+     * @dev                    check if token is allowed
+     * @param  _id             unique identifier of a fund
+     * @param  _tokenAddress   token address
+     * @return                 boolean
+     */
+    function isTokenAllowed(uint256 _id, address _tokenAddress)
+        public
+        view
+        returns (bool)
+    {
+        return FundV1(funds[_id]).isTokenAllowed(_tokenAddress);
+    }
+
     // -----------------------------------------------------------------
     // ADMIN API
     // -----------------------------------------------------------------
