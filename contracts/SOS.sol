@@ -69,7 +69,7 @@ contract SOS is ERC721, AccessControl {
         );
 
         return
-            descriptor._constructTokenURI(
+            descriptor.constructTokenURI(
                 _tokenId,
                 support.amount,
                 support.tokenAddress,
