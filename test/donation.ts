@@ -8,6 +8,8 @@ describe("Donation.sol", function () {
   let stack: Stack;
   let ERC20: Contract;
 
+  let donationAmount = ethers.BigNumber.from(1000);
+
   before(async () => {
     const [_owner, _EOA1, EOA2] = await ethers.getSigners();
 
@@ -26,43 +28,43 @@ describe("Donation.sol", function () {
   it("should accept a donation and deposit into the safe", async function () {
     const [_owner, EOA1, EOA2] = await ethers.getSigners();
 
-    await ERC20.transfer(EOA1.address, 1000000);
-    await ERC20.connect(EOA1).approve(stack.Donation.address, 1000000);
+    await ERC20.transfer(EOA1.address, donationAmount);
+    await ERC20.connect(EOA1).approve(stack.Donation.address, donationAmount);
 
     await expect(() =>
-      stack.Donation.connect(EOA1).donate(0, ERC20.address, 1000000)
-    ).to.changeTokenBalance(ERC20, EOA2, 1000000);
+      stack.Donation.connect(EOA1).donate(0, ERC20.address, donationAmount)
+    ).to.changeTokenBalance(ERC20, EOA2, donationAmount);
   });
 
   it("should mint an ERC721 and transfer to donator", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
-    await ERC20.transfer(EOA1.address, 1000000);
-    await ERC20.connect(EOA1).approve(stack.Donation.address, 1000000);
+    await ERC20.transfer(EOA1.address, donationAmount);
+    await ERC20.connect(EOA1).approve(stack.Donation.address, donationAmount);
 
     await expect(() =>
-      stack.Donation.connect(EOA1).donate(0, ERC20.address, 1000000)
+      stack.Donation.connect(EOA1).donate(0, ERC20.address, donationAmount)
     ).to.changeTokenBalance(stack.SOS, EOA1, 1);
   });
 
   it("should emit a Donated event", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
-    await ERC20.transfer(EOA1.address, 1000000);
-    await ERC20.connect(EOA1).approve(stack.Donation.address, 1000000);
+    await ERC20.transfer(EOA1.address, donationAmount);
+    await ERC20.connect(EOA1).approve(stack.Donation.address, donationAmount);
 
     await expect(
-      stack.Donation.connect(EOA1).donate(0, ERC20.address, 1000000)
+      stack.Donation.connect(EOA1).donate(0, ERC20.address, donationAmount)
     ).to.emit(stack.Donation, "Donated");
   });
 
   it("should revert early if allowance is insufficient", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
-    await ERC20.transfer(EOA1.address, 1000000);
+    await ERC20.transfer(EOA1.address, donationAmount);
 
     await expect(
-      stack.Donation.connect(EOA1).donate(0, ERC20.address, 1000000)
+      stack.Donation.connect(EOA1).donate(0, ERC20.address, donationAmount)
     ).to.be.revertedWith("ERC20: insufficient allowance");
   });
 
@@ -70,7 +72,7 @@ describe("Donation.sol", function () {
     const anotherERC20 = await deployERC20();
 
     await expect(
-      stack.Donation.donate(0, anotherERC20.address, 1000000)
+      stack.Donation.donate(0, anotherERC20.address, donationAmount)
     ).to.be.revertedWith("NotAllowed");
   });
 });

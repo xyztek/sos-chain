@@ -52,6 +52,16 @@ describe("SOS", function () {
 
     const tokenURI = await stack.SOS.tokenURI(event?.args?.tokenId!);
 
-    expect(tokenURI).to.equal(Buffer.from(testSVG).toString("base64"));
+    const encodedSVG = Buffer.from(testSVG).toString("base64");
+
+    const buffer = Buffer.from(
+      `{"name":"SOS Chain", "description": "SOS Chain Donation NFT", "image": "data:image/svg+xml;base64,${encodedSVG}"}`
+    );
+
+    const [def, encoded] = tokenURI.split(",");
+    const encodedBuffer = buffer.toString("base64");
+
+    expect(def).to.equal("data:application/json;base64");
+    expect(encoded).to.equal(encodedBuffer);
   });
 });

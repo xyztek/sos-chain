@@ -27,8 +27,8 @@ describe("NFTDescriptor", function () {
     expect(tokenSVG).to.equal(testSVG);
   });
 
-  it("should construct SVG representation and encode in Base64", async function () {
-    const base64 = await stack.Descriptor._constructTokenURI(
+  it("should construct a Base64 encoded SVG representation", async function () {
+    const encodedSVG = await stack.Descriptor.encodeSVG(
       2,
       "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       ethers.constants.WeiPerEther.mul(1000),
@@ -37,6 +37,6 @@ describe("NFTDescriptor", function () {
       "Test Focus"
     );
 
-    expect(base64).to.equal(Buffer.from(testSVG).toString("base64"));
+    expect(encodedSVG).to.equal(Buffer.from(testSVG).toString("base64"));
   });
 });

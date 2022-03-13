@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -69,14 +70,30 @@ contract SOS is AccessControl, ERC721, Registered {
 
         address owner = ownerOf(_tokenId);
 
+        string memory image = descriptor.encodeSVG(
+            _tokenId,
+            owner,
+            donation.amount,
+            donation.tokenAddress,
+            fundName,
+            fundFocus
+        );
+
         return
-            descriptor.constructTokenURI(
-                _tokenId,
-                owner,
-                donation.amount,
-                donation.tokenAddress,
-                fundName,
-                fundFocus
+            string(
+                abi.encodePacked(
+                    "data:application/json;base64,",
+                    Base64.encode(
+                        abi.encodePacked(
+                            '{"name":"',
+                            name(),
+                            '", "description": "SOS Chain Donation NFT", "image": "',
+                            "data:image/svg+xml;base64,",
+                            image,
+                            '"}'
+                        )
+                    )
+                )
             );
     }
 

@@ -80,13 +80,7 @@ export async function deployFundManager(
 }
 
 export async function deployDescriptor(): Promise<Contract> {
-  const svg = await deployContract("SVG");
-
-  return deployContract("NFTDescriptor", {
-    libraries: {
-      SVG: svg.address,
-    },
-  });
+  return deployContract("NFTDescriptor");
 }
 
 export async function deploySOS(

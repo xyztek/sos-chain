@@ -54,7 +54,15 @@ const TARGET_NETWORK = "avalanche";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
-  solidity: "0.8.10",
+  solidity: {
+    version: "0.8.10",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
   namedAccounts: {
     deployer: 0,
     safe: 9,
