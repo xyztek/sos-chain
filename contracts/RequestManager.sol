@@ -33,11 +33,6 @@ struct Request {
     mapping(bytes32 => address) approvals;
 }
 
-error DisallowedStatusChange();
-error NotAllowedForRequest(RequestStatus);
-error RequiresOpenFund();
-error CheckAlreadyApproved();
-
 contract RequestManager is AccessControl, DynamicChecks {
     Request[] private requests;
 
@@ -45,8 +40,8 @@ contract RequestManager is AccessControl, DynamicChecks {
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 
-    constructor(bytes32[] memory _initialChecks)
-        DynamicChecks(_initialChecks)
+    constructor(bytes32[] memory _defaultChecks)
+        DynamicChecks(_defaultChecks)
     {}
 
     // -----------------------------------------------------------------
@@ -137,7 +132,7 @@ contract RequestManager is AccessControl, DynamicChecks {
     function _bumpRequestStatus(uint256 _requestId) internal {
         if (
             uint8(requests[_requestId].status) == uint8(type(RequestStatus).max)
-        ) revert DisallowedStatusChange();
+        ) revert NotAllowed();
 
         requests[_requestId].status = RequestStatus(
             uint8(requests[_requestId].status) + 1
@@ -168,14 +163,8 @@ contract RequestManager is AccessControl, DynamicChecks {
     // MODIFIERS
     // -----------------------------------------------------------------
 
-    modifier requireChecks() {
-        if (checks.length < 1) revert NoZeroChecks();
-        _;
-    }
-
     modifier onlyRequestsWithStatus(RequestStatus _status, uint256 _requestId) {
-        if (requests[_requestId].status != _status)
-            revert NotAllowedForRequest(_status);
+        if (requests[_requestId].status != _status) revert NotAllowed();
         _;
     }
 

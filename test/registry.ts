@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ContractFactory, Contract } from "ethers";
 import { ethers } from "hardhat";
 
-import { asBytes32 } from "./helpers";
+import { asBytes32 } from "../scripts/helpers";
 
 describe("Registry", function () {
   let factory: ContractFactory;

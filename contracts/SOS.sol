@@ -59,14 +59,20 @@ contract SOS is AccessControl, ERC721, Registered {
         address fundAddress = FundManager(getAddress("FUND_MANAGER"))
             .getFundAddress(donation.fundId);
 
-        (string memory fundName, string memory fundFocus) = FundV1(fundAddress)
-            .getMeta();
+        (
+            string memory fundName,
+            string memory fundFocus,
+            string memory _fundDescription
+        ) = FundV1(fundAddress).getMeta();
 
         NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
+
+        address owner = ownerOf(_tokenId);
 
         return
             descriptor.constructTokenURI(
                 _tokenId,
+                owner,
                 donation.amount,
                 donation.tokenAddress,
                 fundName,

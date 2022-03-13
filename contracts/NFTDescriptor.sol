@@ -20,6 +20,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
 
     function constructTokenURI(
         uint256 _tokenId,
+        address _ownerAddress,
         uint256 _supportAmount,
         address _tokenAddress,
         string memory _fundName,
@@ -29,6 +30,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             Base64.encode(
                 _buildSVG(
                     _tokenId,
+                    _ownerAddress,
                     _supportAmount,
                     _tokenAddress,
                     _fundName,
@@ -39,6 +41,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
 
     function buildSVG(
         uint256 _tokenId,
+        address _ownerAddress,
         uint256 _supportAmount,
         address _tokenAddress,
         string memory _fundName,
@@ -48,6 +51,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             string(
                 _buildSVG(
                     _tokenId,
+                    _ownerAddress,
                     _supportAmount,
                     _tokenAddress,
                     _fundName,
@@ -58,6 +62,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
 
     function _buildSVG(
         uint256 _tokenId,
+        address _ownerAddress,
         uint256 _supportAmount,
         address _tokenAddress,
         string memory _fundName,
@@ -88,7 +93,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
                 abi.encodePacked("#FFF")
             ),
             sideText(
-                addressToBytes(_tokenAddress),
+                addressToBytes(_ownerAddress),
                 abi.encodePacked("rotate(90 -107.5 382.5)"),
                 abi.encodePacked("text-anchor:end"),
                 abi.encodePacked("small"),

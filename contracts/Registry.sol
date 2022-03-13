@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract Registry is Ownable {
-    error AlreadyRegistered();
     error NotFound();
 
     bytes32[] private contracts;
@@ -42,7 +41,7 @@ contract Registry is Ownable {
         onlyOwner
         returns (bool)
     {
-        if (registry[_name] != address(0)) revert AlreadyRegistered();
+        if (registry[_name] != address(0)) return true;
 
         registry[_name] = _address;
         contracts.push(_name);

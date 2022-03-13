@@ -27,6 +27,7 @@ contract FundV1 is AccessControl, TokenControl {
 
     string public name;
     string public focus;
+    string public description;
     Status public status;
 
     address private factory;
@@ -38,6 +39,7 @@ contract FundV1 is AccessControl, TokenControl {
         uint256 _id,
         string memory _name,
         string memory _focus,
+        string memory _description,
         address[] memory _allowedTokens,
         address _safeAddress,
         address _owner
@@ -50,6 +52,7 @@ contract FundV1 is AccessControl, TokenControl {
 
         name = _name;
         focus = _focus;
+        description = _description;
         safeAddress = _safeAddress;
         status = Status.Open;
 
@@ -68,8 +71,16 @@ contract FundV1 is AccessControl, TokenControl {
      * @dev                   get metadata for a fund
      * @return                metadata of the fund
      */
-    function getMeta() external view returns (string memory, string memory) {
-        return (name, focus);
+    function getMeta()
+        external
+        view
+        returns (
+            string memory,
+            string memory,
+            string memory
+        )
+    {
+        return (name, focus, description);
     }
 
     /**

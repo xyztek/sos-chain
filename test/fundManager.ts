@@ -1,40 +1,48 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { ContractFactory, Contract } from "ethers";
+import { Contract, ContractReceipt } from "ethers";
+
+import { deployContract, deployStack, Stack } from "../scripts/helpers";
 
 describe("FundManager", function () {
-  let factory: ContractFactory;
+  let stack: Stack;
   let contract: Contract;
 
-  let implementationAddress: string;
-
   before(async () => {
-    const implementationFactory = await ethers.getContractFactory(
-      "contracts/FundV1.sol:FundV1"
-    );
-
-    const implementation = await implementationFactory.deploy();
-    await implementation.deployed();
-
-    implementationAddress = implementation.address;
-
-    factory = await ethers.getContractFactory(
-      "contracts/FundManager.sol:FundManager"
-    );
+    stack = await deployStack();
   });
 
   beforeEach(async () => {
-    contract = await factory.deploy(implementationAddress);
-    await contract.deployed();
+    contract = await deployContract(
+      "contracts/FundManager.sol:FundManager",
+      {},
+      [stack.Registry.address, stack.FundImplementation.address]
+    );
 
     await expect(
       contract.createFund(
         "Test Fund",
-        "Test",
+        "Test Focus",
+        "Test Description Text",
         ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
       )
     ).to.emit(contract, "FundCreated");
+  });
+
+  it("should emit a FundCreated event", async function () {
+    const fundCreated = await contract.createFund(
+      "Test Fund",
+      "Test Focus",
+      "Test Description Text",
+      ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
+      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    );
+
+    const receipt: ContractReceipt = await fundCreated.wait();
+
+    const event = receipt.events?.find((x) => x.event == "FundCreated");
+
+    expect(event).to.not.be.undefined;
   });
 
   it("should return the address of a fund", async function () {

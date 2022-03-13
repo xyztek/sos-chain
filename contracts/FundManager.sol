@@ -2,18 +2,20 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./TokenControl.sol";
+
 import "./FundV1.sol";
+import "./Registered.sol";
+import "./TokenControl.sol";
 
 import "hardhat/console.sol";
 
 error NotFound();
 
-contract FundManager is AccessControl {
+contract FundManager is AccessControl, Registered {
     address public baseFund;
     address[] private funds;
 
-    constructor(address _impl) {
+    constructor(address _registry, address _impl) Registered(_registry) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         baseFund = _impl;
     }
@@ -21,6 +23,10 @@ contract FundManager is AccessControl {
     // -----------------------------------------------------------------
     // PUBLIC API
     // -----------------------------------------------------------------
+
+    function getFunds() public view returns (address[] memory) {
+        return funds;
+    }
 
     /**
      * @dev                   get a fund's deposit address
@@ -76,16 +82,26 @@ contract FundManager is AccessControl {
     // ADMIN API
     // -----------------------------------------------------------------
 
+    function hashFund(
+        string memory _name,
+        string memory _focus,
+        string memory _description
+    ) public pure returns (uint256) {
+        return uint256(keccak256(abi.encode(_name, _focus, _description)));
+    }
+
     /**
      * @dev                    setup a new fund
      * @param  _name           name of the fund
      * @param  _focus          focus of the fund
+     * @param  _description    description of the fund
      * @param  _allowedTokens  array of allowed token addresses
      * @param  _safeAddress    address of underlying Gnosis Safe
      */
     function createFund(
         string memory _name,
         string memory _focus,
+        string memory _description,
         address[] memory _allowedTokens,
         address _safeAddress
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -97,6 +113,7 @@ contract FundManager is AccessControl {
             index,
             _name,
             _focus,
+            _description,
             _allowedTokens,
             _safeAddress,
             msg.sender
@@ -104,7 +121,7 @@ contract FundManager is AccessControl {
 
         funds.push(cloneAddress);
 
-        emit FundCreated(index, cloneAddress, _name);
+        emit FundCreated(index, cloneAddress, _name, _focus, _description);
     }
 
     /**
@@ -129,6 +146,8 @@ contract FundManager is AccessControl {
     event FundCreated(
         uint256 indexed id,
         address indexed at,
-        string indexed name
+        string name,
+        string focus,
+        string description
     );
 }
