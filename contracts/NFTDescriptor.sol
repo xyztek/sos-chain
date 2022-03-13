@@ -68,7 +68,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         string memory tokenColorC = tokenToColorHex(_tokenAddress, 17);
 
         bytes memory supportAsBytes = abi.encodePacked(
-            (_supportAmount / 10**ERC20(_tokenAddress).decimals()).toString()// USE ERC20(_tokenAddress).decimals() insted of 18
+            (_supportAmount / 10**ERC20(_tokenAddress).decimals()).toString()
         );
 
         bytes memory tokenSymbolAsBytes = abi.encodePacked(ERC20(_tokenAddress).symbol());
@@ -96,7 +96,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             ),
             titleStack(30, 110, "Fund", abi.encodePacked(_fundName)),
             titleStack(30, 180, "Focus", abi.encodePacked(_fundFocus)),
-            titleStackTokenSymbol(30, 250, "Donation", supportAsBytes, tokenSymbolAsBytes),//use ERC20(_tokenAddress).symbol() instead of usdc
+            titleStackTokenSymbol(30, 250, "Donation", supportAsBytes, tokenSymbolAsBytes),
             colorToGridAnim(tokenColorA,tokenColorB,tokenColorC),
             animRect,
             pathConstant,
