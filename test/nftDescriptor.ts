@@ -14,7 +14,7 @@ describe("NFTDescriptor.sol", function () {
     ERC20 = await deployERC20();
   });
 
-  it("should construct SVG representation", async function () {
+  it("should construct an SVG representation", async function () {
     const tokenSVG = await stack.Descriptor.buildSVG(
       2,
       "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",

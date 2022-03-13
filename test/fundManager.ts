@@ -49,13 +49,13 @@ describe("FundManager.sol", function () {
     expect(await contract.getFundAddress(0)).to.be.properAddress;
   });
 
-  it("should return a list of token addresses allowed for deposit for a fund", async function () {
+  it("should return a list of token addresses allowed for deposit", async function () {
     const depositAddress = await contract.getAllowedTokens(0);
 
     expect(depositAddress).to.be.properAddress;
   });
 
-  it("should return a deposit address if token is allowed for a fund", async function () {
+  it("should return a deposit address if token is allowed", async function () {
     const depositAddress = await contract.getDepositAddressFor(
       0,
       "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
@@ -64,7 +64,7 @@ describe("FundManager.sol", function () {
     expect(depositAddress).to.be.properAddress;
   });
 
-  it("should revert if token is not allowed for deposit for a fund", async function () {
+  it("should revert if token is not allowed for deposit", async function () {
     await expect(
       contract.getDepositAddressFor(
         0,

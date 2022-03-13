@@ -89,7 +89,7 @@ const config: HardhatUserConfig = {
     gasPriceApi: gasPriceConfiguration[TARGET_NETWORK].api,
     token: gasPriceConfiguration[TARGET_NETWORK].token,
     currency: "USD",
-    excludeContracts: ["BasicERC20", "ERC20", "ERC721"],
+    excludeContracts: ["BasicToken", "BasicERC20", "ERC20", "ERC721"],
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,

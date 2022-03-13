@@ -33,7 +33,7 @@ describe("FundV1.sol", function () {
     funds = await stack.FundManager.getFunds();
   });
 
-  it("should return meta information for the fund", async function () {
+  it("should return meta information", async function () {
     const [name, focus, description] = await factory.attach(funds[0]).getMeta();
     expect(name).to.equal("Test Fund");
     expect(focus).to.equal("Test Focus");
@@ -46,7 +46,7 @@ describe("FundV1.sol", function () {
     ).to.eq(safeAddress);
   });
 
-  it("should revert if token is not allowed for deposit for a fund", async function () {
+  it("should revert if token is not allowed for deposit", async function () {
     await expect(
       factory
         .attach(funds[0])
