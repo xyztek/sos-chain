@@ -5,7 +5,7 @@ import { Contract } from "ethers";
 import { deployERC20, deployStack, Stack } from "../scripts/helpers";
 import testSVG from "./testSVG";
 
-describe("NFTDescriptor", function () {
+describe("NFTDescriptor.sol", function () {
   let stack: Stack;
   let ERC20: Contract;
 

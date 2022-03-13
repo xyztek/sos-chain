@@ -4,7 +4,7 @@ import { Contract, ContractFactory } from "ethers";
 
 import { deployERC20, deployStack, Stack } from "../scripts/helpers";
 
-describe("FundManager", function () {
+describe("FundV1.sol", function () {
   let stack: Stack;
   let factory: ContractFactory;
   let USDC: Contract;

@@ -3,7 +3,7 @@ import { Contract, ContractReceipt } from "ethers";
 
 import { deployContract, deployStack, Stack } from "../scripts/helpers";
 
-describe("FundManager", function () {
+describe("FundManager.sol", function () {
   let stack: Stack;
   let contract: Contract;
 

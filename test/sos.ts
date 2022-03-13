@@ -5,7 +5,7 @@ import { ethers } from "hardhat";
 import { deployERC20, deployStack, Stack } from "../scripts/helpers";
 import testSVG from "./testSVG";
 
-describe("SOS", function () {
+describe("SOS.sol", function () {
   let stack: Stack;
   let ERC20: Contract;
 

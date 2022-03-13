@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 
 import { asBytes32 } from "../scripts/helpers";
 
-describe("Registry", function () {
+describe("Registry.sol", function () {
   let factory: ContractFactory;
   let contract: Contract;
 
