@@ -81,6 +81,12 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    rinkbery: {
+      url: process.env.RINKBERY_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+
     hardhat: {
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
