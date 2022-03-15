@@ -52,6 +52,7 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
         req.addInt("x", x);
         req.addInt("y", y);
         sendChainlinkRequestTo(oracle, req, fee);
+        responseBytes = 0x3900000000000000000000000000000000000000000000000000000000000000;
     }
 
     function requestInt(int256 x, int256 y) public onlyOwner {
@@ -62,8 +63,8 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
         );
         req.addInt("x", x);
         req.addInt("y", y);
-        responseInt = 10;
         sendChainlinkRequestTo(oracle, req, fee);
+        responseInt = 10;
     }
 
     function fulfillInt(bytes32 _requestId, int256 data)
