@@ -10,3 +10,4 @@ artifacts
 
 .log
 .DS_Store
+deployments/**/*
