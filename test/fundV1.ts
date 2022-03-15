@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract, ContractFactory } from "ethers";
 
@@ -34,10 +34,13 @@ describe("FundV1.sol", function () {
   });
 
   it("should return meta information", async function () {
-    const [name, focus, description] = await factory.attach(funds[0]).getMeta();
+    const [name, focus, description, status] = await factory
+      .attach(funds[0])
+      .getMeta();
     expect(name).to.equal("Test Fund");
     expect(focus).to.equal("Test Focus");
     expect(description).to.equal("Test Description Text");
+    expect(status).to.equal(0);
   });
 
   it("should return deposit address", async function () {
@@ -52,6 +55,11 @@ describe("FundV1.sol", function () {
         .attach(funds[0])
         .getDepositAddressFor("0xC250f11eD2989BB9A64f0BEDA9310CC33FD10D06")
     ).to.be.reverted;
+  });
+
+  it("should return safe balances", async function () {
+    const balances = await factory.attach(funds[0]).getBalances();
+    assert(balances[0].length == balances[1].length);
   });
 
   it("should be resumable only if paused", async function () {

@@ -2,12 +2,12 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { DeployFunction } from "hardhat-deploy/types";
 
-import { asBytes32 } from "../scripts/helpers";
+import { handleRegistry } from "../scripts/helpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts } = hre;
 
-  const { deploy, execute, get } = deployments;
+  const { deploy, get } = deployments;
 
   const { deployer } = await getNamedAccounts();
 
@@ -19,13 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
-  await execute(
-    "Registry",
-    { from: deployer, log: true },
-    "register",
-    asBytes32("DONATION"),
-    Donation.address
-  );
+  await handleRegistry(deployer, deployments, "DONATION", Donation.address);
 };
 
 export default func;

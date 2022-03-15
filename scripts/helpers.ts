@@ -2,6 +2,7 @@ import { ContractFactory, Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { FactoryOptions } from "hardhat/types";
 
+import { DeploymentsExtension } from "hardhat-deploy/types";
 export type ContractName =
   | "Descriptor"
   | "Donation"
@@ -15,6 +16,42 @@ export type Stack = Record<ContractName, Contract>;
 
 export function asBytes32(str: string) {
   return ethers.utils.formatBytes32String(str);
+}
+
+export async function handleRegistry(
+  deployer: string,
+  deployments: DeploymentsExtension,
+  contractName: string,
+  deploymentAddress: string
+): Promise<void> {
+  const { read, execute } = deployments;
+  const isRegistered = await read(
+    "Registry",
+    {},
+    "get",
+    asBytes32(contractName)
+  );
+
+  if (isRegistered && isRegistered == deploymentAddress) return;
+  if (isRegistered && isRegistered != deploymentAddress) {
+    await execute(
+      "Registry",
+      { from: deployer, log: true },
+      "update",
+      asBytes32(contractName),
+      deploymentAddress
+    );
+    return;
+  }
+
+  await execute(
+    "Registry",
+    { from: deployer, log: true },
+    "register",
+    asBytes32(contractName),
+    deploymentAddress
+  );
+  return;
 }
 
 export function grantRole(contract: Contract, role: string, address: string) {
@@ -52,7 +89,7 @@ export async function deployContract(
 export async function deployERC20(
   name = "Basic",
   symbol = "BSC",
-  initialBalance = ethers.BigNumber.from(1000000)
+  initialBalance = ethers.utils.parseUnits("1000000", 18)
 ): Promise<Contract> {
   return deployContract("contracts/test/BasicERC20.sol:BasicERC20", {}, [
     name,
@@ -129,6 +166,8 @@ export async function deployStack(
   await Registry.register(asBytes32("NFT_DESCRIPTOR"), Descriptor.address);
   await Registry.register(asBytes32("SOS"), SOS.address);
   await Registry.register(asBytes32("GOVERNOR"), Governor.address);
+
+  await grantRole(SOS, "MINTER_ROLE", Donation.address);
 
   return {
     FundManager,

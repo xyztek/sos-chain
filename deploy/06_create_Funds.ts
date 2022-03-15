@@ -7,41 +7,54 @@ import { ethers } from "ethers";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts } = hre;
 
-  const { deploy, execute } = deployments;
+  const { deploy, execute, read } = deployments;
 
   const { deployer, safe } = await getNamedAccounts();
 
-  const ERC20 = await deploy("BasicERC20", {
-    from: deployer,
-    args: ["USD Coin", "USDC", ethers.BigNumber.from(1000000)],
-    log: true,
-  });
+  const USDC: Record<string, string> = {
+    rinkeby: "0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b",
+    localhost: "",
+  };
 
-  await execute(
-    "FundManager",
-    { from: deployer, log: true },
-    "createFund",
-    "Fund 001",
-    "Focus A",
-    "Description Text",
-    [ERC20.address],
-    hre.network.name == "rinkeby"
-      ? "0xF35164F058F1b85E277C306dc743ab82b94212dC"
-      : safe
-  );
+  const SAFE: Record<string, string> = {
+    rinkeby: "0xF35164F058F1b85E277C306dc743ab82b94212dC",
+    localhost: safe,
+  };
 
-  await execute(
-    "FundManager",
-    { from: deployer, log: true },
-    "createFund",
-    "Fund 002",
-    "Focus B",
-    "Description Text",
-    [ERC20.address],
-    hre.network.name == "rinkeby"
-      ? "0xF35164F058F1b85E277C306dc743ab82b94212dC"
-      : safe
-  );
+  if (hre.network.name == "localhost") {
+    const ERC20 = await deploy("BasicERC20", {
+      from: deployer,
+      args: ["USD Coin", "USDC", ethers.utils.parseUnits("1000000000", 18)],
+      log: true,
+    });
+
+    USDC.localhost = ERC20.address;
+  }
+
+  const funds = [
+    [
+      "SOS Wildfires Fund",
+      "Natural Disaster",
+      "SOS Wildfires Fund is a contribution raised to reduce the causes of wildfires, compensate their effects and carry out relevant field missions to take precautions.",
+    ],
+  ];
+
+  const existing = await read("FundManager", {}, "getFunds");
+
+  if (!existing.length) {
+    for (const [name, focus, description] of funds) {
+      await execute(
+        "FundManager",
+        { from: deployer, log: true },
+        "createFund",
+        name,
+        focus,
+        description,
+        [USDC[hre.network.name]],
+        SAFE[hre.network.name]
+      );
+    }
+  }
 };
 
 export default func;

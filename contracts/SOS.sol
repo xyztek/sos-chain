@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
+import "./libraries/Donations.sol";
+import "./Donation.sol";
 import "./FundManager.sol";
 import "./FundV1.sol";
 import "./NFTDescriptor.sol";
@@ -14,19 +16,12 @@ import "./Registered.sol";
 
 import "hardhat/console.sol";
 
-struct DonationRecord {
-    uint256 fundId;
-    uint256 amount;
-    address tokenAddress;
-}
-
 contract SOS is AccessControl, ERC721, Registered {
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenIds;
-    mapping(uint256 => DonationRecord) public metadata;
-
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    mapping(uint256 => uint256) public donations;
 
     constructor(address _registry, address _minterAddress)
         ERC721("SOS Chain", "SOS")
@@ -49,22 +44,43 @@ contract SOS is AccessControl, ERC721, Registered {
         return super.supportsInterface(_interfaceId);
     }
 
+    function SVG(uint256 _tokenId) public view returns (string memory) {
+        uint256 donationId = donations[_tokenId];
+        Donations.Record memory record = Donation(getAddress("DONATION"))
+            .getRecord(donationId);
+
+        (string memory fundName, string memory fundFocus, , ) = FundManager(
+            getAddress("FUND_MANAGER")
+        ).getFundMeta(record.fundId);
+
+        NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
+
+        address owner = ownerOf(_tokenId);
+
+        return
+            descriptor.buildSVG(
+                _tokenId,
+                owner,
+                record.amount,
+                record.token,
+                fundName,
+                fundFocus
+            );
+    }
+
     function tokenURI(uint256 _tokenId)
         public
         view
         override
         returns (string memory)
     {
-        DonationRecord storage donation = metadata[_tokenId];
+        uint256 donationId = donations[_tokenId];
+        Donations.Record memory record = Donation(getAddress("DONATION"))
+            .getRecord(donationId);
 
-        address fundAddress = FundManager(getAddress("FUND_MANAGER"))
-            .getFundAddress(donation.fundId);
-
-        (
-            string memory fundName,
-            string memory fundFocus,
-            string memory _fundDescription
-        ) = FundV1(fundAddress).getMeta();
+        (string memory fundName, string memory fundFocus, , ) = FundManager(
+            getAddress("FUND_MANAGER")
+        ).getFundMeta(record.fundId);
 
         NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
 
@@ -73,8 +89,8 @@ contract SOS is AccessControl, ERC721, Registered {
         string memory image = descriptor.encodeSVG(
             _tokenId,
             owner,
-            donation.amount,
-            donation.tokenAddress,
+            record.amount,
+            record.token,
             fundName,
             fundFocus
         );
@@ -102,29 +118,23 @@ contract SOS is AccessControl, ERC721, Registered {
     // -----------------------------------------------------------------
 
     /**
-     * @dev                   mint an nft
-     * @param  _recipient     address of the recipient
-     * @param  _fundId        id of the fund
-     * @param  _amount        amount deposited
-     * @param  _tokenAddress  tracked address of the deposited token
-     * @return                id of the minted ERC721
+     * @dev                 mint an nft
+     * @param  _recipient   recipient address
+     * @param  _donationId  donation ID
+     * @return              id of the minted ERC721
      */
-    function mint(
-        address _recipient,
-        uint256 _fundId,
-        uint256 _amount,
-        address _tokenAddress
-    ) public onlyRole(MINTER_ROLE) returns (uint256) {
+    function mint(address _recipient, uint256 _donationId)
+        public
+        onlyRole(MINTER_ROLE)
+        returns (uint256)
+    {
         tokenIds.increment();
 
         uint256 tokenId = tokenIds.current();
+
         _mint(_recipient, tokenId);
 
-        metadata[tokenId] = DonationRecord({
-            fundId: _fundId,
-            amount: _amount,
-            tokenAddress: _tokenAddress
-        });
+        donations[tokenId] = _donationId;
 
         return tokenId;
     }

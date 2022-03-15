@@ -9,11 +9,18 @@ import "./TokenControl.sol";
 
 import "hardhat/console.sol";
 
-error NotFound();
-
 contract FundManager is AccessControl, Registered {
     address public baseFund;
     address[] private funds;
+
+    struct Fund {
+        uint256 id;
+        address at;
+        string name;
+        string focus;
+        string description;
+        uint256 status;
+    }
 
     constructor(address _registry, address _impl) Registered(_registry) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -24,8 +31,48 @@ contract FundManager is AccessControl, Registered {
     // PUBLIC API
     // -----------------------------------------------------------------
 
+    function getFundMeta(uint256 _id)
+        public
+        view
+        returns (
+            string memory,
+            string memory,
+            string memory,
+            uint256
+        )
+    {
+        return FundV1(funds[_id]).getMeta();
+    }
+
     function getFunds() public view returns (address[] memory) {
         return funds;
+    }
+
+    function getFundsMeta() public view returns (Fund[] memory) {
+        uint256 length = funds.length;
+        Fund[] memory meta = new Fund[](length);
+        for (uint256 i = 0; i < length; i++) {
+            address fundAddress = funds[i];
+            FundV1 fund = FundV1(fundAddress);
+            (
+                string memory name,
+                string memory focus,
+                string memory description,
+                uint256 status
+            ) = fund.getMeta();
+
+            if (status == 0) {
+                meta[i] = Fund({
+                    id: i,
+                    at: fundAddress,
+                    name: name,
+                    focus: focus,
+                    description: description,
+                    status: uint256(status)
+                });
+            }
+        }
+        return meta;
     }
 
     /**
@@ -82,14 +129,6 @@ contract FundManager is AccessControl, Registered {
     // ADMIN API
     // -----------------------------------------------------------------
 
-    function hashFund(
-        string memory _name,
-        string memory _focus,
-        string memory _description
-    ) public pure returns (uint256) {
-        return uint256(keccak256(abi.encode(_name, _focus, _description)));
-    }
-
     /**
      * @dev                    setup a new fund
      * @param  _name           name of the fund
@@ -110,7 +149,6 @@ contract FundManager is AccessControl, Registered {
         address cloneAddress = Clones.clone(baseFund);
 
         FundV1(cloneAddress).initialize(
-            index,
             _name,
             _focus,
             _description,

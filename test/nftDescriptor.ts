@@ -15,28 +15,32 @@ describe("NFTDescriptor.sol", function () {
   });
 
   it("should construct an SVG representation", async function () {
+    const [_owner, EOA1] = await ethers.getSigners();
     const tokenSVG = await stack.Descriptor.buildSVG(
       2,
-      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      ethers.constants.WeiPerEther.mul(1000),
+      EOA1.address,
+      ethers.utils.parseUnits("120", await ERC20.decimals()),
       ERC20.address,
       "Test Fund",
       "Test Focus"
     );
 
-    expect(tokenSVG).to.equal(testSVG);
+    expect(tokenSVG).to.equal(testSVG(EOA1.address));
   });
 
   it("should construct a Base64 encoded SVG representation", async function () {
+    const [_owner, EOA1] = await ethers.getSigners();
     const encodedSVG = await stack.Descriptor.encodeSVG(
       2,
-      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      ethers.constants.WeiPerEther.mul(1000),
+      EOA1.address,
+      ethers.utils.parseUnits("120", await ERC20.decimals()),
       ERC20.address,
       "Test Fund",
       "Test Focus"
     );
 
-    expect(encodedSVG).to.equal(Buffer.from(testSVG).toString("base64"));
+    expect(encodedSVG).to.equal(
+      Buffer.from(testSVG(EOA1.address)).toString("base64")
+    );
   });
 });

@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "hardhat/console.sol";
 
-contract Registry is Ownable {
-    error NotFound();
+error NotFound();
 
+contract Registry is Ownable {
     bytes32[] private contracts;
     mapping(bytes32 => address) private registry;
 

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
@@ -12,31 +13,27 @@ import "hardhat/console.sol";
 error Forbidden();
 error NotAllowed();
 
-enum Status {
-    Open,
-    Paused,
-    Closed
-}
-
 // Master Fund (v1) Contract
 // FundManager create clones of this contract.
 contract FundV1 is AccessControl, TokenControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public id;
-
+    Status public status;
+    address private factory;
+    address private safeAddress;
     string public name;
     string public focus;
     string public description;
-    Status public status;
 
-    address private factory;
-    address private safeAddress;
+    enum Status {
+        Open,
+        Paused,
+        Closed
+    }
 
     // called once by the factory at time of deployment
     // any subsequent calls will revert with Forbidden()
     function initialize(
-        uint256 _id,
         string memory _name,
         string memory _focus,
         string memory _description,
@@ -47,7 +44,6 @@ contract FundV1 is AccessControl, TokenControl {
         if (factory != address(0)) revert Forbidden();
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
-        id = _id;
         factory = msg.sender;
 
         name = _name;
@@ -77,10 +73,33 @@ contract FundV1 is AccessControl, TokenControl {
         returns (
             string memory,
             string memory,
-            string memory
+            string memory,
+            uint256
         )
     {
-        return (name, focus, description);
+        return (name, focus, description, uint256(status));
+    }
+
+    /**
+     * @dev                   get fund safe balances
+     * @return                tuple of (tokenAddress[], balance[])
+     */
+    function getBalances()
+        external
+        view
+        returns (address[] memory, uint256[] memory)
+    {
+        uint256 length = allowedTokens.length();
+
+        address[] memory addresses = new address[](length);
+        uint256[] memory balances = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            addresses[i] = allowedTokens.at(i);
+            balances[i] = IERC20(allowedTokens.at(i)).balanceOf(safeAddress);
+        }
+
+        return (addresses, balances);
     }
 
     /**
@@ -154,6 +173,14 @@ contract FundV1 is AccessControl, TokenControl {
     function _setStatus(Status _status) internal returns (bool) {
         status = _status;
 
+        emit StatusChange(uint256(_status));
+
         return true;
     }
+
+    // -----------------------------------------------------------------
+    // EVENTS
+    // -----------------------------------------------------------------
+
+    event StatusChange(uint256 indexed id);
 }

@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "./libraries/Geo.sol";
 
@@ -14,31 +16,34 @@ import "./Registry.sol";
 
 import "hardhat/console.sol";
 
-enum RequestStatus {
-    Pending,
-    Approved,
-    Finalized,
-    Executed
-}
-
-struct Request {
-    uint256 id;
-    uint256 fundId;
-    bytes32 _type;
-    RequestStatus status;
-    Geo.Coordinates location;
-    address recipient;
-    uint256 amount;
-    bytes32[] remainingChecks;
-    mapping(bytes32 => address) approvals;
-}
-
 contract RequestManager is AccessControl, DynamicChecks {
-    Request[] private requests;
+    using EnumerableMap for EnumerableMap.UintToAddressMap;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+
+    Request[] private requests;
+
+    enum Status {
+        Pending,
+        Approved,
+        Finalized,
+        Executed
+    }
+
+    struct Request {
+        uint256 id;
+        uint256 fundId;
+        uint256 amount;
+        address recipient;
+        Status status;
+        Geo.Coordinates location;
+        EnumerableSet.Bytes32Set checks;
+        EnumerableSet.Bytes32Set pending;
+        mapping(bytes32 => address) approvals;
+    }
 
     constructor(bytes32[] memory _defaultChecks)
         DynamicChecks(_defaultChecks)
@@ -49,20 +54,20 @@ contract RequestManager is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
 
     /**
-     * @dev                    initiate a request
-     * @param  _type           type of the request
-     * @param  _amount         requested amount from the fund
-     * @param  _recipient      ultimate recipient of the funds requested
-     * @param  _fundId         id of the fund requested from
-     * @param  _coordinates    coordinates pointing to request location
-     * @return                 id (index) of the initiated request
+     * @dev                  initiate a request
+     * @param  _amount       requested amount from the fund
+     * @param  _recipient    ultimate recipient of the funds requested
+     * @param  _fundId       id of the fund requested from
+     * @param  _description  a short description of the request
+     * @param  _coordinates  coordinates pointing to request location
+     * @return               id (index) of the initiated request
      */
     function createRequest(
-        bytes32 _type,
         uint256 _amount,
         address _recipient,
         uint256 _fundId,
-        uint256[2] memory _coordinates
+        uint256[2] memory _coordinates,
+        string memory _description
     )
         public
         requireChecks /* onlyOpenFunds */
@@ -76,94 +81,152 @@ contract RequestManager is AccessControl, DynamicChecks {
         Request storage request = requests[index];
 
         request.id = index;
-        request._type = _type;
-        request.status = RequestStatus.Pending;
+        request.status = Status.Pending;
         request.location = Geo.coordinatesFromPair(_coordinates);
         request.recipient = _recipient;
         request.fundId = _fundId;
         request.amount = _amount;
-        request.remainingChecks = checks;
 
-        emit RequestCreated(index, _fundId, _recipient);
+        uint256 length = checks.length;
+
+        uint256 i = 0;
+        while (i < length) {
+            request.checks.add(checks[i]);
+            request.pending.add(checks[i]);
+            i++;
+        }
+
+        emit RequestCreated(index, _fundId, _recipient, _amount, _description);
 
         return index;
     }
 
     /**
-     * @dev                 initiate a request
-     * @param  _id          type of the request
-     * @param  _checkIndex  index of the check being approved
-     * @return              boolean indicating result of the operation
+     * @dev            initiate a request
+     * @param  _id     type of the request
+     * @param  _check  check to approve
+     * @return         boolean indicating op result
      */
-    function approveRequest(uint256 _id, uint256 _checkIndex)
+    function approveRequest(uint256 _id, bytes32 _check)
         public
         onlyRole(APPROVER_ROLE)
-        onlyRequestsWithStatus(RequestStatus.Pending, _id)
+        onlyRequestsWithStatus(Status.Pending, _id)
         returns (bool)
     {
-        bytes32 check = requests[_id].remainingChecks[_checkIndex];
+        Request storage request = requests[_id];
 
-        if (requests[_id].approvals[check] != address(0x0))
-            revert CheckAlreadyApproved();
+        if (!_isApprovable(request, _check)) revert NotAllowed();
 
-        requests[_id].approvals[check] = msg.sender;
+        _approveCheck(request, _check);
 
-        _shiftPop(requests[_id].remainingChecks, _checkIndex);
-
-        if (requests[_id].remainingChecks.length == 0) {
-            _bumpRequestStatus(_id);
+        if (request.pending.length() == 0) {
+            _bumpStatus(request);
         }
 
-        if (requests[_id].status == RequestStatus.Approved) {
-            _finalizeRequest(_id);
+        if (request.status == Status.Approved) {
+            //_finalizeRequest();
         }
 
         return true;
     }
 
-    function getRequestStatus(uint256 _id) public view returns (RequestStatus) {
+    /**
+     * @dev         get request status
+     * @param  _id  request ID
+     * @return      request status
+     */
+    function getStatus(uint256 _id) external view returns (Status) {
         return requests[_id].status;
+    }
+
+    /**
+     * @dev         get remaining checks for a request
+     * @param  _id  request ID
+     * @return      remaining checks
+     */
+    function getRemainingChecks(uint256 _id)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        return requests[_id].pending.values();
+    }
+
+    /**
+     * @dev         get approved checks for a request
+     * @param  _id  request ID
+     * @return      approved checks
+     */
+    function getApprovedChecks(uint256 _id)
+        external
+        view
+        returns (bytes32[] memory, address[] memory)
+    {
+        Request storage request = requests[_id];
+        uint256 allChecksLength = request.checks.length();
+        uint256 pendingChecksLength = allChecksLength -
+            request.pending.length();
+
+        bytes32[] memory checks = new bytes32[](pendingChecksLength);
+        address[] memory approvers = new address[](pendingChecksLength);
+
+        for (uint256 i = 0; i < allChecksLength; i++) {
+            bytes32 check = request.checks.at(i);
+            if (request.pending.contains(check)) continue;
+            checks[i] = check;
+            approvers[i] = request.approvals[check];
+        }
+
+        return (checks, approvers);
+    }
+
+    /**
+     * @dev            get approver address for a check
+     * @param  _id     request ID
+     * @param  _check  check
+     * @return         remaining checks
+     */
+    function getApprover(uint256 _id, bytes32 _check)
+        external
+        view
+        returns (address)
+    {
+        return requests[_id].approvals[_check];
     }
 
     // -----------------------------------------------------------------
     // INTERNAL API
     // -----------------------------------------------------------------
 
-    function _bumpRequestStatus(uint256 _requestId) internal {
-        if (
-            uint8(requests[_requestId].status) == uint8(type(RequestStatus).max)
-        ) revert NotAllowed();
-
-        requests[_requestId].status = RequestStatus(
-            uint8(requests[_requestId].status) + 1
-        );
-
-        //emit RequestStatusChange(_requestId, requests[_requestId].status);
+    function _isApprovable(Request storage _request, bytes32 _check)
+        internal
+        view
+        returns (bool)
+    {
+        return
+            _request.pending.contains(_check) &&
+            _request.approvals[_check] == address(0);
     }
 
-    function _finalizeRequest(uint256 _requestId)
-        internal
-        onlyRequestsWithStatus(RequestStatus.Approved, _requestId)
-    {
-        // TODO: INTERNAL FINALIZE FLOW
-
-        _bumpRequestStatus(_requestId);
+    function _approveCheck(Request storage _request, bytes32 _check) internal {
+        _request.approvals[_check] = msg.sender;
+        _request.pending.remove(_check);
     }
 
-    function _signRequest(uint256 _requestId)
-        internal
-        onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
-    {
-        // TODO: INTERNAL SIGN FLOW
+    function _bumpStatus(Request storage _request) internal {
+        if (uint8(_request.status) == uint8(type(Status).max))
+            revert NotAllowed();
 
-        _bumpRequestStatus(_requestId);
+        _request.status = Status(uint8(_request.status) + 1);
+
+        emit StatusChange(_request.id, _request.status);
     }
 
     // -----------------------------------------------------------------
     // MODIFIERS
     // -----------------------------------------------------------------
 
-    modifier onlyRequestsWithStatus(RequestStatus _status, uint256 _requestId) {
+    modifier onlyRequestsWithStatus(Status _status, uint256 _requestId) {
         if (requests[_requestId].status != _status) revert NotAllowed();
         _;
     }
@@ -175,8 +238,10 @@ contract RequestManager is AccessControl, DynamicChecks {
     event RequestCreated(
         uint256 indexed id,
         uint256 indexed fundId,
-        address indexed recipient
+        address indexed recipient,
+        uint256 amount,
+        string description
     );
 
-    event RequestStatusChange(uint256 indexed id, RequestStatus indexed status);
+    event StatusChange(uint256 indexed id, Status indexed status);
 }

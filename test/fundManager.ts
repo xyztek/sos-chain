@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract, ContractReceipt } from "ethers";
+import { BigNumber, Contract, ContractReceipt } from "ethers";
 
 import { deployContract, deployStack, Stack } from "../scripts/helpers";
 
@@ -43,6 +43,21 @@ describe("FundManager.sol", function () {
     const event = receipt.events?.find((x) => x.event == "FundCreated");
 
     expect(event).to.not.be.undefined;
+  });
+
+  it("should return addresses of open funds", async function () {
+    expect(await contract.getFunds()).to.be.not.empty;
+  });
+
+  it("should return meta of open funds", async function () {
+    const meta = await contract.getFundsMeta();
+    expect(meta).to.be.not.empty;
+
+    expect(meta[0].id).to.be.instanceOf(BigNumber);
+    expect(meta[0].name).to.eq("Test Fund");
+    expect(meta[0].focus).to.eq("Test Focus");
+    expect(meta[0].description).to.eq("Test Description Text");
+    expect(meta[0].status).to.eq(0);
   });
 
   it("should return the address of a fund", async function () {

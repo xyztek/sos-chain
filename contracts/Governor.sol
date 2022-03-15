@@ -14,11 +14,10 @@ import "./RequestManager.sol";
 
 import "hardhat/console.sol";
 
+error MissingRole(bytes32);
+
 contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
     using SafeMath for uint256;
-
-    error MissingRole(bytes32);
-    error NotAllowedForFund(uint256);
 
     constructor(address _registry, bytes32[] memory _initialChecks)
         Registered(_registry)
@@ -40,7 +39,7 @@ contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
 
     modifier onlyOpenFunds(uint256 _fundId) {
         FundV1 fund = _getFund(_fundId);
-        if (!fund.isOpen()) revert NotAllowedForFund(_fundId);
+        if (!fund.isOpen()) revert NotAllowed();
         _;
     }
 
