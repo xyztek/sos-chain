@@ -18,6 +18,7 @@ describe("Governor.sol", function () {
   const createRequest = async (recipient: string) => {
     return stack.Governor.createRequest(
       requestAmount,
+      ERC20.address,
       recipient,
       0,
       [2000000000000, 1000000000000],
@@ -91,5 +92,12 @@ describe("Governor.sol", function () {
 
     expect(checks).to.have.members(initialChecks.slice(0, 1));
     expect(approvers).to.have.members([EOA1.address]);
+  });
+
+  it("should return approval status for a request", async function () {
+    const [pending, all] = await stack.Governor.getApprovalStatus(0);
+
+    expect(pending).to.eq(2);
+    expect(all).to.eq(3);
   });
 });

@@ -25,33 +25,34 @@ export async function handleRegistry(
   deploymentAddress: string
 ): Promise<void> {
   const { read, execute } = deployments;
-  const isRegistered = await read(
-    "Registry",
-    {},
-    "get",
-    asBytes32(contractName)
-  );
+  try {
+    const isRegistered = await read(
+      "Registry",
+      {},
+      "get",
+      asBytes32(contractName)
+    );
 
-  if (isRegistered && isRegistered == deploymentAddress) return;
-  if (isRegistered && isRegistered != deploymentAddress) {
+    if (isRegistered && isRegistered == deploymentAddress) return;
+    if (isRegistered && isRegistered != deploymentAddress) {
+      await execute(
+        "Registry",
+        { from: deployer, log: true },
+        "update",
+        asBytes32(contractName),
+        deploymentAddress
+      );
+      return;
+    }
+  } catch (_e) {
     await execute(
       "Registry",
       { from: deployer, log: true },
-      "update",
+      "register",
       asBytes32(contractName),
       deploymentAddress
     );
-    return;
   }
-
-  await execute(
-    "Registry",
-    { from: deployer, log: true },
-    "register",
-    asBytes32(contractName),
-    deploymentAddress
-  );
-  return;
 }
 
 export function grantRole(contract: Contract, role: string, address: string) {

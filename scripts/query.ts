@@ -1,30 +1,25 @@
-import { Contract, ContractFactory } from "ethers";
+import { ContractFactory } from "ethers";
 import { ethers } from "hardhat";
+
+import { grantRole } from "./helpers";
 
 async function main() {
   try {
-    const [owner, EOA1, _EOA2] = await ethers.getSigners();
+    const [_owner, _EOA1, _EOA2] = await ethers.getSigners();
 
     const factory: ContractFactory = await ethers.getContractFactory(
-      "FundManager"
+      "Governor"
     );
 
     const contract = factory.attach(
-      "0x1e09936F01A9A56fC208fF55dbc7969C5C04B711"
+      "0xF7a81Feb465f25b418f678180084ce4C3652a869"
     );
 
-    const fundV1Address = await contract.getFundAddress(1);
-
-    const fundFactory: ContractFactory = await ethers.getContractFactory(
-      "FundV1"
+    await grantRole(
+      contract,
+      "APPROVER_ROLE",
+      "0xEB6BE041000438400816eF46224f4aa17Ca316D7"
     );
-
-    const fund = fundFactory.attach(fundV1Address);
-
-    await fund.addToken("0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b");
-    await fund.removeToken("0x8967CddA31Dc3f971276dc4B534eC7a2a3e1fA81");
-
-    console.log(await fund.getAllowedTokens());
   } catch (error) {
     console.log(error);
   }

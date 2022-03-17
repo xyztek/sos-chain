@@ -37,6 +37,7 @@ contract RequestManager is AccessControl, DynamicChecks {
         uint256 id;
         uint256 fundId;
         uint256 amount;
+        address token;
         address recipient;
         Status status;
         Geo.Coordinates location;
@@ -54,16 +55,18 @@ contract RequestManager is AccessControl, DynamicChecks {
     // -----------------------------------------------------------------
 
     /**
-     * @dev                  initiate a request
-     * @param  _amount       requested amount from the fund
-     * @param  _recipient    ultimate recipient of the funds requested
-     * @param  _fundId       id of the fund requested from
-     * @param  _description  a short description of the request
-     * @param  _coordinates  coordinates pointing to request location
-     * @return               id (index) of the initiated request
+     * @dev                   initiate a request
+     * @param  _amount        requested amount from the fund
+     * @param  _tokenAddress  token address
+     * @param  _recipient     ultimate recipient of the funds requested
+     * @param  _fundId        id of the fund requested from
+     * @param  _description   a short description of the request
+     * @param  _coordinates   coordinates pointing to request location
+     * @return                id (index) of the initiated request
      */
     function createRequest(
         uint256 _amount,
+        address _tokenAddress,
         address _recipient,
         uint256 _fundId,
         uint256[2] memory _coordinates,
@@ -86,6 +89,7 @@ contract RequestManager is AccessControl, DynamicChecks {
         request.recipient = _recipient;
         request.fundId = _fundId;
         request.amount = _amount;
+        request.token = _tokenAddress;
 
         uint256 length = checks.length;
 
@@ -96,7 +100,14 @@ contract RequestManager is AccessControl, DynamicChecks {
             i++;
         }
 
-        emit RequestCreated(index, _fundId, _recipient, _amount, _description);
+        emit RequestCreated(
+            index,
+            _fundId,
+            _recipient,
+            _amount,
+            _tokenAddress,
+            _description
+        );
 
         return index;
     }
@@ -119,6 +130,8 @@ contract RequestManager is AccessControl, DynamicChecks {
 
         _approveCheck(request, _check);
 
+        emit CheckApproved(_id, _check);
+
         if (request.pending.length() == 0) {
             _bumpStatus(request);
         }
@@ -137,6 +150,19 @@ contract RequestManager is AccessControl, DynamicChecks {
      */
     function getStatus(uint256 _id) external view returns (Status) {
         return requests[_id].status;
+    }
+
+    /**
+     * @dev         get approval status
+     * @param  _id  request ID
+     * @return      tuple of (pending, all) checks
+     */
+    function getApprovalStatus(uint256 _id)
+        external
+        view
+        returns (uint256, uint256)
+    {
+        return (requests[_id].pending.length(), requests[_id].checks.length());
     }
 
     /**
@@ -240,8 +266,11 @@ contract RequestManager is AccessControl, DynamicChecks {
         uint256 indexed fundId,
         address indexed recipient,
         uint256 amount,
+        address token,
         string description
     );
+
+    event CheckApproved(uint256 indexed id, bytes32 indexed check);
 
     event StatusChange(uint256 indexed id, Status indexed status);
 }
