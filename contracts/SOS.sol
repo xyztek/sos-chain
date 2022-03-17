@@ -1,53 +1,71 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
+import "./libraries/Donations.sol";
+import "./Donation.sol";
 import "./FundManager.sol";
-import "./Fund.sol";
+import "./FundV1.sol";
 import "./NFTDescriptor.sol";
-import "./Registry.sol";
+import "./Registered.sol";
 
 import "hardhat/console.sol";
 
-struct Support {
-    string fundId;
-    uint256 amount;
-    address tokenAddress;
-}
-
-contract SOS is ERC721, AccessControl {
+contract SOS is AccessControl, ERC721, Registered {
     using Counters for Counters.Counter;
 
-    Registry private registry;
-    Counters.Counter private _tokenIds;
-    mapping(uint256 => Support) public metadata;
-
+    Counters.Counter private tokenIds;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    mapping(uint256 => uint256) public donations;
 
-    constructor(address _registryAddress, address _minterAddress)
+    constructor(address _registry, address _minterAddress)
         ERC721("SOS Chain", "SOS")
+        Registered(_registry)
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, _minterAddress);
-
-        registry = Registry(_registryAddress);
     }
 
     // -----------------------------------------------------------------
     // PUBLIC API
     // -----------------------------------------------------------------
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         override(ERC721, AccessControl)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return super.supportsInterface(_interfaceId);
+    }
+
+    function SVG(uint256 _tokenId) public view returns (string memory) {
+        uint256 donationId = donations[_tokenId];
+        Donations.Record memory record = Donation(getAddress("DONATION"))
+            .getRecord(donationId);
+
+        (string memory fundName, string memory fundFocus, , ) = FundManager(
+            getAddress("FUND_MANAGER")
+        ).getFundMeta(record.fundId);
+
+        NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
+
+        address owner = ownerOf(_tokenId);
+
+        return
+            descriptor.buildSVG(
+                _tokenId,
+                owner,
+                record.amount,
+                record.token,
+                fundName,
+                fundFocus
+            );
     }
 
     function tokenURI(uint256 _tokenId)
@@ -56,25 +74,42 @@ contract SOS is ERC721, AccessControl {
         override
         returns (string memory)
     {
-        Support storage support = metadata[_tokenId];
+        uint256 donationId = donations[_tokenId];
+        Donations.Record memory record = Donation(getAddress("DONATION"))
+            .getRecord(donationId);
 
-        address fundAddress = FundManager(registry.get("FUND_MANAGER"))
-            .getFundAddress(support.fundId);
+        (string memory fundName, string memory fundFocus, , ) = FundManager(
+            getAddress("FUND_MANAGER")
+        ).getFundMeta(record.fundId);
 
-        (string memory fundName, string memory fundFocus) = Fund(fundAddress)
-            .getMeta();
+        NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
 
-        NFTDescriptor descriptor = NFTDescriptor(
-            registry.get("NFT_DESCRIPTOR")
+        address owner = ownerOf(_tokenId);
+
+        string memory image = descriptor.encodeSVG(
+            _tokenId,
+            owner,
+            record.amount,
+            record.token,
+            fundName,
+            fundFocus
         );
 
         return
-            descriptor.constructTokenURI(
-                _tokenId,
-                support.amount,
-                support.tokenAddress,
-                fundName,
-                fundFocus
+            string(
+                abi.encodePacked(
+                    "data:application/json;base64,",
+                    Base64.encode(
+                        abi.encodePacked(
+                            '{"name":"',
+                            name(),
+                            '", "description": "SOS Chain Donation NFT", "image": "',
+                            "data:image/svg+xml;base64,",
+                            image,
+                            '"}'
+                        )
+                    )
+                )
             );
     }
 
@@ -83,29 +118,23 @@ contract SOS is ERC721, AccessControl {
     // -----------------------------------------------------------------
 
     /**
-     * @dev                   mint an nft
-     * @param  _recipient     address of the recipient
-     * @param  _fundId        id of the fund
-     * @param  _amount        amount deposited
-     * @param  _tokenAddress  tracked address of the deposited token
-     * @return                id of the minted ERC721
+     * @dev                 mint an nft
+     * @param  _recipient   recipient address
+     * @param  _donationId  donation ID
+     * @return              id of the minted ERC721
      */
-    function mint(
-        address _recipient,
-        string memory _fundId,
-        uint256 _amount,
-        address _tokenAddress
-    ) public onlyRole(MINTER_ROLE) returns (uint256) {
-        _tokenIds.increment();
+    function mint(address _recipient, uint256 _donationId)
+        public
+        onlyRole(MINTER_ROLE)
+        returns (uint256)
+    {
+        tokenIds.increment();
 
-        uint256 tokenId = _tokenIds.current();
+        uint256 tokenId = tokenIds.current();
+
         _mint(_recipient, tokenId);
 
-        metadata[tokenId] = Support({
-            fundId: _fundId,
-            amount: _amount,
-            tokenAddress: _tokenAddress
-        });
+        donations[tokenId] = _donationId;
 
         return tokenId;
     }

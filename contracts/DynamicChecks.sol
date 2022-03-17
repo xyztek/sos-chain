@@ -7,9 +7,15 @@ import "hardhat/console.sol";
 
 contract DynamicChecks is AccessControl {
     error NoZeroChecks();
+    error CheckAlreadyApproved();
 
     bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
     bytes32[] internal checks;
+
+    constructor(bytes32[] memory _initialChecks) {
+        if (_initialChecks.length < 1) revert NoZeroChecks();
+        checks = _initialChecks;
+    }
 
     function getCheck(uint256 _index) public view returns (bytes32) {
         return checks[_index];
@@ -48,5 +54,10 @@ contract DynamicChecks is AccessControl {
         _array.pop();
 
         // TODO: ENSURE _array IS PASSED AS REFERENCE IN TESTS
+    }
+
+    modifier requireChecks() {
+        if (checks.length < 1) revert NoZeroChecks();
+        _;
     }
 }

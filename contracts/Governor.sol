@@ -1,202 +1,51 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import "./libraries/Geo.sol";
+
+import "./FundV1.sol";
+import "./FundManager.sol";
 import "./DynamicChecks.sol";
+import "./Registered.sol";
+import "./RequestManager.sol";
 
 import "hardhat/console.sol";
 
-contract Governor is AccessControl, DynamicChecks {
+error MissingRole(bytes32);
+
+contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
     using SafeMath for uint256;
 
-    error DisallowedStatusChange();
-    error NotAllowedForRequestStatus();
-    error RequestAlreadyApproved();
-
-    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
-    bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
-    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-
-    enum RequestStatus {
-        Pending,
-        Approved,
-        Finalized,
-        Executed
-    }
-
-    // This will be used for coordinate math.
-    uint256 private constant RESOLUTION = 1000000000000000;
-
-    struct Coordinates {
-        uint256 lat;
-        uint256 lon;
-    }
-
-    struct Request {
-        bytes32 requestType;
-        Coordinates requestLocation;
-        RequestStatus requestStatus;
-        address recipient;
-        bytes32 fundId;
-        bytes32[] remainingChecks;
-        mapping(bytes32 => address) approvals;
-    }
-
-    Request[] private requests;
-
-    constructor(bytes32[] memory _initialChecks) {
-        if (_initialChecks.length > 0) revert NoZeroChecks();
-
+    constructor(address _registry, bytes32[] memory _initialChecks)
+        Registered(_registry)
+        RequestManager(_initialChecks)
+    {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-
-        checks = _initialChecks;
     }
 
-    // -----------------------------------------------------------------
-    // PUBLIC API
-    // -----------------------------------------------------------------
+    function _getFund(uint256 _fundId) internal view returns (FundV1) {
+        address fundAddress = FundManager(getAddress("FUND_MANAGER"))
+            .getFundAddress(_fundId);
 
-    function initRequest(
-        bytes32 _requestType,
-        address _recipient,
-        bytes32 _fundId,
-        uint256[2] memory coordinates
-    ) public requireChecks returns (uint256) {
-        // TODO: CHECK FUND IS OPEN
-
-        // pre-allocate storage location for the new Request
-        uint256 index = requests.length;
-        requests.push();
-
-        // assign new Request to the storage location
-        Request storage request = requests[index];
-
-        request.requestType = _requestType;
-        request.requestStatus = RequestStatus.Pending;
-        request.requestLocation = Coordinates({
-            lat: coordinates[0],
-            lon: coordinates[1]
-        });
-        request.recipient = _recipient;
-        request.fundId = _fundId;
-        request.remainingChecks = checks;
-
-        return index;
-    }
-
-    // -----------------------------------------------------------------
-    // OWNER API
-    // -----------------------------------------------------------------
-
-    function approveRequest(uint256 _requestId, uint256 _checkIndex)
-        public
-        onlyRole(APPROVER_ROLE)
-        onlyRequestsWithStatus(RequestStatus.Pending, _requestId)
-        returns (bool)
-    {
-        _approveRequest(_requestId, _checkIndex);
-
-        if (requests[_requestId].requestStatus == RequestStatus.Approved) {
-            _finalizeRequest(_requestId);
-        }
-
-        return true;
-    }
-
-    function finalizeRequest(uint256 _requestId)
-        public
-        onlyRole(FINALIZER_ROLE)
-        onlyRequestsWithStatus(RequestStatus.Approved, _requestId)
-        returns (bool)
-    {
-        _finalizeRequest(_requestId);
-
-        return true;
-    }
-
-    function signRequest(uint256 _requestId)
-        public
-        onlyRole(EXECUTOR_ROLE)
-        onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
-        returns (bool)
-    {
-        _signRequest(_requestId);
-        return true;
-    }
-
-    // -----------------------------------------------------------------
-    // INTERNAL
-    // -----------------------------------------------------------------
-
-    function _bumpRequestStatus(uint256 _requestId) internal {
-        if (requests[_requestId].requestStatus == RequestStatus.Pending) {
-            requests[_requestId].requestStatus = RequestStatus.Approved;
-        } else if (
-            requests[_requestId].requestStatus == RequestStatus.Approved
-        ) {
-            requests[_requestId].requestStatus = RequestStatus.Finalized;
-        } else if (
-            requests[_requestId].requestStatus == RequestStatus.Finalized
-        ) {
-            requests[_requestId].requestStatus = RequestStatus.Executed;
-        } else {
-            revert DisallowedStatusChange();
-        }
-    }
-
-    function _approveRequest(uint256 _requestId, uint256 _checkIndex)
-        internal
-        onlyRequestsWithStatus(RequestStatus.Pending, _requestId)
-    {
-        bytes32 check = requests[_requestId].remainingChecks[_checkIndex];
-
-        if (requests[_requestId].approvals[check] != address(0x0))
-            revert RequestAlreadyApproved();
-
-        requests[_requestId].approvals[check] = msg.sender;
-
-        _shiftPop(requests[_requestId].remainingChecks, _checkIndex);
-
-        if (requests[_requestId].remainingChecks.length == 0) {
-            _bumpRequestStatus(_requestId);
-        }
-    }
-
-    function _finalizeRequest(uint256 _requestId)
-        internal
-        onlyRequestsWithStatus(RequestStatus.Approved, _requestId)
-    {
-        // TODO: INTERNAL FINALIZE FLOW
-
-        _bumpRequestStatus(_requestId);
-    }
-
-    function _signRequest(uint256 _requestId)
-        internal
-        onlyRequestsWithStatus(RequestStatus.Finalized, _requestId)
-    {
-        // TODO: INTERNAL SIGN FLOW
-
-        _bumpRequestStatus(_requestId);
+        return FundV1(fundAddress);
     }
 
     // -----------------------------------------------------------------
     // MODIFIERS
     // -----------------------------------------------------------------
 
-    modifier requireChecks() {
-        if (checks.length < 1) revert NoZeroChecks();
+    modifier onlyOpenFunds(uint256 _fundId) {
+        FundV1 fund = _getFund(_fundId);
+        if (!fund.isOpen()) revert NotAllowed();
         _;
     }
 
-    modifier onlyRequestsWithStatus(
-        RequestStatus _requestStatus,
-        uint256 _requestId
-    ) {
-        if (requests[_requestId].requestStatus != _requestStatus)
-            revert NotAllowedForRequestStatus();
+    modifier onlyFundRole(uint256 _fundId, bytes32 _role) {
+        FundV1 fund = _getFund(_fundId);
+        if (!fund.hasRole(_role, msg.sender)) revert MissingRole(_role);
         _;
     }
 }

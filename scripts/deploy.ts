@@ -4,24 +4,10 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 
-import { Contract } from "ethers";
 import { ethers } from "hardhat";
+import { Contract } from "ethers";
 
-async function deploy(
-  artifact: string,
-  params?: Array<unknown>
-): Promise<Contract> {
-  const Contract = await ethers.getContractFactory(artifact);
-  const contract = params
-    ? await Contract.deploy(...params)
-    : await Contract.deploy();
-
-  await contract.deployed();
-
-  console.log(`${artifact} contract deployed to: ${contract.address}`);
-
-  return contract;
-}
+import { ContractName, deployERC20, deployStack } from "./helpers";
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -31,13 +17,35 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  const registry = await deploy("contracts/Registry.sol:Registry");
+  const [owner, _EOA1, _EOA2] = await ethers.getSigners();
 
-  const fundManager = await deploy("contracts/FundManager.sol:FundManager");
-  await registry.register("FUND_MANAGER", fundManager.address);
+  console.log(`Deployed by ${owner.address}`);
 
-  const deposit = await deploy("contracts/Deposit.sol:Deposit");
-  await registry.register("DEPOSIT", deposit.address);
+  const USDC = await deployERC20("USD Coin", "USDC");
+  console.log(`Fake USDC contract deployed at ${USDC.address}`);
+
+  const stack = await deployStack();
+
+  await stack.FundManager.createFund(
+    "Test Fund 001",
+    "Test Focus A",
+    "Test Description Text",
+    [USDC.address],
+    owner.address
+  );
+
+  await stack.FundManager.createFund(
+    "Test Fund 002",
+    "Test Focus B",
+    "Test Description Text",
+    [USDC.address],
+    owner.address
+  );
+
+  Object.keys(stack).forEach((key: string) => {
+    const contract: Contract = stack[key as ContractName];
+    console.log(`${key} contract deployed at ${contract.address}`);
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

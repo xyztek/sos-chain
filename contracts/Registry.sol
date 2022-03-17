@@ -5,18 +5,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "hardhat/console.sol";
 
-contract Registry is Ownable {
-    error AlreadyRegistered();
-    error NotFound();
+error NotFound();
 
-    string[] private contracts;
-    mapping(string => address) private registry;
+contract Registry is Ownable {
+    bytes32[] private contracts;
+    mapping(bytes32 => address) private registry;
 
     /**
      * @dev              get a list of registered contract names
      * @return           a list of registered contract names
      */
-    function registered() public view returns (string[] memory) {
+    function registered() public view returns (bytes32[] memory) {
         return contracts;
     }
 
@@ -25,7 +24,7 @@ contract Registry is Ownable {
      * @param _name      name of the contract
      * @return           address of the queried contract
      */
-    function get(string memory _name) public view returns (address) {
+    function get(bytes32 _name) public view returns (address) {
         if (registry[_name] == address(0x0)) revert NotFound();
 
         return registry[_name];
@@ -37,12 +36,12 @@ contract Registry is Ownable {
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
      */
-    function register(string memory _name, address _address)
+    function register(bytes32 _name, address _address)
         public
         onlyOwner
         returns (bool)
     {
-        if (registry[_name] != address(0)) revert AlreadyRegistered();
+        if (registry[_name] != address(0)) return true;
 
         registry[_name] = _address;
         contracts.push(_name);
@@ -56,7 +55,7 @@ contract Registry is Ownable {
      * @param _address   address of the contract
      * @return           boolean indicating result of the operation
      */
-    function update(string memory _name, address _address)
+    function update(bytes32 _name, address _address)
         public
         onlyOwner
         returns (bool)

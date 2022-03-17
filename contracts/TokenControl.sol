@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -11,7 +11,7 @@ contract TokenControl is AccessControl {
 
     error TokenNotAllowed();
 
-    EnumerableSet.AddressSet private allowedTokens;
+    EnumerableSet.AddressSet internal allowedTokens;
 
     // -----------------------------------------------------------------
     // PUBLIC API
