@@ -76,6 +76,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         focus = _focus;
         safeAddress = _safeAddress;
         status = Status.Open;
+        setChecks(_checks);
 
         _setChecks(_checks);
 
