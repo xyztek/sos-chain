@@ -16,7 +16,7 @@ import "./Registry.sol";
 
 import "hardhat/console.sol";
 
-contract RequestManager is AccessControl, DynamicChecks {
+contract RequestManager is AccessControl, DynamicChecks, Registered {
     using EnumerableMap for EnumerableMap.UintToAddressMap;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -109,7 +109,8 @@ contract RequestManager is AccessControl, DynamicChecks {
             _recipient,
             _amount,
             _tokenAddress,
-            _description
+            _description,
+            checks
         );
 
         return index;
@@ -257,7 +258,8 @@ contract RequestManager is AccessControl, DynamicChecks {
         address indexed recipient,
         uint256 amount,
         address token,
-        string description
+        string description,
+        bytes32[] checks
     );
 
     event CheckApproved(
