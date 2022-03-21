@@ -85,13 +85,12 @@ describe("Governor.sol", function () {
     ).to.be.revertedWith("NotAllowed()");
   });
 
-  it("should return approved checks and their approvers", async function () {
-    const [_owner, EOA1] = await ethers.getSigners();
+  it("should return checks", async function () {
+    const [_owner, _EOA1] = await ethers.getSigners();
 
-    const [checks, approvers] = await stack.Governor.getApprovedChecks(0);
+    const checks = await stack.Governor.getChecks(0);
 
-    expect(checks).to.have.members(initialChecks.slice(0, 1));
-    expect(approvers).to.have.members([EOA1.address]);
+    expect(checks).to.have.members(initialChecks);
   });
 
   it("should return approval status for a request", async function () {
@@ -99,5 +98,13 @@ describe("Governor.sol", function () {
 
     expect(pending).to.eq(2);
     expect(all).to.eq(3);
+  });
+
+  it("should emit a CheckApproved event", async function () {
+    const [_owner, EOA1] = await ethers.getSigners();
+
+    await expect(
+      stack.Governor.connect(EOA1).approveRequest(0, initialChecks[1])
+    ).to.emit(stack.Governor, "CheckApproved");
   });
 });

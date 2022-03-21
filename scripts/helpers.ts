@@ -57,6 +57,13 @@ export async function handleRegistry(
   }
 }
 
+export function hasRole(contract: Contract, role: string, address: string) {
+  return contract.hasRole(
+    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(role)),
+    address
+  );
+}
+
 export function grantRole(contract: Contract, role: string, address: string) {
   return contract.grantRole(
     ethers.utils.keccak256(ethers.utils.toUtf8Bytes(role)),

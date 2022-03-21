@@ -118,7 +118,7 @@ contract RequestManager is AccessControl, DynamicChecks {
      * @param  _check  check to approve
      * @return         boolean indicating op result
      */
-    function approveRequest(uint256 _id, bytes32 _check)
+    function approveCheck(uint256 _id, bytes32 _check)
         public
         onlyRole(APPROVER_ROLE)
         onlyRequestsWithStatus(Status.Pending, _id)
@@ -130,7 +130,7 @@ contract RequestManager is AccessControl, DynamicChecks {
 
         _approveCheck(request, _check);
 
-        emit CheckApproved(_id, _check);
+        emit CheckApproved(_id, _check, msg.sender);
 
         if (request.pending.length() == 0) {
             _bumpStatus(request);
@@ -166,6 +166,15 @@ contract RequestManager is AccessControl, DynamicChecks {
     }
 
     /**
+     * @dev         get checks for a request
+     * @param  _id  request ID
+     * @return      checks
+     */
+    function getChecks(uint256 _id) external view returns (bytes32[] memory) {
+        return requests[_id].checks.values();
+    }
+
+    /**
      * @dev         get remaining checks for a request
      * @param  _id  request ID
      * @return      remaining checks
@@ -176,34 +185,6 @@ contract RequestManager is AccessControl, DynamicChecks {
         returns (bytes32[] memory)
     {
         return requests[_id].pending.values();
-    }
-
-    /**
-     * @dev         get approved checks for a request
-     * @param  _id  request ID
-     * @return      approved checks
-     */
-    function getApprovedChecks(uint256 _id)
-        external
-        view
-        returns (bytes32[] memory, address[] memory)
-    {
-        Request storage request = requests[_id];
-        uint256 allChecksLength = request.checks.length();
-        uint256 pendingChecksLength = allChecksLength -
-            request.pending.length();
-
-        bytes32[] memory checks = new bytes32[](pendingChecksLength);
-        address[] memory approvers = new address[](pendingChecksLength);
-
-        for (uint256 i = 0; i < allChecksLength; i++) {
-            bytes32 check = request.checks.at(i);
-            if (request.pending.contains(check)) continue;
-            checks[i] = check;
-            approvers[i] = request.approvals[check];
-        }
-
-        return (checks, approvers);
     }
 
     /**
@@ -270,7 +251,11 @@ contract RequestManager is AccessControl, DynamicChecks {
         string description
     );
 
-    event CheckApproved(uint256 indexed id, bytes32 indexed check);
+    event CheckApproved(
+        uint256 indexed id,
+        bytes32 indexed check,
+        address indexed approver
+    );
 
     event StatusChange(uint256 indexed id, Status indexed status);
 }
