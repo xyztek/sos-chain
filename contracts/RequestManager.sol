@@ -205,7 +205,7 @@ contract RequestManager is AccessControl, DynamicChecks {
     }
 
     // -----------------------------------------------------------------
-    // INTERNAL API
+    // INTERNAL
     // -----------------------------------------------------------------
 
     function _isApprovable(Request storage _request, bytes32 _check)
