@@ -53,7 +53,7 @@ describe("Governor.sol", function () {
   it("should revert an approve call if msg.sender lacks APPROVER_ROLE", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
     await expect(
-      stack.Governor.connect(EOA1).approveRequest(0, initialChecks[0])
+      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0])
     ).to.revertedWith("AccessControl");
   });
 
@@ -62,7 +62,7 @@ describe("Governor.sol", function () {
 
     await grantRole(stack.Governor, "APPROVER_ROLE", EOA1.address);
 
-    await stack.Governor.connect(EOA1).approveRequest(0, initialChecks[0]);
+    await stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0]);
 
     const remainingChecks = await stack.Governor.getRemainingChecks(0);
 
@@ -81,7 +81,7 @@ describe("Governor.sol", function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
     await expect(
-      stack.Governor.connect(EOA1).approveRequest(0, initialChecks[0])
+      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0])
     ).to.be.revertedWith("NotAllowed()");
   });
 
@@ -104,7 +104,7 @@ describe("Governor.sol", function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
     await expect(
-      stack.Governor.connect(EOA1).approveRequest(0, initialChecks[1])
+      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[1])
     ).to.emit(stack.Governor, "CheckApproved");
   });
 });
