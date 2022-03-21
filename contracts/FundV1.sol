@@ -25,6 +25,8 @@ contract FundV1 is AccessControl, TokenControl {
     string public focus;
     string public description;
 
+    bool public requestable;
+
     enum Status {
         Open,
         Paused,
