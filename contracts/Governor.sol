@@ -20,10 +20,10 @@ contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
     using SafeMath for uint256;
 
     constructor(address _registry, bytes32[] memory _initialChecks)
-        Registered(_registry)
         RequestManager(_initialChecks)
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _register(_registry, "GOVERNOR");
     }
 
     function _getFund(uint256 _fundId) internal view returns (FundV1) {

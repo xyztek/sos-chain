@@ -25,10 +25,11 @@ contract SOS is AccessControl, ERC721, Registered {
 
     constructor(address _registry, address _minterAddress)
         ERC721("SOS Chain", "SOS")
-        Registered(_registry)
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, _minterAddress);
+
+        _register(_registry, "SOS");
     }
 
     // -----------------------------------------------------------------

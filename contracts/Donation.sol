@@ -20,7 +20,9 @@ contract Donation is Registered, Ownable {
     Counters.Counter private donationIds;
     mapping(uint256 => Donations.Record) private donations;
 
-    constructor(address _registry) Registered(_registry) {}
+    constructor(address _registry) {
+        _register(_registry, "DONATION");
+    }
 
     // -----------------------------------------------------------------
     // PUBLIC API

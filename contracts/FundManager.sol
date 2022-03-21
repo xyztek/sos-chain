@@ -26,9 +26,11 @@ contract FundManager is AccessControl, Registered {
         uint256 status;
     }
 
-    constructor(address _registry, address _impl) Registered(_registry) {
+    constructor(address _registry, address _impl) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         baseFund = _impl;
+
+        _register(_registry, "FUND_MANAGER");
     }
 
     // -----------------------------------------------------------------
