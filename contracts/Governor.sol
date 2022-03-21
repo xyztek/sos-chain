@@ -27,7 +27,7 @@ contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
     }
 
     function _getFund(uint256 _fundId) internal view returns (FundV1) {
-        address fundAddress = FundManager(getAddress("FUND_MANAGER"))
+        address fundAddress = FundManager(_getAddress("FUND_MANAGER"))
             .getFundAddress(_fundId);
 
         return FundV1(fundAddress);

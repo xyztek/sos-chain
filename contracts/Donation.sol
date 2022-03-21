@@ -78,7 +78,7 @@ contract Donation is Registered, Ownable {
         returns (address)
     {
         return
-            FundManager(getAddress("FUND_MANAGER")).getDepositAddressFor(
+            FundManager(_getAddress("FUND_MANAGER")).getDepositAddressFor(
                 _fundId,
                 _tokenAddress
             );
@@ -134,7 +134,7 @@ contract Donation is Registered, Ownable {
         internal
         returns (uint256)
     {
-        return SOS(getAddress("SOS")).mint(_recipient, _donationId);
+        return SOS(_getAddress("SOS")).mint(_recipient, _donationId);
     }
 
     // -----------------------------------------------------------------

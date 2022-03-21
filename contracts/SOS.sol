@@ -47,14 +47,14 @@ contract SOS is AccessControl, ERC721, Registered {
 
     function SVG(uint256 _tokenId) public view returns (string memory) {
         uint256 donationId = donations[_tokenId];
-        Donations.Record memory record = Donation(getAddress("DONATION"))
+        Donations.Record memory record = Donation(_getAddress("DONATION"))
             .getRecord(donationId);
 
         (string memory fundName, string memory fundFocus, , ) = FundManager(
-            getAddress("FUND_MANAGER")
+            _getAddress("FUND_MANAGER")
         ).getFundMeta(record.fundId);
 
-        NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
+        NFTDescriptor descriptor = NFTDescriptor(_getAddress("NFT_DESCRIPTOR"));
 
         address owner = ownerOf(_tokenId);
 
@@ -76,14 +76,14 @@ contract SOS is AccessControl, ERC721, Registered {
         returns (string memory)
     {
         uint256 donationId = donations[_tokenId];
-        Donations.Record memory record = Donation(getAddress("DONATION"))
+        Donations.Record memory record = Donation(_getAddress("DONATION"))
             .getRecord(donationId);
 
         (string memory fundName, string memory fundFocus, , ) = FundManager(
-            getAddress("FUND_MANAGER")
+            _getAddress("FUND_MANAGER")
         ).getFundMeta(record.fundId);
 
-        NFTDescriptor descriptor = NFTDescriptor(getAddress("NFT_DESCRIPTOR"));
+        NFTDescriptor descriptor = NFTDescriptor(_getAddress("NFT_DESCRIPTOR"));
 
         address owner = ownerOf(_tokenId);
 
