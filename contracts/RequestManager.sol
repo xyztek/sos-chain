@@ -32,7 +32,7 @@ contract RequestManager is AccessControl, Registered {
 
     Request[] private requests;
 
-    enum Status {
+    enum StatusRM {
         Pending,
         Approved,
         Finalized,
@@ -50,7 +50,7 @@ contract RequestManager is AccessControl, Registered {
         uint256 amount;
         address token;
         address recipient;
-        Status status;
+        StatusRM status;
         Geo.Coordinates location;
         bytes32[2][] checks;
         uint256 pendingCheckCount;
@@ -122,7 +122,7 @@ contract RequestManager is AccessControl, Registered {
             _bumpStatus(request);
         }
 
-        if (request.status == Status.Approved) {
+        if (request.status == StatusRM.Approved) {
             //_finalizeRequest();
         }
 
@@ -279,7 +279,7 @@ contract RequestManager is AccessControl, Registered {
         if (uint8(_request.status) == uint8(type(Status).max))
             revert NotAllowed();
 
-        _request.status = Status(uint8(_request.status) + 1);
+        _request.status = StatusRM(uint8(_request.status) + 1);
 
         emit StatusChange(_request.id, _request.status);
     }
@@ -352,5 +352,5 @@ contract RequestManager is AccessControl, Registered {
         bytes data
     );
 
-    event StatusChange(uint256 indexed id, Status indexed status);
+    event StatusChange(uint256 indexed id, StatusRM indexed status);
 }
