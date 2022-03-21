@@ -19,8 +19,7 @@ error MissingRole(bytes32);
 contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
     using SafeMath for uint256;
 
-    constructor(address _registry, bytes32[] memory _initialChecks)
-        RequestManager(_initialChecks)
+    constructor(address _registry)
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setRegistry(_registry);

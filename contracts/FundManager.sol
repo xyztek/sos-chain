@@ -149,6 +149,7 @@ contract FundManager is AccessControl, Registered {
         string memory _focus,
         string memory _description,
         address[] memory _allowedTokens,
+        bytes32[] memory _checks,
         address _safeAddress
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
@@ -160,6 +161,7 @@ contract FundManager is AccessControl, Registered {
             _focus,
             _description,
             _allowedTokens,
+            _checks,
             _safeAddress,
             msg.sender
         );

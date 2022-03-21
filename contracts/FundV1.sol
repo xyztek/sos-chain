@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 import "./TokenControl.sol";
+import "./DynamicChecks.sol";
 
 import "hardhat/console.sol";
 
@@ -15,7 +16,7 @@ error NotAllowed();
 
 // Master Fund (v1) Contract
 // FundManager create clones of this contract.
-contract FundV1 is AccessControl, TokenControl {
+contract FundV1 is AccessControl, TokenControl, DynamicChecks {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     Status public status;
@@ -40,6 +41,7 @@ contract FundV1 is AccessControl, TokenControl {
         string memory _focus,
         string memory _description,
         address[] memory _allowedTokens,
+        bytes32[] memory _checks,
         address _safeAddress,
         address _owner
     ) external {
@@ -53,6 +55,7 @@ contract FundV1 is AccessControl, TokenControl {
         description = _description;
         safeAddress = _safeAddress;
         status = Status.Open;
+        setChecks(_checks);
 
         uint256 i = 0;
         while (i < _allowedTokens.length) {

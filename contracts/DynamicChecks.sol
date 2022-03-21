@@ -8,11 +8,13 @@ import "hardhat/console.sol";
 contract DynamicChecks is AccessControl {
     error NoZeroChecks();
     error CheckAlreadyApproved();
+    error Forbidden();
 
     bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
     bytes32[] internal checks;
 
-    constructor(bytes32[] memory _initialChecks) {
+    function setChecks(bytes32[] memory _initialChecks) internal{
+        if (checks.length > 0) revert Forbidden();    
         if (_initialChecks.length < 1) revert NoZeroChecks();
         checks = _initialChecks;
     }

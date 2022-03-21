@@ -11,12 +11,12 @@ import "./libraries/Geo.sol";
 
 import "./FundV1.sol";
 import "./FundManager.sol";
-import "./DynamicChecks.sol";
 import "./Registry.sol";
 
 import "hardhat/console.sol";
 
-contract RequestManager is AccessControl, DynamicChecks, Registered {
+
+contract RequestManager is AccessControl, FundV1, Registered {
     using EnumerableMap for EnumerableMap.UintToAddressMap;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -26,7 +26,7 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
 
     Request[] private requests;
 
-    enum Status {
+    enum StatusRM {
         Pending,
         Approved,
         Finalized,
@@ -39,16 +39,13 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
         uint256 amount;
         address token;
         address recipient;
-        Status status;
+        StatusRM status;
         Geo.Coordinates location;
         EnumerableSet.Bytes32Set checks;
         EnumerableSet.Bytes32Set pending;
         mapping(bytes32 => address) approvals;
     }
 
-    constructor(bytes32[] memory _defaultChecks)
-        DynamicChecks(_defaultChecks)
-    {}
 
     // -----------------------------------------------------------------
     // PUBLIC API
@@ -87,7 +84,7 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
         Request storage request = requests[index];
 
         request.id = index;
-        request.status = Status.Pending;
+        request.status = StatusRM.Pending;
         request.location = Geo.coordinatesFromPair(_coordinates);
         request.recipient = _recipient;
         request.fundId = _fundId;
@@ -102,6 +99,10 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
             request.pending.add(checks[i]);
             i++;
         }
+
+        address fundManager = getAddress("FUND_MANAGER");
+        address fundAddress = FundManager(fundManager).getFundAddress(_fundId);
+        bytes32[] memory checks = FundV1(fundAddress).allChecks();
 
         emit RequestCreated(
             index,
@@ -125,7 +126,7 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
     function approveCheck(uint256 _id, bytes32 _check)
         public
         onlyRole(APPROVER_ROLE)
-        onlyRequestsWithStatus(Status.Pending, _id)
+        onlyRequestsWithStatus(StatusRM.Pending, _id)
         returns (bool)
     {
         Request storage request = requests[_id];
@@ -140,7 +141,7 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
             _bumpStatus(request);
         }
 
-        if (request.status == Status.Approved) {
+        if (request.status == StatusRM.Approved) {
             //_finalizeRequest();
         }
 
@@ -152,7 +153,7 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
      * @param  _id  request ID
      * @return      request status
      */
-    function getStatus(uint256 _id) external view returns (Status) {
+    function getStatus(uint256 _id) external view returns (StatusRM) {
         return requests[_id].status;
     }
 
@@ -228,7 +229,7 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
         if (uint8(_request.status) == uint8(type(Status).max))
             revert NotAllowed();
 
-        _request.status = Status(uint8(_request.status) + 1);
+        _request.status = StatusRM(uint8(_request.status) + 1);
 
         emit StatusChange(_request.id, _request.status);
     }
@@ -244,7 +245,7 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
     // MODIFIERS
     // -----------------------------------------------------------------
 
-    modifier onlyRequestsWithStatus(Status _status, uint256 _requestId) {
+    modifier onlyRequestsWithStatus(StatusRM _status, uint256 _requestId) {
         if (requests[_requestId].status != _status) revert NotAllowed();
         _;
     }
@@ -269,5 +270,5 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
         address indexed approver
     );
 
-    event StatusChange(uint256 indexed id, Status indexed status);
+    event StatusChange(uint256 indexed id, StatusRM indexed status);
 }
