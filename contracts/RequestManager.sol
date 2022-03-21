@@ -76,8 +76,8 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
         requireChecks /* onlyOpenFunds */
         returns (uint256)
     {
-        FundV1 fund = _getFund(_fundId);
-        if (!fund.requestable()) revert NotAllowed();
+        // FundV1 fund = _getFund(_fundId);
+        // if (!fund.requestable()) revert NotAllowed();
 
         // pre-allocate storage location for the new Request
         uint256 index = requests.length;
@@ -235,8 +235,9 @@ contract RequestManager is AccessControl, DynamicChecks, Registered {
 
     function _getFund(uint256 _fundId) internal returns (FundV1) {
         FundManager manager = FundManager(_getAddress("FUND_MANAGER"));
+        address fundAddress = manager.getFundAddress(_fundId);
 
-        return FundV1(manager.getFundAddress(_fundId));
+        return FundV1(fundAddress);
     }
 
     // -----------------------------------------------------------------

@@ -29,7 +29,7 @@ contract SOS is AccessControl, ERC721, Registered {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, _minterAddress);
 
-        _register(_registry, "SOS");
+        _setRegistry(_registry);
     }
 
     // -----------------------------------------------------------------

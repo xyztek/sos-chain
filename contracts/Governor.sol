@@ -23,7 +23,7 @@ contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
         RequestManager(_initialChecks)
     {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _register(_registry, "GOVERNOR");
+        _setRegistry(_registry);
     }
 
     // -----------------------------------------------------------------

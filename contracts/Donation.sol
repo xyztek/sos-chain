@@ -21,7 +21,7 @@ contract Donation is Registered, Ownable {
     mapping(uint256 => Donations.Record) private donations;
 
     constructor(address _registry) {
-        _register(_registry, "DONATION");
+        _setRegistry(_registry);
     }
 
     // -----------------------------------------------------------------

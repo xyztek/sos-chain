@@ -22,15 +22,10 @@ contract Registered {
     }
 
     /**
-     * @dev           self register
-     * @param  _name  name to register with
-     * @return        boolean indicating op result
+     * @dev               set registry
+     * @param  _registry  registry address
      */
-    function _register(address _registry, bytes32 _name)
-        internal
-        returns (bool)
-    {
+    function _setRegistry(address _registry) internal {
         registry = Registry(_registry);
-        return registry.register(_name, address(this));
     }
 }
