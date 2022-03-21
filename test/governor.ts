@@ -121,7 +121,7 @@ describe("Governor.sol", function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
     await expect(
-      stack.Governor.connect(EOA1).approveRequest(0, initialChecks[1])
+      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[1])
     ).to.emit(stack.Governor, "CheckApproved");
   });
 });
