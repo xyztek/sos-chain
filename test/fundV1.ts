@@ -59,7 +59,6 @@ describe("FundV1.sol", function () {
 
   it("should return safe balances", async function () {
     const balances = await factory.attach(funds[0]).getBalances();
-    console.log(balances);
     assert(balances[0].length == balances[1].length);
   });
 
