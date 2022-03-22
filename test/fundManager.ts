@@ -8,9 +8,7 @@ import {
   deployContract,
   deployGnosisSafe,
   deployGnosisSafeProxyFactory,
-import {
   createFund,
-  deployContract,
   deployStack,
   Stack,
 } from "../scripts/helpers";
