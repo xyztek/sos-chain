@@ -71,6 +71,27 @@ export function grantRole(contract: Contract, role: string, address: string) {
   );
 }
 
+export function createFund(
+  contract: Contract,
+  allowedTokenAddresses: string[],
+  underlyingSafeAddress: string,
+  name = "Test Fund",
+  focus = "Test Focus",
+  description = "Test Description Text",
+  checks = ["TEST_CHECK_001", "TEST_CHECK_002", "TEST_CHECK_003"].map((check) =>
+    ethers.utils.formatBytes32String(check)
+  )
+) {
+  return contract.createFund(
+    name,
+    focus,
+    description,
+    underlyingSafeAddress,
+    allowedTokenAddresses,
+    checks
+  );
+}
+
 export async function getAddress(
   registry: Contract,
   name: string
@@ -153,11 +174,8 @@ export async function deploySOS(
   return deployContract("SOS", {}, [registry.address, minter]);
 }
 
-export async function deployGovernor(
-  registry: Contract,
-  initialChecks: string[]
-): Promise<Contract> {
-  return deployContract("Governor", {}, [registry.address, initialChecks]);
+export async function deployGovernor(registry: Contract): Promise<Contract> {
+  return deployContract("Governor", {}, [registry.address]);
 }
 
 export async function deployDonation(registry: Contract): Promise<Contract> {
@@ -187,7 +205,7 @@ export async function deployStack(
       ethers.utils.formatBytes32String(check)
     );
 
-  const Governor = await deployGovernor(Registry, checks);
+  const Governor = await deployGovernor(Registry);
 
   await Registry.register(asBytes32("FUND_MANAGER"), FundManager.address);
   await Registry.register(asBytes32("DONATION"), Donation.address);

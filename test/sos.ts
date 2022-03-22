@@ -2,7 +2,12 @@ import { expect } from "chai";
 import { Contract, EventFilter } from "ethers";
 import { ethers } from "hardhat";
 
-import { deployERC20, deployStack, Stack } from "../scripts/helpers";
+import {
+  createFund,
+  deployERC20,
+  deployStack,
+  Stack,
+} from "../scripts/helpers";
 import testSVG from "./testSVG";
 
 describe("SOS.sol", function () {
@@ -29,13 +34,7 @@ describe("SOS.sol", function () {
   it("should return a token URI for an ERC721", async function () {
     const [owner, EOA1] = await ethers.getSigners();
 
-    await stack.FundManager.createFund(
-      "Test Fund",
-      "Test Focus",
-      "Test Description Text",
-      [ERC20.address],
-      owner.address
-    );
+    await createFund(stack.FundManager, [ERC20.address], owner.address);
 
     const donationAmount = ethers.utils.parseUnits(
       "120",

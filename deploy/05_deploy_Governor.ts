@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const Governor = await deploy("Governor", {
     from: deployer,
-    args: [Registry.address, defaultChecks],
+    args: [Registry.address],
     log: true,
   });
 

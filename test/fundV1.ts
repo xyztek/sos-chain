@@ -2,7 +2,12 @@ import { assert, expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract, ContractFactory } from "ethers";
 
-import { deployERC20, deployStack, Stack } from "../scripts/helpers";
+import {
+  createFund,
+  deployERC20,
+  deployStack,
+  Stack,
+} from "../scripts/helpers";
 
 describe("FundV1.sol", function () {
   let stack: Stack;
@@ -22,13 +27,7 @@ describe("FundV1.sol", function () {
 
     factory = await ethers.getContractFactory("FundV1");
 
-    await stack.FundManager.createFund(
-      "Test Fund",
-      "Test Focus",
-      "Test Description Text",
-      [USDC.address],
-      EOA1.address
-    );
+    await createFund(stack.FundManager, [USDC.address], EOA1.address);
 
     funds = await stack.FundManager.getFunds();
   });

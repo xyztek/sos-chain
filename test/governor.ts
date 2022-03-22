@@ -2,7 +2,13 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 
-import { deployERC20, deployStack, grantRole, Stack } from "../scripts/helpers";
+import {
+  createFund,
+  deployERC20,
+  deployStack,
+  grantRole,
+  Stack,
+} from "../scripts/helpers";
 
 describe("Governor.sol", function () {
   let stack: Stack;
@@ -27,9 +33,12 @@ describe("Governor.sol", function () {
   };
 
   before(async () => {
+    const [_owner, _EOA1, EOA2] = await ethers.getSigners();
+
     stack = await deployStack();
     ERC20 = await deployERC20();
 
+    await createFund(stack.FundManager, [ERC20.address], EOA2.address);
     requestAmount = ethers.utils.parseUnits("1000", await ERC20.decimals());
   });
 

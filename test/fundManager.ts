@@ -8,6 +8,9 @@ import {
   deployContract,
   deployGnosisSafe,
   deployGnosisSafeProxyFactory,
+import {
+  createFund,
+  deployContract,
   deployStack,
   Stack,
 } from "../scripts/helpers";
@@ -39,10 +42,8 @@ describe("FundManager.sol", function () {
     );
 
     await expect(
-      contract.createFund(
-        "Test Fund",
-        "Test Focus",
-        "Test Description Text",
+      createFund(
+        contract,
         ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
       )
@@ -56,6 +57,9 @@ describe("FundManager.sol", function () {
       "Test Fund",
       "Test Focus",
       "Test Description Text",
+  it("should emit a FundCreated event", async function () {
+    const fundCreated = await createFund(
+      contract,
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
       [owner],
       1
