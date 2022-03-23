@@ -18,6 +18,10 @@ contract RequestManager is AccessControl, Registered {
     using EnumerableMap for EnumerableMap.UintToAddressMap;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
+    bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
+    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+
     Request[] private requests;
 
     error MissingRole(bytes32);
@@ -27,7 +31,7 @@ contract RequestManager is AccessControl, Registered {
         Approved,
         Finalized,
         Executed
-    } //rejected??
+    }
 
     struct Request {
         uint256 id;
@@ -116,9 +120,13 @@ contract RequestManager is AccessControl, Registered {
         returns (bool)
     {
         Request storage request = requests[_id];
+        FundV1 fund = _getFund(request.fundId);
 
-        if (!_isApprovable(request, _check)) revert NotAllowed();
-        _isFundApprover(request.fundId);
+        if (!_isApprovable(request, _check) || !_isFundOpen(fund))
+            revert NotAllowed();
+
+        if (!_hasFundRole(fund, APPROVER_ROLE))
+            revert MissingRole(APPROVER_ROLE);
 
         _approveCheck(request, _check);
 
@@ -205,6 +213,18 @@ contract RequestManager is AccessControl, Registered {
         return
             _request.pending.contains(_check) &&
             _request.approvals[_check] == address(0);
+    }
+
+    function _isFundOpen(FundV1 _fund) internal view returns (bool) {
+        return _fund.isOpen();
+    }
+
+    function _hasFundRole(FundV1 _fund, bytes32 _role)
+        internal
+        view
+        returns (bool)
+    {
+        return _fund.hasRole(_role, msg.sender);
     }
 
     function _approveCheck(Request storage _request, bytes32 _check) internal {
