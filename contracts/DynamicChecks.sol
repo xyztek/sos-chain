@@ -7,15 +7,12 @@ import "hardhat/console.sol";
 
 contract DynamicChecks is AccessControl {
     error NoZeroChecks();
-    error CheckAlreadyApproved();
     error Forbidden();
 
     bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
     bytes32[] internal checks;
 
-    function setChecks(bytes32[] memory _initialChecks) internal{
-        if (checks.length > 0) revert Forbidden();    
-        if (_initialChecks.length < 1) revert NoZeroChecks();
+    function setChecks(bytes32[] memory _initialChecks) internal {
         checks = _initialChecks;
     }
 
@@ -56,10 +53,5 @@ contract DynamicChecks is AccessControl {
         _array.pop();
 
         // TODO: ENSURE _array IS PASSED AS REFERENCE IN TESTS
-    }
-
-    modifier requireChecks() {
-        if (checks.length < 1) revert NoZeroChecks();
-        _;
     }
 }

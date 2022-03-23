@@ -129,7 +129,8 @@ contract FundManager is AccessControl, Registered {
         address _safeAddress,
         address[] memory _allowedTokens,
         bool _requestable,
-        bytes32[] memory _checks
+        bytes32[] memory _checks,
+        address[] memory _whitelist
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
 
@@ -138,11 +139,12 @@ contract FundManager is AccessControl, Registered {
         FundV1(cloneAddress).initialize(
             _name,
             _focus,
+            _safeAddress,
+            msg.sender,
             _allowedTokens,
             _requestable,
             _checks,
-            _safeAddress,
-            msg.sender
+            _whitelist
         );
 
         funds.push(cloneAddress);

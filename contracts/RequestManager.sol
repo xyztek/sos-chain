@@ -70,6 +70,7 @@ contract RequestManager is AccessControl, Registered {
     ) public returns (uint256) {
         FundV1 fund = _getFund(_fundId);
         if (!fund.requestable()) revert NotAllowed();
+        if (!fund.isWhitelisted(msg.sender)) revert NotAllowed();
 
         uint256 id = _createRequest(
             _amount,

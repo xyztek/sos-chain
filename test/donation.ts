@@ -23,7 +23,13 @@ describe("Donation.sol", function () {
 
     DECIMALS = await ERC20.decimals();
 
-    await createFund(stack.FundManager, [ERC20.address], EOA2.address);
+    await createFund(
+      stack.FundManager,
+      [ERC20.address],
+      EOA2.address,
+      false,
+      []
+    );
   });
 
   it("should accept a donation and deposit into the safe", async function () {

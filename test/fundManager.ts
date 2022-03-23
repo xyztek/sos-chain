@@ -43,7 +43,9 @@ describe("FundManager.sol", function () {
       createFund(
         contract,
         ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        false,
+        []
       )
     ).to.emit(contract, "FundCreated");
   });
@@ -59,37 +61,9 @@ describe("FundManager.sol", function () {
     const fundCreated = await createFund(
       contract,
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-      [owner],
-      1
-    );
-
-    const receipt: ContractReceipt = await fundCreated.wait();
-
-    const event = receipt.events?.find((x) => x.event == "FundCreated");
-
-    const fundAddress = await contract.getFundAddress(event?.args?.id);
-
-    const gnosisSafeAddress = await fundFactory
-      .attach(fundAddress)
-      .getDepositAddressFor("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
-
-    const isOwner = await gnosisFactory
-      .attach(gnosisSafeAddress)
-      .isOwner(owner);
-
-    expect(isOwner).to.equal(true);
-  });
-
-  it("should deploy a governod Gnosis Safe and create a fund", async function () {
-    const owner = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";
-
-    const fundCreated = await contract.createFundWithSafe(
-      "Test Fund",
-      "Test Focus",
-      "Test Description Text",
-      ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-      [owner],
-      1
+      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      false,
+      []
     );
 
     const receipt: ContractReceipt = await fundCreated.wait();

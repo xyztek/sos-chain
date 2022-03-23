@@ -76,12 +76,13 @@ export function createFund(
   allowedTokenAddresses: string[],
   underlyingSafeAddress: string,
   requestable = false,
-  name = "Test Fund",
-  focus = "Test Focus",
-  description = "Test Description Text",
   checks = ["TEST_CHECK_001", "TEST_CHECK_002", "TEST_CHECK_003"].map((check) =>
     ethers.utils.formatBytes32String(check)
-  )
+  ),
+  whitelist = [],
+  name = "Test Fund",
+  focus = "Test Focus",
+  description = "Test Description Text"
 ) {
   return contract.createFund(
     name,
@@ -90,7 +91,8 @@ export function createFund(
     underlyingSafeAddress,
     allowedTokenAddresses,
     requestable,
-    checks
+    checks,
+    whitelist
   );
 }
 

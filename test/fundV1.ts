@@ -27,7 +27,13 @@ describe("FundV1.sol", function () {
 
     factory = await ethers.getContractFactory("FundV1");
 
-    await createFund(stack.FundManager, [USDC.address], EOA1.address);
+    await createFund(
+      stack.FundManager,
+      [USDC.address],
+      EOA1.address,
+      false,
+      []
+    );
 
     funds = await stack.FundManager.getFunds();
   });

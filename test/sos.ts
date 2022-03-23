@@ -34,7 +34,13 @@ describe("SOS.sol", function () {
   it("should return a token URI for an ERC721", async function () {
     const [owner, EOA1] = await ethers.getSigners();
 
-    await createFund(stack.FundManager, [ERC20.address], owner.address);
+    await createFund(
+      stack.FundManager,
+      [ERC20.address],
+      owner.address,
+      false,
+      []
+    );
 
     const donationAmount = ethers.utils.parseUnits(
       "120",

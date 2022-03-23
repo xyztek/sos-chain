@@ -26,10 +26,10 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
     Status public status;
     address private factory;
     address private safeAddress;
+    bool public requestable;
     string public name;
     string public focus;
-
-    bool public requestable;
+    EnumerableSet.AddressSet private whitelist;
 
     enum Status {
         Open,
@@ -42,13 +42,25 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
     function initialize(
         string memory _name,
         string memory _focus,
+        address _safeAddress,
+        address _owner,
         address[] memory _allowedTokens,
         bool _requestable,
         bytes32[] memory _checks,
-        address _safeAddress,
-        address _owner
+        address[] memory _whitelist
     ) external {
         if (factory != address(0)) revert Forbidden();
+        if (_requestable) {
+            require(
+                _checks.length > 0,
+                "A set of initial checks are required for a requestable Fund."
+            );
+        }
+
+        if (_whitelist.length > 0 || _checks.length > 0) {
+            require(_requestable, "Fund must be set as requestable.");
+        }
+
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
         factory = msg.sender;
@@ -60,11 +72,8 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
         status = Status.Open;
         setChecks(_checks);
 
-        uint256 i = 0;
-        while (i < _allowedTokens.length) {
-            allowedTokens.add(_allowedTokens[i]);
-            i++;
-        }
+        _batchSet(whitelist, _whitelist);
+        _batchSet(allowedTokens, _allowedTokens);
     }
 
     // -----------------------------------------------------------------
@@ -126,6 +135,15 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
         return status == Status.Open;
     }
 
+    /**
+     * @dev                   check if address is whitelisted
+     * @return                boolean indicating status
+     */
+    function isWhitelisted(address _address) external view returns (bool) {
+        if (whitelist.length() == 0) return true;
+        return whitelist.contains(_address);
+    }
+
     // -----------------------------------------------------------------
     // ACCESS CONTROLLED
     // -----------------------------------------------------------------
@@ -175,6 +193,23 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
         emit StatusChange(uint256(_status));
 
         return true;
+    }
+
+    /**
+     * @dev             batch set insertion
+     * @param  _set     pointer to storage EnumerableSet
+     * @param  _values  array of values to insert
+     */
+    function _batchSet(
+        EnumerableSet.AddressSet storage _set,
+        address[] memory _values
+    ) internal {
+        uint256 length = _values.length;
+        uint256 i = 0;
+        while (i < length) {
+            _set.add(_values[i]);
+            i++;
+        }
     }
 
     // -----------------------------------------------------------------
