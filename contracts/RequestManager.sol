@@ -39,7 +39,7 @@ contract RequestManager is AccessControl, Registered {
         Approved,
         Finalized,
         Executed
-    } //rejected??
+    }
 
     struct Signature {
         bool approved;
