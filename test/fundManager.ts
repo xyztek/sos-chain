@@ -142,17 +142,6 @@ describe("FundManager.sol", function () {
     expect(await contract.getFunds()).to.be.not.empty;
   });
 
-  it("should return meta of open funds", async function () {
-    const meta = await contract.getFundsMeta();
-    expect(meta).to.be.not.empty;
-
-    expect(meta[0].id).to.be.instanceOf(BigNumber);
-    expect(meta[0].name).to.eq("Test Fund");
-    expect(meta[0].focus).to.eq("Test Focus");
-    expect(meta[0].description).to.eq("Test Description Text");
-    expect(meta[0].status).to.eq(0);
-  });
-
   it("should return the address of a fund", async function () {
     expect(await contract.getFundAddress(0)).to.be.properAddress;
   });

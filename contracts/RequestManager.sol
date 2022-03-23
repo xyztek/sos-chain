@@ -25,6 +25,8 @@ contract RequestManager is AccessControl, Registered {
 
     Request[] private requests;
 
+    error MissingRole(bytes32);
+
     enum Status {
         Pending,
         Approved,
@@ -116,13 +118,13 @@ contract RequestManager is AccessControl, Registered {
      */
     function approveCheck(uint256 _id, bytes32 _check)
         public
-        onlyRole(APPROVER_ROLE)
         onlyRequestsWithStatus(Status.Pending, _id)
         returns (bool)
     {
         Request storage request = requests[_id];
 
         if (!_isApprovable(request, _check)) revert NotAllowed();
+        _isFundApprover(request.fundId);
 
         _approveCheck(request, _check);
 
@@ -239,6 +241,13 @@ contract RequestManager is AccessControl, Registered {
     {
         FundV1 fund = _getFund(_fundId);
         return fund.allChecks();
+    }
+
+    function _isFundApprover(uint256 _fundId) internal view {
+        FundV1 fund = _getFund(_fundId);
+        if (!fund.isOpen()) revert NotAllowed();
+        if (!fund.hasRole(APPROVER_ROLE, msg.sender))
+            revert MissingRole(APPROVER_ROLE);
     }
 
     // -----------------------------------------------------------------

@@ -68,6 +68,10 @@ const config: HardhatUserConfig = {
     safe: 9,
   },
   networks: {
+    fuji: {
+      url: `https://speedy-nodes-nyc.moralis.io/20bb3a98759a92194f0b3e8a/avalanche/testnet`,
+      accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`],
+    },
     rinkeby: {
       url: `https://speedy-nodes-nyc.moralis.io/20bb3a98759a92194f0b3e8a/eth/rinkeby`,
       accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`],

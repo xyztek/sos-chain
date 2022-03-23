@@ -61,15 +61,24 @@ describe("Governor.sol", function () {
 
   it("should revert an approve call if msg.sender lacks APPROVER_ROLE", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
+    const role = ethers.utils.keccak256(
+      ethers.utils.toUtf8Bytes("APPROVER_ROLE")
+    );
     await expect(
       stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0])
-    ).to.revertedWith("AccessControl");
+    ).to.revertedWith(`MissingRole("${role}")`);
   });
 
   it("should approve a check if msg.send has APPROVER_ROLE", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
-    await grantRole(stack.Governor, "APPROVER_ROLE", EOA1.address);
+    const fundAddress = await stack.FundManager.getFundAddress(0);
+
+    const fund = (await ethers.getContractFactory("FundV1")).attach(
+      fundAddress
+    );
+
+    await grantRole(fund, "APPROVER_ROLE", EOA1.address);
 
     await stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0]);
 

@@ -46,13 +46,11 @@ contract SOS is AccessControl, ERC721, Registered {
     }
 
     function SVG(uint256 _tokenId) public view returns (string memory) {
-        uint256 donationId = donations[_tokenId];
-        Donations.Record memory record = Donation(_getAddress("DONATION"))
-            .getRecord(donationId);
+        Donations.Record memory record = _getDonationRecord(_tokenId);
 
-        (string memory fundName, string memory fundFocus, , ) = FundManager(
-            _getAddress("FUND_MANAGER")
-        ).getFundMeta(record.fundId);
+        (string memory fundName, string memory fundFocus) = _getFundMeta(
+            record.fundId
+        );
 
         NFTDescriptor descriptor = NFTDescriptor(_getAddress("NFT_DESCRIPTOR"));
 
@@ -75,13 +73,11 @@ contract SOS is AccessControl, ERC721, Registered {
         override
         returns (string memory)
     {
-        uint256 donationId = donations[_tokenId];
-        Donations.Record memory record = Donation(_getAddress("DONATION"))
-            .getRecord(donationId);
+        Donations.Record memory record = _getDonationRecord(_tokenId);
 
-        (string memory fundName, string memory fundFocus, , ) = FundManager(
-            _getAddress("FUND_MANAGER")
-        ).getFundMeta(record.fundId);
+        (string memory fundName, string memory fundFocus) = _getFundMeta(
+            record.fundId
+        );
 
         NFTDescriptor descriptor = NFTDescriptor(_getAddress("NFT_DESCRIPTOR"));
 
@@ -115,7 +111,7 @@ contract SOS is AccessControl, ERC721, Registered {
     }
 
     // -----------------------------------------------------------------
-    // ADMIN API
+    // ADMIN
     // -----------------------------------------------------------------
 
     /**
@@ -138,5 +134,22 @@ contract SOS is AccessControl, ERC721, Registered {
         donations[tokenId] = _donationId;
 
         return tokenId;
+    }
+
+    function _getDonationRecord(uint256 _tokenId)
+        internal
+        view
+        returns (Donations.Record memory)
+    {
+        uint256 donationId = donations[_tokenId];
+        return Donation(_getAddress("DONATION")).getRecord(donationId);
+    }
+
+    function _getFundMeta(uint256 _fundId)
+        internal
+        view
+        returns (string memory, string memory)
+    {
+        return FundManager(_getAddress("FUND_MANAGER")).getFundMeta(_fundId);
     }
 }

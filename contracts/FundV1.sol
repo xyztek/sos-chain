@@ -24,7 +24,6 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
     address private safeAddress;
     string public name;
     string public focus;
-    string public description;
 
     bool public requestable;
 
@@ -39,7 +38,6 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
     function initialize(
         string memory _name,
         string memory _focus,
-        string memory _description,
         address[] memory _allowedTokens,
         bytes32[] memory _checks,
         address _safeAddress,
@@ -52,7 +50,6 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
 
         name = _name;
         focus = _focus;
-        description = _description;
         safeAddress = _safeAddress;
         status = Status.Open;
         setChecks(_checks);
@@ -72,17 +69,8 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
      * @dev                   get metadata for a fund
      * @return                metadata of the fund
      */
-    function getMeta()
-        external
-        view
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            uint256
-        )
-    {
-        return (name, focus, description, uint256(status));
+    function getMeta() external view returns (string memory, string memory) {
+        return (name, focus);
     }
 
     /**

@@ -199,12 +199,6 @@ export async function deployStack(
   const GnosisSafe = await deployGnosisSafe();
   const GnosisSafeProxyFactory = await deployGnosisSafeProxyFactory();
 
-  const checks =
-    options.governorInitialChecks ||
-    ["TEST_CHECK_001", "TEST_CHECK_002", "TEST_CHECK_003"].map((check) =>
-      ethers.utils.formatBytes32String(check)
-    );
-
   const Governor = await deployGovernor(Registry);
 
   await Registry.register(asBytes32("FUND_MANAGER"), FundManager.address);

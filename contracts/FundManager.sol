@@ -22,7 +22,6 @@ contract FundManager is AccessControl, Registered {
         address at;
         string name;
         string focus;
-        string description;
         uint256 status;
     }
 
@@ -38,48 +37,25 @@ contract FundManager is AccessControl, Registered {
     // PUBLIC API
     // -----------------------------------------------------------------
 
+    /**
+     * @dev         get a fund's name and focus
+     * @param  _id  unique identifier of the fund
+     * @return      fund name and focus
+     */
     function getFundMeta(uint256 _id)
         public
         view
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            uint256
-        )
+        returns (string memory, string memory)
     {
         return FundV1(funds[_id]).getMeta();
     }
 
+    /**
+     * @dev     get all fund addresses
+     * @return  fund addresses
+     */
     function getFunds() public view returns (address[] memory) {
         return funds;
-    }
-
-    function getFundsMeta() public view returns (Fund[] memory) {
-        uint256 length = funds.length;
-        Fund[] memory meta = new Fund[](length);
-        for (uint256 i = 0; i < length; i++) {
-            address fundAddress = funds[i];
-            FundV1 fund = FundV1(fundAddress);
-            (
-                string memory name,
-                string memory focus,
-                string memory description,
-                uint256 status
-            ) = fund.getMeta();
-
-            if (status == 0) {
-                meta[i] = Fund({
-                    id: i,
-                    at: fundAddress,
-                    name: name,
-                    focus: focus,
-                    description: description,
-                    status: uint256(status)
-                });
-            }
-        }
-        return meta;
     }
 
     /**
@@ -133,7 +109,7 @@ contract FundManager is AccessControl, Registered {
     }
 
     // -----------------------------------------------------------------
-    // ADMIN API
+    // ACCESS CONTROLLED
     // -----------------------------------------------------------------
 
     /**
@@ -159,7 +135,6 @@ contract FundManager is AccessControl, Registered {
         FundV1(cloneAddress).initialize(
             _name,
             _focus,
-            _description,
             _allowedTokens,
             _checks,
             _safeAddress,

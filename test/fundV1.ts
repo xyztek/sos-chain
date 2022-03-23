@@ -33,13 +33,9 @@ describe("FundV1.sol", function () {
   });
 
   it("should return meta information", async function () {
-    const [name, focus, description, status] = await factory
-      .attach(funds[0])
-      .getMeta();
+    const [name, focus] = await factory.attach(funds[0]).getMeta();
     expect(name).to.equal("Test Fund");
     expect(focus).to.equal("Test Focus");
-    expect(description).to.equal("Test Description Text");
-    expect(status).to.equal(0);
   });
 
   it("should return deposit address", async function () {
