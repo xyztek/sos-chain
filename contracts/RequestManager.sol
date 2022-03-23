@@ -39,7 +39,7 @@ contract RequestManager is AccessControl, Registered {
         Approved,
         Finalized,
         Executed
-    }
+    } //rejected??
 
     struct Signature {
         bool approved;
@@ -320,13 +320,6 @@ contract RequestManager is AccessControl, Registered {
                 request.amount,
                 request.token
             );
-    }
-
-    function _isFundApprover(uint256 _fundId) internal view {
-        FundV1 fund = _getFund(_fundId);
-        if (!fund.isOpen()) revert NotAllowed();
-        if (!fund.hasRole(APPROVER_ROLE, msg.sender))
-            revert MissingRole(APPROVER_ROLE);
     }
 
     // -----------------------------------------------------------------
