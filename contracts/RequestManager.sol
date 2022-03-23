@@ -68,44 +68,20 @@ contract RequestManager is AccessControl, Registered {
         uint256[2] memory _coordinates,
         string memory _description
     ) public returns (uint256) {
-        // FundV1 fund = _getFund(_fundId);
-        // if (!fund.requestable()) revert NotAllowed();
+        FundV1 fund = _getFund(_fundId);
+        if (!fund.requestable()) revert NotAllowed();
 
-        // pre-allocate storage location for the new Request
-        uint256 index = requests.length;
-        requests.push();
-
-        // assign new Request to the storage location
-        Request storage request = requests[index];
-
-        request.id = index;
-        request.status = Status.Pending;
-        request.location = Geo.coordinatesFromPair(_coordinates);
-        request.recipient = _recipient;
-        request.fundId = _fundId;
-        request.amount = _amount;
-        request.token = _tokenAddress;
-        bytes32[] memory checks = _copyChecksFromFund(_fundId);
-        uint256 length = checks.length;
-
-        uint256 i = 0;
-        while (i < length) {
-            request.checks.add(checks[i]);
-            request.pending.add(checks[i]);
-            i++;
-        }
-
-        emit RequestCreated(
-            index,
-            _fundId,
-            _recipient,
+        uint256 id = _createRequest(
             _amount,
             _tokenAddress,
-            _description,
-            checks
+            _recipient,
+            _fundId,
+            fund,
+            _coordinates,
+            _description
         );
 
-        return index;
+        return id;
     }
 
     /**
@@ -114,11 +90,7 @@ contract RequestManager is AccessControl, Registered {
      * @param  _check  check to approve
      * @return         boolean indicating op result
      */
-    function approveCheck(uint256 _id, bytes32 _check)
-        public
-        onlyRequestsWithStatus(Status.Pending, _id)
-        returns (bool)
-    {
+    function approveCheck(uint256 _id, bytes32 _check) public returns (bool) {
         Request storage request = requests[_id];
         FundV1 fund = _getFund(request.fundId);
 
@@ -211,6 +183,7 @@ contract RequestManager is AccessControl, Registered {
         returns (bool)
     {
         return
+            _request.status == Status.Pending &&
             _request.pending.contains(_check) &&
             _request.approvals[_check] == address(0);
     }
@@ -225,6 +198,62 @@ contract RequestManager is AccessControl, Registered {
         returns (bool)
     {
         return _fund.hasRole(_role, msg.sender);
+    }
+
+    function _createRequest(
+        uint256 _amount,
+        address _tokenAddress,
+        address _recipient,
+        uint256 _fundId,
+        FundV1 _fund,
+        uint256[2] memory _coordinates,
+        string memory _description
+    ) internal returns (uint256) {
+        // pre-allocate storage location for the new Request
+        uint256 id = requests.length;
+        requests.push();
+
+        // assign new Request to the storage location
+        Request storage request = requests[id];
+
+        request.id = id;
+        request.status = Status.Pending;
+        request.location = Geo.coordinatesFromPair(_coordinates);
+        request.recipient = _recipient;
+        request.fundId = _fundId;
+        request.amount = _amount;
+        request.token = _tokenAddress;
+
+        bytes32[] memory checks = _setChecks(request, _fund);
+
+        emit RequestCreated(
+            id,
+            _fundId,
+            _recipient,
+            _amount,
+            _tokenAddress,
+            _description,
+            checks
+        );
+
+        return id;
+    }
+
+    function _setChecks(Request storage _request, FundV1 _fund)
+        internal
+        returns (bytes32[] memory)
+    {
+        bytes32[] memory checks = _copyChecksFromFund(_fund);
+        uint256 length = checks.length;
+
+        uint256 i = 0;
+        while (i < length) {
+            _request.checks.add(checks[i]);
+            _request.pending.add(checks[i]);
+            i++;
+        }
+
+        return checks;
     }
 
     function _approveCheck(Request storage _request, bytes32 _check) internal {
@@ -256,11 +285,6 @@ contract RequestManager is AccessControl, Registered {
     // -----------------------------------------------------------------
     // MODIFIERS
     // -----------------------------------------------------------------
-
-    modifier onlyRequestsWithStatus(Status _status, uint256 _requestId) {
-        if (requests[_requestId].status != _status) revert NotAllowed();
-        _;
-    }
 
     // -----------------------------------------------------------------
     // EVENTS

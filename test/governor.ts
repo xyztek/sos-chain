@@ -38,7 +38,7 @@ describe("Governor.sol", function () {
     stack = await deployStack();
     ERC20 = await deployERC20();
 
-    await createFund(stack.FundManager, [ERC20.address], EOA2.address);
+    await createFund(stack.FundManager, [ERC20.address], EOA2.address, true);
     requestAmount = ethers.utils.parseUnits("1000", await ERC20.decimals());
   });
 

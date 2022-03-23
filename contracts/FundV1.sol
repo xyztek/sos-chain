@@ -22,7 +22,7 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-    
+
     Status public status;
     address private factory;
     address private safeAddress;
@@ -43,6 +43,7 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
         string memory _name,
         string memory _focus,
         address[] memory _allowedTokens,
+        bool _requestable,
         bytes32[] memory _checks,
         address _safeAddress,
         address _owner
@@ -52,6 +53,7 @@ contract FundV1 is AccessControl, TokenControl, DynamicChecks {
 
         factory = msg.sender;
 
+        requestable = _requestable;
         name = _name;
         focus = _focus;
         safeAddress = _safeAddress;

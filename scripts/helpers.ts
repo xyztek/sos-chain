@@ -75,6 +75,7 @@ export function createFund(
   contract: Contract,
   allowedTokenAddresses: string[],
   underlyingSafeAddress: string,
+  requestable = false,
   name = "Test Fund",
   focus = "Test Focus",
   description = "Test Description Text",
@@ -88,6 +89,7 @@ export function createFund(
     description,
     underlyingSafeAddress,
     allowedTokenAddresses,
+    requestable,
     checks
   );
 }

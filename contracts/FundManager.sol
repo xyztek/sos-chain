@@ -117,8 +117,10 @@ contract FundManager is AccessControl, Registered {
      * @param  _name           name of the fund
      * @param  _focus          focus of the fund
      * @param  _description    description of the fund
+     * @param  _safeAddress    address of underlying Gnosis Safe
      * @param  _allowedTokens  array of allowed token addresses
-     * @param  _safeAddress    address of the fund
+     * @param  _requestable    boolean indicating if fund is requestable
+     * @param  _checks         a list of checks if fund is requestable
      */
     function createFund(
         string memory _name,
@@ -126,6 +128,7 @@ contract FundManager is AccessControl, Registered {
         string memory _description,
         address _safeAddress,
         address[] memory _allowedTokens,
+        bool _requestable,
         bytes32[] memory _checks
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
@@ -136,6 +139,7 @@ contract FundManager is AccessControl, Registered {
             _name,
             _focus,
             _allowedTokens,
+            _requestable,
             _checks,
             _safeAddress,
             msg.sender
