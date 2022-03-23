@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
+import "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol";
+
 import "./FundV1.sol";
 import "./Registered.sol";
 import "./TokenControl.sol";
@@ -135,7 +137,7 @@ contract FundManager is AccessControl, Registered {
      * @param  _focus          focus of the fund
      * @param  _description    description of the fund
      * @param  _allowedTokens  array of allowed token addresses
-     * @param  _safeAddress    address of underlying Gnosis Safe
+     * @param  _safeAddress    address of the fund
      */
     function createFund(
         string memory _name,
@@ -163,11 +165,61 @@ contract FundManager is AccessControl, Registered {
     }
 
     /**
+     * @dev                    setup a new fund
+     * @param  _name           name of the fund
+     * @param  _focus          focus of the fund
+     * @param  _description    description of the fund
+     * @param  _allowedTokens  array of allowed token addresses
+     * @param  _owners         owners of the safe
+       @param  _threshold      number of confirmations that the safe would need before a transaction
+     */
+    function createFundWithSafe(
+        string memory _name,
+        string memory _focus,
+        string memory _description,
+        address[] memory _allowedTokens,
+        address[] calldata _owners,
+        uint256 _threshold
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 index = funds.length;
+
+        address cloneAddress = Clones.clone(baseFund);
+
+        bytes memory safeParams = _encodeSetup(
+            _owners,
+            _threshold,
+            address(0),
+            "0x",
+            address(0),
+            address(0),
+            0,
+            payable(address(0))
+        );
+
+        address _safeAddress = address(
+            GnosisSafeProxyFactory(getAddress("GNOSIS_SAFE_PROXY_FACTORY"))
+                .createProxy(getAddress("GNOSIS_SAFE"), safeParams)
+        );
+
+        FundV1(cloneAddress).initialize(
+            _name,
+            _focus,
+            _description,
+            _allowedTokens,
+            _safeAddress,
+            msg.sender
+        );
+
+        funds.push(cloneAddress);
+
+        emit FundCreated(index, cloneAddress, _name, _focus, _description);
+    }
+
+    /**
      * @dev           set implementation address
      * @param  _impl  address of underlying Gnosis Safe
      * @return        boolean indicating op. result
      */
-
     function setImplementation(address _impl)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -175,6 +227,45 @@ contract FundManager is AccessControl, Registered {
     {
         baseFund = _impl;
         return true;
+    }
+
+    // -----------------------------------------------------------------
+    // INTERNAL API
+    // -----------------------------------------------------------------
+
+    /**
+     * @dev Encodes params and function for proxy creation
+     * @param _owners List of Safe owners.
+     * @param _threshold Number of required confirmations for a Safe transaction.
+     * @param to Contract address for optional delegate call.
+     * @param data Data payload for optional delegate call.
+     * @param fallbackHandler Handler for fallback calls to this contract
+     * @param paymentToken Token that should be used for the payment (0 is ETH)
+     * @param payment Value that should be paid
+     * @param paymentReceiver Address that should receive the payment (or 0 if tx.origin)
+     * @return encoded Bytes representation of the params with setup signature
+     */
+    function _encodeSetup(
+        address[] calldata _owners,
+        uint256 _threshold,
+        address to,
+        bytes memory data,
+        address fallbackHandler,
+        address paymentToken,
+        uint256 payment,
+        address payable paymentReceiver
+    ) internal pure returns (bytes memory encoded) {
+        encoded = abi.encodeWithSignature(
+            "setup(address[],uint256,address,bytes,address,address,uint256,address)",
+            _owners,
+            _threshold,
+            to,
+            data,
+            fallbackHandler,
+            paymentToken,
+            payment,
+            paymentReceiver
+        );
     }
 
     // -----------------------------------------------------------------
