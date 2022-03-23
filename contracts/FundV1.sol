@@ -19,6 +19,10 @@ error NotAllowed();
 contract FundV1 is AccessControl, TokenControl, DynamicChecks {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
+    bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
+    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+    
     Status public status;
     address private factory;
     address private safeAddress;

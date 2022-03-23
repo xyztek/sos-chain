@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "./libraries/Geo.sol";
-
 import "./FundV1.sol";
 import "./FundManager.sol";
 import "./Registry.sol";
@@ -19,10 +18,6 @@ contract RequestManager is AccessControl, Registered {
     using EnumerableMap for EnumerableMap.UintToAddressMap;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
-    bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
-    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-
     Request[] private requests;
 
     error MissingRole(bytes32);
@@ -32,7 +27,7 @@ contract RequestManager is AccessControl, Registered {
         Approved,
         Finalized,
         Executed
-    }
+    } //rejected??
 
     struct Request {
         uint256 id;
@@ -86,7 +81,6 @@ contract RequestManager is AccessControl, Registered {
         request.fundId = _fundId;
         request.amount = _amount;
         request.token = _tokenAddress;
-
         bytes32[] memory checks = _copyChecksFromFund(_fundId);
         uint256 length = checks.length;
 
@@ -234,20 +228,9 @@ contract RequestManager is AccessControl, Registered {
         return FundV1(fundAddress);
     }
 
-    function _copyChecksFromFund(uint256 _fundId)
-        internal
-        view
-        returns (bytes32[] memory)
-    {
+    function _copyChecksFromFund(uint256 _fundId) internal view returns (bytes32[] memory){
         FundV1 fund = _getFund(_fundId);
         return fund.allChecks();
-    }
-
-    function _isFundApprover(uint256 _fundId) internal view {
-        FundV1 fund = _getFund(_fundId);
-        if (!fund.isOpen()) revert NotAllowed();
-        if (!fund.hasRole(APPROVER_ROLE, msg.sender))
-            revert MissingRole(APPROVER_ROLE);
     }
 
     // -----------------------------------------------------------------
