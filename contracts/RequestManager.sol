@@ -278,9 +278,12 @@ contract RequestManager is AccessControl, Registered {
         return FundV1(fundAddress);
     }
 
-    function _copyChecksFromFund(uint256 _fundId) internal view returns (bytes32[] memory){
-        FundV1 fund = _getFund(_fundId);
-        return fund.allChecks();
+    function _copyChecksFromFund(FundV1 _fund)
+        internal
+        view
+        returns (bytes32[] memory)
+    {
+        return _fund.allChecks();
     }
 
     // -----------------------------------------------------------------
