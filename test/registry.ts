@@ -18,12 +18,15 @@ describe("Registry.sol", function () {
     contract = await factory.deploy();
     await contract.deployed();
 
-    const registration = await contract.register(
+    await contract.register(
       asBytes32("FUND_MANAGER"),
       "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512"
     );
 
-    await registration.wait();
+    await contract.register(
+      asBytes32("GOVERNOR"),
+      "0xc3e53f4d16ae77db1c982e75a937b9f60fe63690"
+    );
   });
 
   it("should register and return a registered address", async function () {
@@ -42,4 +45,15 @@ describe("Registry.sol", function () {
       "0xc3e53f4d16ae77db1c982e75a937b9f60fe63690"
     );
   });
+
+  it("should return the contract names in an address array", async function () {
+    const values = [
+      "FUND_MANAGER",
+      "GOVERNOR",
+      ].map((value) => asBytes32(value));
+    const addresses = await contract.getBatch(values);
+    expect(addresses[0]).to.be.hexEqual("0xe7f1725e7734ce288f8367e1bb143e90bb3f0512");
+    expect(addresses[1]).to.be.hexEqual("0xc3e53f4d16ae77db1c982e75a937b9f60fe63690");
+  })
+
 });

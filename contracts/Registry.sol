@@ -31,6 +31,21 @@ contract Registry is Ownable {
     }
 
     /**
+     * @dev              get contract address
+     * @param _names     name of the contract
+     * @return           addresses of the queried contracts
+     */
+    function getBatch(bytes32[] memory _names) public view returns (address[] memory){
+        uint256 length = _names.length;
+        address[] memory addresses = new address[](length);
+
+        for(uint256 i = 0; i< length; i++){
+            addresses[i] = get(_names[i]);
+        }
+        return addresses;
+    }
+
+    /**
      * @dev              register contract address
      * @param _name      name of the contract
      * @param _address   address of the contract
