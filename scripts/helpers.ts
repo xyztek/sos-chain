@@ -12,7 +12,8 @@ export type ContractName =
   | "Registry"
   | "SOS"
   | "GnosisSafe"
-  | "GnosisSafeProxyFactory";
+  | "GnosisSafeProxyFactory"
+  | "OracleConsumer";
 
 export type Stack = Record<ContractName, Contract>;
 
@@ -148,6 +149,17 @@ export async function deployGnosisSafe(): Promise<Contract> {
     []
   );
 }
+export async function deployOracleConsumer(
+  oracle = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4",
+  jobId = "BSC",
+  fee = ethers.utils.parseUnits("0.1", 18)
+): Promise<Contract> {
+  return deployContract(
+    "contracts/hybrid/OracleConsumer.sol:OracleConsumer",
+    {},
+    [oracle, jobId, fee]
+  );
+}
 
 export async function deployRegistry(): Promise<Contract> {
   return deployContract("contracts/Registry.sol:Registry");
@@ -204,12 +216,19 @@ export async function deployStack(
   const GnosisSafeProxyFactory = await deployGnosisSafeProxyFactory();
 
   const Governor = await deployGovernor(Registry);
+  const OracleConsumer = await deployOracleConsumer();
+  const checks =
+    options.governorInitialChecks ||
+    ["TEST_CHECK_001", "TEST_CHECK_002", "TEST_CHECK_003"].map((check) =>
+      ethers.utils.formatBytes32String(check)
+    );
 
   await Registry.register(asBytes32("FUND_MANAGER"), FundManager.address);
   await Registry.register(asBytes32("DONATION"), Donation.address);
   await Registry.register(asBytes32("NFT_DESCRIPTOR"), Descriptor.address);
   await Registry.register(asBytes32("SOS"), SOS.address);
   await Registry.register(asBytes32("GOVERNOR"), Governor.address);
+  await Registry.register(asBytes32("ORACLE_CONSUMER"), OracleConsumer.address);
 
   await Registry.register(
     asBytes32("GNOSIS_SAFE_PROXY_FACTORY"),
@@ -229,5 +248,6 @@ export async function deployStack(
     SOS,
     GnosisSafe,
     GnosisSafeProxyFactory,
+    OracleConsumer,
   };
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
@@ -8,7 +8,6 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
 
     uint256 private fee;
-    int256 public responseInt;
     bytes32 public responseBytes;
 
     address private oracle;
@@ -17,11 +16,6 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
     event RequestBytesFullfiled(
         bytes32 indexed requestId,
         bytes32 indexed response
-    );
-
-    event RequestIntFullfiled(
-        bytes32 indexed requestId,
-        int256 indexed response
     );
 
     function setOracle(address _oracle) public onlyOwner {
@@ -36,11 +30,15 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
         fee = _fee;
     }
 
-    constructor() ConfirmedOwner(msg.sender) {
+    constructor(
+        address _oracle,
+        string memory _jobId,
+        uint256 _fee
+    ) ConfirmedOwner(msg.sender) {
         setPublicChainlinkToken();
-        oracle = 0xBa6396EbfA52fcd4F24B2338eA26aDC0b07F0AC2;
-        jobId = "53c081cf45a14ba4b08257af5b3e753d";
-        fee = 0.1 * 10**18;
+        oracle = _oracle;
+        jobId = _jobId;
+        fee = _fee;
     }
 
     function requestBytes(int256 x, int256 y) public onlyOwner {
@@ -53,26 +51,6 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
         req.addInt("y", y);
         sendChainlinkRequestTo(oracle, req, fee);
         responseBytes = 0x3900000000000000000000000000000000000000000000000000000000000000;
-    }
-
-    function requestInt(int256 x, int256 y) public onlyOwner {
-        Chainlink.Request memory req = buildChainlinkRequest(
-            stringToBytes32(jobId),
-            address(this),
-            this.fulfillInt.selector
-        );
-        req.addInt("x", x);
-        req.addInt("y", y);
-        sendChainlinkRequestTo(oracle, req, fee);
-        responseInt = 10;
-    }
-
-    function fulfillInt(bytes32 _requestId, int256 data)
-        public
-        recordChainlinkFulfillment(_requestId)
-    {
-        emit RequestIntFullfiled(_requestId, data);
-        responseInt = data;
     }
 
     function fulfillBytes(bytes32 _requestId, bytes32 data)
