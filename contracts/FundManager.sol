@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol";
 
+import "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol";
+
 import "./FundV1.sol";
 import "./Registered.sol";
 import "./TokenControl.sol";

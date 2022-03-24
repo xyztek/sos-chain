@@ -10,7 +10,9 @@ export type ContractName =
   | "FundImplementation"
   | "Governor"
   | "Registry"
-  | "SOS";
+  | "SOS"
+  | "GnosisSafe"
+  | "GnosisSafeProxyFactory";
 
 export type Stack = Record<ContractName, Contract>;
 
@@ -202,5 +204,7 @@ export async function deployStack(
     Governor,
     Registry,
     SOS,
+    GnosisSafe,
+    GnosisSafeProxyFactory,
   };
 }
