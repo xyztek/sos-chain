@@ -57,13 +57,12 @@ describe("FundManager.sol", function () {
       "Test Fund",
       "Test Focus",
       "Test Description Text",
-  it("should emit a FundCreated event", async function () {
-    const fundCreated = await createFund(
-      contract,
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       false,
-      []
+      [],
+      [],
+      [owner],
+      1
     );
 
     const receipt: ContractReceipt = await fundCreated.wait();
@@ -92,10 +91,13 @@ describe("FundManager.sol", function () {
         "Test Focus",
         "Test Description Text",
         ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
+        false,
+        [],
+        [],
         [owner],
         5
       )
-    ).to.be.reverted;
+    ).to.be.revertedWith("NotAllowed()");
   });
 
   it("should create a fund given an ordinary EOA address", async function () {
@@ -103,8 +105,11 @@ describe("FundManager.sol", function () {
       "Test Fund",
       "Test Focus",
       "Test Description Text",
+      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+      false,
+      [],
+      []
     );
 
     const receipt: ContractReceipt = await fundCreated.wait();
