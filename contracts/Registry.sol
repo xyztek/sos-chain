@@ -35,7 +35,7 @@ contract Registry is Ownable {
      * @param _names     name of the contract
      * @return           addresses of the queried contracts
      */
-    function getBatch(bytes32[] memory _names) public view returns (address[] memory){
+    function batchGet(bytes32[] memory _names) public view returns (address[] memory){
         uint256 length = _names.length;
         address[] memory addresses = new address[](length);
 
@@ -65,6 +65,26 @@ contract Registry is Ownable {
     }
 
     /**
+     * @dev              register contract addresses
+     * @param _name      array of name of contracts
+     * @param _address   address arrays of contracts
+     * @return           boolean indicating result of the operation
+     */
+    function batchRegister(bytes32[] memory _name, address[] memory _address) 
+        public 
+        onlyOwner 
+        returns (bool)
+    {
+        uint256 length = _name.length;
+        for(uint256 i = 0; i< length; i++){
+            if (registry[_name[i]] != address(0)) continue;
+            registry[_name[i]] = _address[i];
+            contracts.push(_name[i]);
+        }
+        return true;
+    }
+
+    /**
      * @dev              update contract address
      * @param _name      name of the contract
      * @param _address   address of the contract
@@ -79,6 +99,25 @@ contract Registry is Ownable {
 
         registry[_name] = _address;
 
+        return true;
+    }
+
+    /**
+     * @dev              update contracts' addresses
+     * @param _name      array of name of contracts
+     * @param _address   address arrays of contracts
+     * @return           boolean indicating result of the operation
+     */
+    function batchUpdate(bytes32[] memory _name, address[] memory _address)
+        public
+        onlyOwner
+        returns (bool)
+    {
+        uint256 length = _name.length;
+        for(uint256 i = 0; i< length; i++){
+            if (registry[_name[i]] == address(0x0)) continue;
+            registry[_name[i]] = _address[i];
+        }
         return true;
     }
 }
