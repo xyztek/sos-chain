@@ -10,7 +10,9 @@ export type ContractName =
   | "FundImplementation"
   | "Governor"
   | "Registry"
-  | "SOS";
+  | "SOS"
+  | "GnosisSafe"
+  | "GnosisSafeProxyFactory";
 
 export type Stack = Record<ContractName, Contract>;
 
@@ -99,6 +101,22 @@ export async function deployERC20(
   ]);
 }
 
+export async function deployGnosisSafeProxyFactory(): Promise<Contract> {
+  return deployContract(
+    "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol:GnosisSafeProxyFactory",
+    {},
+    []
+  );
+}
+
+export async function deployGnosisSafe(): Promise<Contract> {
+  return deployContract(
+    "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol:GnosisSafe",
+    {},
+    []
+  );
+}
+
 export async function deployRegistry(): Promise<Contract> {
   return deployContract("contracts/Registry.sol:Registry");
 }
@@ -153,6 +171,8 @@ export async function deployStack(
   const Descriptor = await deployDescriptor();
   const Donation = await deployDonation(Registry);
   const SOS = await deploySOS(Registry, options.SOSMinter || Donation.address);
+  const GnosisSafe = await deployGnosisSafe();
+  const GnosisSafeProxyFactory = await deployGnosisSafeProxyFactory();
 
   const checks =
     options.governorInitialChecks ||
@@ -168,6 +188,12 @@ export async function deployStack(
   await Registry.register(asBytes32("SOS"), SOS.address);
   await Registry.register(asBytes32("GOVERNOR"), Governor.address);
 
+  await Registry.register(
+    asBytes32("GNOSIS_SAFE_PROXY_FACTORY"),
+    GnosisSafeProxyFactory.address
+  );
+  await Registry.register(asBytes32("GNOSIS_SAFE"), GnosisSafe.address);
+
   await grantRole(SOS, "MINTER_ROLE", Donation.address);
 
   return {
@@ -178,5 +204,7 @@ export async function deployStack(
     Governor,
     Registry,
     SOS,
+    GnosisSafe,
+    GnosisSafeProxyFactory,
   };
 }
