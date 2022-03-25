@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { assert, expect } from "chai";
 
 import { BigNumber, Contract, ContractFactory, ContractReceipt } from "ethers";
 
@@ -49,7 +49,7 @@ describe("FundManager.sol", function () {
     ).to.emit(contract, "FundCreated");
   });
 
-  it("should emit a FundCreated event for gnosis safe", async function () {
+  it("should deploy a Gnosis Safe and create a fund", async function () {
     const owner = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";
 
     const fundCreated = await contract.createFundWithSafe(
@@ -78,7 +78,36 @@ describe("FundManager.sol", function () {
     expect(isOwner).to.equal(true);
   });
 
-  it("should revert a FundCreated event for gnosis safe if threshold is greater than owners size", async function () {
+  it("should deploy a governod Gnosis Safe and create a fund", async function () {
+    const owner = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";
+
+    const fundCreated = await contract.createFundWithSafe(
+      "Test Fund",
+      "Test Focus",
+      "Test Description Text",
+      ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
+      [owner],
+      1
+    );
+
+    const receipt: ContractReceipt = await fundCreated.wait();
+
+    const event = receipt.events?.find((x) => x.event == "FundCreated");
+
+    const fundAddress = await contract.getFundAddress(event?.args?.id);
+
+    const gnosisSafeAddress = await fundFactory
+      .attach(fundAddress)
+      .getDepositAddressFor("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
+
+    const isOwner = await gnosisFactory
+      .attach(gnosisSafeAddress)
+      .isOwner(owner);
+
+    expect(isOwner).to.equal(true);
+  });
+
+  it("should revert if given threshold is greater than owners size", async function () {
     const owner = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";
 
     await expect(
@@ -93,7 +122,7 @@ describe("FundManager.sol", function () {
     ).to.be.reverted;
   });
 
-  it("should emit a FundCreated event for custom wallet", async function () {
+  it("should create a fund given an ordinary EOA address", async function () {
     const fundCreated = await contract.createFund(
       "Test Fund",
       "Test Focus",
@@ -104,9 +133,7 @@ describe("FundManager.sol", function () {
 
     const receipt: ContractReceipt = await fundCreated.wait();
 
-    const event = receipt.events?.find((x) => x.event == "FundCreated");
-
-    expect(event).to.not.be.undefined;
+    assert(receipt.events?.find((x) => x.event == "FundCreated"));
   });
 
   it("should return addresses of open funds", async function () {
