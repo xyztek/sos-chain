@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-import "./TokenControl.sol";
-import "./DynamicChecks.sol";
+import {TokenControl} from "./TokenControl.sol";
+import {DynamicChecks} from "./DynamicChecks.sol";
 
 import "hardhat/console.sol";
 
