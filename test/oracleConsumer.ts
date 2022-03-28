@@ -8,7 +8,7 @@ import {
   deployMockOracleConsumer,
 } from "../scripts/helpers";
 
-describe.only("OracleConsumer.sol", function () {
+describe("MockOracleConsumer.sol", function () {
   let stack: Stack;
   let contract: Contract;
   let tokenContract: Contract;

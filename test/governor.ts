@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 
 import {
+  asBytes32,
   createFund,
   deployERC20,
   deployStack,
@@ -27,7 +28,10 @@ describe("Governor.sol", function () {
       ERC20.address,
       recipient,
       0,
-      [2000000000000, 1000000000000],
+      [
+        ethers.utils.parseUnits("256.12903", 10),
+        ethers.utils.parseUnits("123.4833", 10),
+      ],
       "Description"
     );
   };
@@ -53,19 +57,13 @@ describe("Governor.sol", function () {
     );
   });
 
-  it("should return a list of remaining checks for a request", async function () {
-    const remainingChecks = await stack.Governor.getRemainingChecks(0);
-
-    expect(remainingChecks).to.have.members(initialChecks);
-  });
-
   it("should revert an approve call if msg.sender lacks APPROVER_ROLE", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
     const role = ethers.utils.keccak256(
       ethers.utils.toUtf8Bytes("APPROVER_ROLE")
     );
     await expect(
-      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0])
+      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0], true)
     ).to.revertedWith(`MissingRole("${role}")`);
   });
 
@@ -80,17 +78,17 @@ describe("Governor.sol", function () {
 
     await grantRole(fund, "APPROVER_ROLE", EOA1.address);
 
-    await stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0]);
+    await stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0], true);
 
-    const remainingChecks = await stack.Governor.getRemainingChecks(0);
+    const pendingChecks = await stack.Governor.getPendingChecksCount(0);
 
-    expect(remainingChecks).to.have.members(initialChecks.slice(1));
+    expect(pendingChecks).to.eq(2);
   });
 
   it("should map the approver's address to check on approval", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
-    expect(await stack.Governor.getApprover(0, initialChecks[0])).to.hexEqual(
+    expect(await stack.Governor.getSigner(0, initialChecks[0])).to.hexEqual(
       EOA1.address
     );
   });
@@ -99,30 +97,31 @@ describe("Governor.sol", function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
     await expect(
-      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0])
+      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[0], true)
     ).to.be.revertedWith("NotAllowed()");
   });
 
-  it("should return checks", async function () {
+  it("should return pending checks count", async function () {
     const [_owner, _EOA1] = await ethers.getSigners();
 
-    const checks = await stack.Governor.getChecks(0);
+    const pendingChecks = await stack.Governor.getPendingChecksCount(0);
 
-    expect(checks).to.have.members(initialChecks);
+    expect(pendingChecks).to.eq(2);
   });
 
-  it("should return approval status for a request", async function () {
-    const [pending, all] = await stack.Governor.getApprovalStatus(0);
-
-    expect(pending).to.eq(2);
-    expect(all).to.eq(3);
-  });
-
-  it("should emit a CheckApproved event", async function () {
+  it("should emit a Signed event", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
     await expect(
-      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[1])
-    ).to.emit(stack.Governor, "CheckApproved");
+      stack.Governor.connect(EOA1).approveCheck(0, initialChecks[1], true)
+    ).to.emit(stack.Governor, "Signed");
+  });
+
+  it("should pack a request into bytes", async function () {
+    const packed = await stack.Governor._packRequestWithCheck(
+      0,
+      asBytes32("TEST_CHECK_001")
+    );
+    console.log(packed);
   });
 });

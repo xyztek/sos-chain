@@ -11,10 +11,13 @@ import "./libraries/Geo.sol";
 import "./FundV1.sol";
 import "./FundManager.sol";
 import "./Registry.sol";
+import {OracleConsumer as Oracle} from "./hybrid/newOracleConsumer.sol";
+import {Checks} from "./libraries/Checks.sol";
 
 import "hardhat/console.sol";
 
 contract RequestManager is AccessControl, Registered {
+    using SafeMath for uint256;
     using EnumerableMap for EnumerableMap.UintToAddressMap;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -33,6 +36,11 @@ contract RequestManager is AccessControl, Registered {
         Executed
     }
 
+    struct Signature {
+        bool approved;
+        address signer;
+    }
+
     struct Request {
         uint256 id;
         uint256 fundId;
@@ -41,9 +49,8 @@ contract RequestManager is AccessControl, Registered {
         address recipient;
         Status status;
         Geo.Coordinates location;
-        EnumerableSet.Bytes32Set checks;
-        EnumerableSet.Bytes32Set pending;
-        mapping(bytes32 => address) approvals;
+        uint256 pending;
+        mapping(bytes32 => Signature) signatures;
     }
 
     // -----------------------------------------------------------------
@@ -86,71 +93,17 @@ contract RequestManager is AccessControl, Registered {
     }
 
     /**
-     * @dev                   initiate a request
-     * @param  _amount        requested amount from the fund
-     * @param  _tokenAddress  token address
-     * @param  _recipient     ultimate recipient of the funds requested
-     * @param  _fundId        id of the fund requested from
-     * @param  _description   a short description of the request
-     * @param  _coordinates   coordinates pointing to request location
-     * @return                id (index) of the initiated request
+     * @dev                initiate a request
+     * @param  _requestId  type of the request
+     * @param  _check      check to approve
+     * @return             boolean indicating op result
      */
-    function createRequestWithOracle(
-        uint256 _amount,
-        address _tokenAddress,
-        address _recipient,
-        uint256 _fundId,
-        uint256[2] memory _coordinates,
-        string memory _description
-    )
-        public
-        requireChecks /* onlyOpenFunds */
-        returns (uint256)
-    {
-        // pre-allocate storage location for the new Request
-        uint256 index = requests.length;
-        requests.push();
-
-        // assign new Request to the storage location
-        Request storage request = requests[index];
-
-        request.id = index;
-        request.status = Status.Pending;
-        request.location = Geo.coordinatesFromPair(_coordinates);
-        request.recipient = _recipient;
-        request.fundId = _fundId;
-        request.amount = _amount;
-        request.token = _tokenAddress;
-
-        uint256 length = checks.length;
-
-        uint256 i = 0;
-        while (i < length) {
-            request.checks.add(checks[i]);
-            request.pending.add(checks[i]);
-            i++;
-        }
-
-        emit RequestCreated(
-            index,
-            _fundId,
-            _recipient,
-            _amount,
-            _tokenAddress,
-            _description
-        );
-
-        return index;
-    }
-
-    /**
-     * @dev            initiate a request
-     * @param  _id     type of the request
-     * @param  _check  check to approve
-     * @return         boolean indicating op result
-     */
-    function approveCheck(uint256 _id, bytes32 _check) public returns (bool) {
-        Request storage request = requests[_id];
+    function approveCheck(
+        uint256 _requestId,
+        bytes32 _check,
+        bool _success
+    ) public returns (bool) {
+        Request storage request = requests[_requestId];
         FundV1 fund = _getFund(request.fundId);
 
         if (!_isApprovable(request, _check) || !_isFundOpen(fund))
@@ -159,11 +112,9 @@ contract RequestManager is AccessControl, Registered {
         if (!_hasFundRole(fund, APPROVER_ROLE))
             revert MissingRole(APPROVER_ROLE);
 
-        _approveCheck(request, _check);
+        _approveCheck(request, _check, _success);
 
-        emit CheckApproved(_id, _check, msg.sender);
-
-        if (request.pending.length() == 0) {
+        if (request.pending == 0) {
             _bumpStatus(request);
         }
 
@@ -175,47 +126,25 @@ contract RequestManager is AccessControl, Registered {
     }
 
     /**
-     * @dev         get request status
-     * @param  _id  request ID
-     * @return      request status
+     * @dev                get request status
+     * @param  _requestId  request ID
+     * @return             request status
      */
-    function getStatus(uint256 _id) external view returns (Status) {
-        return requests[_id].status;
+    function getStatus(uint256 _requestId) external view returns (Status) {
+        return requests[_requestId].status;
     }
 
     /**
-     * @dev         get approval status
-     * @param  _id  request ID
-     * @return      tuple of (pending, all) checks
+     * @dev                get remaining checks for a request
+     * @param  _requestId  request ID
+     * @return             remaining check count
      */
-    function getApprovalStatus(uint256 _id)
+    function getPendingChecksCount(uint256 _requestId)
         external
         view
-        returns (uint256, uint256)
+        returns (uint256)
     {
-        return (requests[_id].pending.length(), requests[_id].checks.length());
-    }
-
-    /**
-     * @dev         get checks for a request
-     * @param  _id  request ID
-     * @return      checks
-     */
-    function getChecks(uint256 _id) external view returns (bytes32[] memory) {
-        return requests[_id].checks.values();
-    }
-
-    /**
-     * @dev         get remaining checks for a request
-     * @param  _id  request ID
-     * @return      remaining checks
-     */
-    function getRemainingChecks(uint256 _id)
-        external
-        view
-        returns (bytes32[] memory)
-    {
-        return requests[_id].pending.values();
+        return requests[_requestId].pending;
     }
 
     /**
@@ -224,12 +153,38 @@ contract RequestManager is AccessControl, Registered {
      * @param  _check  check
      * @return         remaining checks
      */
-    function getApprover(uint256 _id, bytes32 _check)
+    function getSigner(uint256 _id, bytes32 _check)
         external
         view
         returns (address)
     {
-        return requests[_id].approvals[_check];
+        return requests[_id].signatures[_check].signer;
+    }
+
+    /**
+     * @dev                call oracle to try approve check
+     * @param  _requestId  request ID
+     * @param  _check      check
+     */
+    function callOracle(uint256 _requestId, bytes32 _check)
+        external
+        returns (bool)
+    {
+        // require(_check.automated, "Automated check required.");
+        // bytes memory data = _packRequestWithCheck(_requestId, _check.name);
+        bytes memory data = _packRequestWithCheck(_requestId, _check);
+        bytes32 oracleRequestId = Oracle(_getAddress("SOS_ORACLE")).tryApprove(
+            //_check.jobId,
+            bytes32("JOB_ID"),
+            data
+        );
+
+        emit OracleRequest(
+            _requestId,
+            bytes32("JOB_ID"),
+            oracleRequestId,
+            data
+        );
     }
 
     // -----------------------------------------------------------------
@@ -243,8 +198,7 @@ contract RequestManager is AccessControl, Registered {
     {
         return
             _request.status == Status.Pending &&
-            _request.pending.contains(_check) &&
-            _request.approvals[_check] == address(0);
+            _request.signatures[_check].approved == false;
     }
 
     function _isFundOpen(FundV1 _fund) internal view returns (bool) {
@@ -283,7 +237,8 @@ contract RequestManager is AccessControl, Registered {
         request.amount = _amount;
         request.token = _tokenAddress;
 
-        bytes32[] memory checks = _setChecks(request, _fund);
+        bytes32[] memory checks = _copyChecksFromFund(_fund);
+        request.pending = checks.length;
 
         emit RequestCreated(
             id,
@@ -298,26 +253,23 @@ contract RequestManager is AccessControl, Registered {
         return id;
     }
 
-    function _setChecks(Request storage _request, FundV1 _fund)
-        internal
-        returns (bytes32[] memory)
-    {
-        bytes32[] memory checks = _copyChecksFromFund(_fund);
-        uint256 length = checks.length;
+    function _approveCheck(
+        Request storage _request,
+        bytes32 _check,
+        bool success
+    ) internal {
+        require(_request.pending > 0, "No pending checks.");
 
-        uint256 i = 0;
-        while (i < length) {
-            _request.checks.add(checks[i]);
-            _request.pending.add(checks[i]);
-            i++;
+        if (success) {
+            _request.pending = _request.pending.sub(1);
         }
 
-        return checks;
-    }
+        _request.signatures[_check] = Signature({
+            approved: success,
+            signer: msg.sender
+        });
 
-    function _approveCheck(Request storage _request, bytes32 _check) internal {
-        _request.approvals[_check] = msg.sender;
-        _request.pending.remove(_check);
+        emit Signed(_request.id, _check, msg.sender, success);
     }
 
     function _bumpStatus(Request storage _request) internal {
@@ -344,6 +296,27 @@ contract RequestManager is AccessControl, Registered {
         return _fund.allChecks();
     }
 
+    function _packRequestWithCheck(uint256 _id, bytes32 _check)
+        public
+        view
+        returns (bytes memory)
+    {
+        Request storage request = requests[_id];
+
+        return
+            abi.encode(
+                _check,
+                request.id,
+                request.status,
+                request.location.lat,
+                request.location.lon,
+                request.recipient,
+                request.fundId,
+                request.amount,
+                request.token
+            );
+    }
+
     // -----------------------------------------------------------------
     // MODIFIERS
     // -----------------------------------------------------------------
@@ -362,10 +335,18 @@ contract RequestManager is AccessControl, Registered {
         bytes32[] checks
     );
 
-    event CheckApproved(
+    event Signed(
         uint256 indexed id,
         bytes32 indexed check,
-        address indexed approver
+        address indexed approver,
+        bool approved
+    );
+
+    event OracleRequest(
+        uint256 indexed requestId,
+        bytes32 indexed jobId,
+        bytes32 indexed oracleRequestId,
+        bytes data
     );
 
     event StatusChange(uint256 indexed id, Status indexed status);

@@ -163,7 +163,7 @@ contract OracleArgcis is
     }
 
     /**
-     * @notice Different Abi for input
+     * @notice Different Abi for input !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      * @dev Given params must hash back to the commitment stored from `oracleRequest`.
      * Will call the callback address' callback function without bubbling up error
      * checking in a `require` so that the node can get paid.
@@ -181,7 +181,9 @@ contract OracleArgcis is
         address _callbackAddress,
         bytes4 _callbackFunctionId,
         uint256 _expiration,
-        int256 _data
+        int256 _data,
+        bytes32 _checkId,
+        uint256 _govRequestId
     ) external onlyAuthorizedNode isValidRequest(_requestId) returns (bool) {
         bytes32 paramsHash = keccak256(
             abi.encodePacked(
@@ -205,7 +207,13 @@ contract OracleArgcis is
         // callback(addr+functionId) as it is untrusted.
         // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
         (bool success, ) = _callbackAddress.call(
-            abi.encodeWithSelector(_callbackFunctionId, _requestId, _data)
+            abi.encodeWithSelector(
+                _callbackFunctionId,
+                _requestId,
+                _data,
+                _checkId,
+                _govRequestId
+            )
         ); // solhint-disable-line avoid-low-level-calls
         return success;
     }
