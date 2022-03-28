@@ -86,6 +86,64 @@ contract RequestManager is AccessControl, Registered {
     }
 
     /**
+     * @dev                   initiate a request
+     * @param  _amount        requested amount from the fund
+     * @param  _tokenAddress  token address
+     * @param  _recipient     ultimate recipient of the funds requested
+     * @param  _fundId        id of the fund requested from
+     * @param  _description   a short description of the request
+     * @param  _coordinates   coordinates pointing to request location
+     * @return                id (index) of the initiated request
+     */
+    function createRequestWithOracle(
+        uint256 _amount,
+        address _tokenAddress,
+        address _recipient,
+        uint256 _fundId,
+        uint256[2] memory _coordinates,
+        string memory _description
+    )
+        public
+        requireChecks /* onlyOpenFunds */
+        returns (uint256)
+    {
+        // pre-allocate storage location for the new Request
+        uint256 index = requests.length;
+        requests.push();
+
+        // assign new Request to the storage location
+        Request storage request = requests[index];
+
+        request.id = index;
+        request.status = Status.Pending;
+        request.location = Geo.coordinatesFromPair(_coordinates);
+        request.recipient = _recipient;
+        request.fundId = _fundId;
+        request.amount = _amount;
+        request.token = _tokenAddress;
+
+        uint256 length = checks.length;
+
+        uint256 i = 0;
+        while (i < length) {
+            request.checks.add(checks[i]);
+            request.pending.add(checks[i]);
+            i++;
+        }
+
+        emit RequestCreated(
+            index,
+            _fundId,
+            _recipient,
+            _amount,
+            _tokenAddress,
+            _description
+        );
+
+        return index;
+    }
+
+    /**
      * @dev            initiate a request
      * @param  _id     type of the request
      * @param  _check  check to approve

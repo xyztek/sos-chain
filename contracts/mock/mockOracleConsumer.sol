@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
@@ -6,14 +5,16 @@ import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
 
 import "hardhat/console.sol";
 
-contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
+contract MockOracleConsumer is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
 
-    uint256 private fee;
+    uint256 public fee;
     bytes32 public responseBytes;
 
-    address private oracle;
-    string private jobId;
+    address public oracle;
+    string public jobId;
+
+    address public chainLink;
 
     event RequestBytesFullfiled(
         bytes32 indexed requestId,
@@ -35,12 +36,13 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
     constructor(
         address _oracle,
         string memory _jobId,
-        uint256 _fee
+        uint256 _fee,
+        address _chainLink
     ) ConfirmedOwner(msg.sender) {
-        setPublicChainlinkToken();
         oracle = _oracle;
         jobId = _jobId;
         fee = _fee;
+        chainLink = _chainLink;
     }
 
     function requestBytes(int256 x, int256 y) public onlyOwner {
@@ -51,7 +53,9 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
         );
         req.addInt("x", x);
         req.addInt("y", y);
+
         sendChainlinkRequestTo(oracle, req, fee);
+
         responseBytes = 0x3900000000000000000000000000000000000000000000000000000000000000;
     }
 
@@ -60,14 +64,17 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
         recordChainlinkFulfillment(_requestId)
     {
         emit RequestBytesFullfiled(_requestId, data);
+        responseBytes = data;
+        //request manager
     }
 
     function getChainlinkToken() public view returns (address) {
-        return chainlinkTokenAddress();
+        return chainLink;
     }
 
     function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
+        LinkTokenInterface link = LinkTokenInterface(chainLink);
+
         require(
             link.transfer(msg.sender, link.balanceOf(address(this))),
             "Unable to transfer"
@@ -89,7 +96,7 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
     }
 
     function stringToBytes32(string memory source)
-        private
+        public
         pure
         returns (bytes32 result)
     {

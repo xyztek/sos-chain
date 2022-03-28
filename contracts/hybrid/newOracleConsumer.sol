@@ -55,10 +55,11 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
         responseBytes = 0x3900000000000000000000000000000000000000000000000000000000000000;
     }
 
-    function fulfillBytes(bytes32 _requestId, bytes32 data)
-        public
-        recordChainlinkFulfillment(_requestId)
-    {
+    function approveCheck(
+        bytes32 _requestId,
+        bytes32 calldata _data,
+        bytes32 _fundId
+    ) public recordChainlinkFulfillment(_requestId) {
         emit RequestBytesFullfiled(_requestId, data);
     }
 

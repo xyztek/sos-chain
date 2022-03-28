@@ -13,7 +13,9 @@ export type ContractName =
   | "SOS"
   | "GnosisSafe"
   | "GnosisSafeProxyFactory"
-  | "OracleConsumer";
+  | "MockOracleConsumer"
+  | "MockChainLinkToken"
+  | "OracleArgcis";
 
 export type Stack = Record<ContractName, Contract>;
 
@@ -149,16 +151,32 @@ export async function deployGnosisSafe(): Promise<Contract> {
     []
   );
 }
-export async function deployOracleConsumer(
-  oracle = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4",
-  jobId = "BSC",
-  fee = ethers.utils.parseUnits("0.1", 18)
+
+export async function deployMockOracleConsumer(
+  chainLink: string,
+  oracle: string,
+  jobId = "834f1c7da06e4df6854b5880488598e0",
+  fee = ethers.utils.parseEther("0.1")
 ): Promise<Contract> {
   return deployContract(
-    "contracts/hybrid/OracleConsumer.sol:OracleConsumer",
+    "contracts/mock/mockOracleConsumer.sol:MockOracleConsumer",
     {},
-    [oracle, jobId, fee]
+    [oracle, jobId, fee, chainLink]
   );
+}
+
+export async function deployMockChainLinkToken(): Promise<Contract> {
+  return deployContract(
+    "contracts/mock/mockChainLinkToken.sol:LinkToken",
+    {},
+    []
+  );
+}
+
+export async function deployOracleArgcis(chainLink: string): Promise<Contract> {
+  return deployContract("contracts/hybrid/OracleArgcis.sol:OracleArgcis", {}, [
+    chainLink,
+  ]);
 }
 
 export async function deployRegistry(): Promise<Contract> {
@@ -216,7 +234,14 @@ export async function deployStack(
   const GnosisSafeProxyFactory = await deployGnosisSafeProxyFactory();
 
   const Governor = await deployGovernor(Registry);
-  const OracleConsumer = await deployOracleConsumer();
+
+  const MockChainLinkToken = await deployMockChainLinkToken();
+  const OracleArgcis = await deployOracleArgcis(MockChainLinkToken.address);
+  const MockOracleConsumer = await deployMockOracleConsumer(
+    MockChainLinkToken.address,
+    OracleArgcis.address
+  );
+
   const checks =
     options.governorInitialChecks ||
     ["TEST_CHECK_001", "TEST_CHECK_002", "TEST_CHECK_003"].map((check) =>
@@ -228,7 +253,13 @@ export async function deployStack(
   await Registry.register(asBytes32("NFT_DESCRIPTOR"), Descriptor.address);
   await Registry.register(asBytes32("SOS"), SOS.address);
   await Registry.register(asBytes32("GOVERNOR"), Governor.address);
-  await Registry.register(asBytes32("ORACLE_CONSUMER"), OracleConsumer.address);
+
+  await Registry.register(
+    asBytes32("ORACLE_CONSUMER"),
+    MockOracleConsumer.address
+  );
+
+  await Registry.register(asBytes32("ORACLE"), OracleArgcis.address);
 
   await Registry.register(
     asBytes32("GNOSIS_SAFE_PROXY_FACTORY"),
@@ -248,6 +279,8 @@ export async function deployStack(
     SOS,
     GnosisSafe,
     GnosisSafeProxyFactory,
-    OracleConsumer,
+    MockOracleConsumer,
+    MockChainLinkToken,
+    OracleArgcis,
   };
 }
