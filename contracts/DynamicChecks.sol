@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import {Checks} from "./libraries/Checks.sol";
 
 import "hardhat/console.sol";
 
@@ -10,21 +11,17 @@ contract DynamicChecks is AccessControl {
     error Forbidden();
 
     bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
-    bytes32[] internal checks;
+    bytes32[2][] internal checks;
 
-    function setChecks(bytes32[] memory _initialChecks) internal {
-        checks = _initialChecks;
-    }
-
-    function getCheck(uint256 _index) public view returns (bytes32) {
+    function getCheck(uint256 _index) public view returns (bytes32[2] memory) {
         return checks[_index];
     }
 
-    function allChecks() public view returns (bytes32[] memory) {
+    function allChecks() public view returns (bytes32[2][] memory) {
         return checks;
     }
 
-    function addCheck(bytes32 _check)
+    function addCheck(bytes32[2] memory _check)
         public
         onlyRole(AUDIT_ROLE)
         returns (bool)
@@ -45,7 +42,11 @@ contract DynamicChecks is AccessControl {
         return true;
     }
 
-    function _shiftPop(bytes32[] storage _array, uint256 _index) internal {
+    function _setChecks(bytes32[2][] memory _initialChecks) internal {
+        checks = _initialChecks;
+    }
+
+    function _shiftPop(bytes32[2][] storage _array, uint256 _index) internal {
         require(_array.length > 0);
         require(_index <= _array.length - 1);
 

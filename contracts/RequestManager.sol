@@ -8,9 +8,10 @@ import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "./libraries/Geo.sol";
-import "./FundV1.sol";
-import "./FundManager.sol";
-import "./Registry.sol";
+import {FundV1} from "./FundV1.sol";
+import {FundManager} from "./FundManager.sol";
+import {Registry} from "./Registry.sol";
+import {Registered} from "./Registered.sol";
 import {OracleConsumer as Oracle} from "./hybrid/newOracleConsumer.sol";
 import {Checks} from "./libraries/Checks.sol";
 
@@ -21,13 +22,14 @@ contract RequestManager is AccessControl, Registered {
     using EnumerableMap for EnumerableMap.UintToAddressMap;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    error MissingRole(bytes32);
+    error NotAllowed();
+
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 
     Request[] private requests;
-
-    error MissingRole(bytes32);
 
     enum Status {
         Pending,
@@ -49,8 +51,9 @@ contract RequestManager is AccessControl, Registered {
         address recipient;
         Status status;
         Geo.Coordinates location;
-        uint256 pending;
-        mapping(bytes32 => Signature) signatures;
+        bytes32[2][] checks;
+        uint256 pendingCheckCount;
+        mapping(uint256 => Signature) signatures;
     }
 
     // -----------------------------------------------------------------
@@ -95,26 +98,26 @@ contract RequestManager is AccessControl, Registered {
     /**
      * @dev                initiate a request
      * @param  _requestId  type of the request
-     * @param  _check      check to approve
+     * @param  _checkId    check to approve
      * @return             boolean indicating op result
      */
     function approveCheck(
         uint256 _requestId,
-        bytes32 _check,
+        uint256 _checkId,
         bool _success
     ) public returns (bool) {
         Request storage request = requests[_requestId];
         FundV1 fund = _getFund(request.fundId);
 
-        if (!_isApprovable(request, _check) || !_isFundOpen(fund))
+        if (!_isApprovable(request, _checkId) || !_isFundOpen(fund))
             revert NotAllowed();
 
         if (!_hasFundRole(fund, APPROVER_ROLE))
             revert MissingRole(APPROVER_ROLE);
 
-        _approveCheck(request, _check, _success);
+        _approveCheck(request, _checkId, _success);
 
-        if (request.pending == 0) {
+        if (request.pendingCheckCount == 0) {
             _bumpStatus(request);
         }
 
@@ -144,61 +147,60 @@ contract RequestManager is AccessControl, Registered {
         view
         returns (uint256)
     {
-        return requests[_requestId].pending;
+        return requests[_requestId].pendingCheckCount;
     }
 
     /**
-     * @dev            get approver address for a check
-     * @param  _id     request ID
-     * @param  _check  check
-     * @return         remaining checks
+     * @dev              get approver address for a check
+     * @param  _id       request ID
+     * @param  _checkId  check ID
+     * @return           remaining checks
      */
-    function getSigner(uint256 _id, bytes32 _check)
+    function getSigner(uint256 _id, uint256 _checkId)
         external
         view
         returns (address)
     {
-        return requests[_id].signatures[_check].signer;
+        return requests[_id].signatures[_checkId].signer;
     }
 
     /**
      * @dev                call oracle to try approve check
      * @param  _requestId  request ID
-     * @param  _check      check
+     * @param  _checkId    check ID
      */
-    function callOracle(uint256 _requestId, bytes32 _check)
+    function callOracle(uint256 _requestId, uint256 _checkId)
         external
         returns (bool)
     {
-        // require(_check.automated, "Automated check required.");
-        // bytes memory data = _packRequestWithCheck(_requestId, _check.name);
-        bytes memory data = _packRequestWithCheck(_requestId, _check);
+        Request storage request = requests[_requestId];
+        bytes32[2] memory check = request.checks[_checkId];
+        require(Checks.isAutomated(check), "Automated check required.");
+
+        bytes memory data = _packRequestWithCheck(_requestId, _checkId);
+
         bytes32 oracleRequestId = Oracle(_getAddress("SOS_ORACLE")).tryApprove(
-            //_check.jobId,
-            bytes32("JOB_ID"),
+            check[1],
             data
         );
 
-        emit OracleRequest(
-            _requestId,
-            bytes32("JOB_ID"),
-            oracleRequestId,
-            data
-        );
+        emit OracleRequest(_requestId, check[1], oracleRequestId, data);
+
+        return true;
     }
 
     // -----------------------------------------------------------------
     // INTERNAL
     // -----------------------------------------------------------------
 
-    function _isApprovable(Request storage _request, bytes32 _check)
+    function _isApprovable(Request storage _request, uint256 _checkId)
         internal
         view
         returns (bool)
     {
         return
             _request.status == Status.Pending &&
-            _request.signatures[_check].approved == false;
+            _request.signatures[_checkId].approved == false;
     }
 
     function _isFundOpen(FundV1 _fund) internal view returns (bool) {
@@ -237,8 +239,8 @@ contract RequestManager is AccessControl, Registered {
         request.amount = _amount;
         request.token = _tokenAddress;
 
-        bytes32[] memory checks = _copyChecksFromFund(_fund);
-        request.pending = checks.length;
+        request.checks = _copyChecksFromFund(_fund);
+        request.pendingCheckCount = request.checks.length;
 
         emit RequestCreated(
             id,
@@ -247,7 +249,7 @@ contract RequestManager is AccessControl, Registered {
             _amount,
             _tokenAddress,
             _description,
-            checks
+            request.checks
         );
 
         return id;
@@ -255,21 +257,21 @@ contract RequestManager is AccessControl, Registered {
 
     function _approveCheck(
         Request storage _request,
-        bytes32 _check,
+        uint256 _checkId,
         bool success
     ) internal {
-        require(_request.pending > 0, "No pending checks.");
+        require(_request.pendingCheckCount > 0, "No pending checks.");
 
         if (success) {
-            _request.pending = _request.pending.sub(1);
+            _request.pendingCheckCount = _request.pendingCheckCount.sub(1);
         }
 
-        _request.signatures[_check] = Signature({
+        _request.signatures[_checkId] = Signature({
             approved: success,
             signer: msg.sender
         });
 
-        emit Signed(_request.id, _check, msg.sender, success);
+        emit Signed(_request.id, _checkId, msg.sender, success);
     }
 
     function _bumpStatus(Request storage _request) internal {
@@ -291,12 +293,12 @@ contract RequestManager is AccessControl, Registered {
     function _copyChecksFromFund(FundV1 _fund)
         internal
         view
-        returns (bytes32[] memory)
+        returns (bytes32[2][] memory)
     {
         return _fund.allChecks();
     }
 
-    function _packRequestWithCheck(uint256 _id, bytes32 _check)
+    function _packRequestWithCheck(uint256 _id, uint256 _checkId)
         public
         view
         returns (bytes memory)
@@ -305,7 +307,7 @@ contract RequestManager is AccessControl, Registered {
 
         return
             abi.encode(
-                _check,
+                _checkId,
                 request.id,
                 request.status,
                 request.location.lat,
@@ -332,12 +334,12 @@ contract RequestManager is AccessControl, Registered {
         uint256 amount,
         address token,
         string description,
-        bytes32[] checks
+        bytes32[2][] checks
     );
 
     event Signed(
         uint256 indexed id,
-        bytes32 indexed check,
+        uint256 indexed check,
         address indexed approver,
         bool approved
     );

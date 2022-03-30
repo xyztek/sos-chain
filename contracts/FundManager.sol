@@ -10,10 +10,13 @@ import "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol";
 import "./FundV1.sol";
 import "./Registered.sol";
 import "./TokenControl.sol";
+import {Checks} from "./libraries/Checks.sol";
 
 import "hardhat/console.sol";
 
 contract FundManager is AccessControl, Registered {
+    error NotAllowed();
+
     address public baseFund;
     address[] private funds;
 
@@ -129,7 +132,7 @@ contract FundManager is AccessControl, Registered {
         address _safeAddress,
         address[] memory _allowedTokens,
         bool _requestable,
-        bytes32[] memory _checks,
+        bytes32[2][] memory _checks,
         address[] memory _whitelist
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
@@ -167,7 +170,7 @@ contract FundManager is AccessControl, Registered {
         string memory _description,
         address[] memory _allowedTokens,
         bool _requestable,
-        bytes32[] memory _checks,
+        bytes32[2][] memory _checks,
         address[] memory _whitelist,
         address[] memory _owners,
         uint256 _threshold

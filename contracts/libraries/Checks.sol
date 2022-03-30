@@ -7,9 +7,11 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
 
 library Checks {
-    struct Check {
-        bytes32 name;
-        bool automated;
-        bytes32 jobId;
+    function isAutomated(bytes32[2] memory _check)
+        internal
+        pure
+        returns (bool)
+    {
+        return _check[1] != "";
     }
 }

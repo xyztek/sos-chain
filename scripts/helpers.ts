@@ -79,9 +79,14 @@ export function createFund(
   allowedTokenAddresses: string[],
   underlyingSafeAddress: string,
   requestable = false,
-  checks = ["TEST_CHECK_001", "TEST_CHECK_002", "TEST_CHECK_003"].map((check) =>
-    ethers.utils.formatBytes32String(check)
-  ),
+  checks = [
+    ["TEST_CHECK_001", ""],
+    ["TEST_CHECK_002", ""],
+    ["TEST_CHECK_003", ""],
+  ].map(([name, jobId]) => [
+    ethers.utils.formatBytes32String(name),
+    ethers.utils.formatBytes32String(jobId),
+  ]),
   whitelist = [],
   name = "Test Fund",
   focus = "Test Focus",
