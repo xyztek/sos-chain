@@ -181,7 +181,7 @@ contract OracleArgcis is
         address _callbackAddress,
         bytes4 _callbackFunctionId,
         uint256 _expiration,
-        int256 _data,
+        bool _data,
         bytes32 _checkId,
         uint256 _govRequestId
     ) external onlyAuthorizedNode isValidRequest(_requestId) returns (bool) {

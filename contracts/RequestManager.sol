@@ -11,7 +11,7 @@ import "./libraries/Geo.sol";
 import "./FundV1.sol";
 import "./FundManager.sol";
 import "./Registry.sol";
-import {OracleConsumer as Oracle} from "./hybrid/newOracleConsumer.sol";
+import {OracleConsumer as Oracle} from "./hybrid/OracleConsumer.sol";
 import {Checks} from "./libraries/Checks.sol";
 
 import "hardhat/console.sol";

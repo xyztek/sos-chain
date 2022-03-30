@@ -6,12 +6,15 @@ import { ethers } from "hardhat";
 
 import {
   deployContract,
-  deployGnosisSafe,
-  deployGnosisSafeProxyFactory,
   createFund,
   deployStack,
   Stack,
 } from "../scripts/helpers";
+
+import {
+  deployGnosisSafe,
+  deployGnosisSafeProxyFactory,
+} from "../scripts/Deployments/gnosisSafe";
 
 describe("FundManager.sol", function () {
   let stack: Stack;

@@ -3,63 +3,69 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
-
+import "../Registry.sol";
+import "../Governor.sol";
+import "../Registered.sol";
 import "hardhat/console.sol";
 
-contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
+contract OracleConsumer is ChainlinkClient, ConfirmedOwner, Registered {
     using Chainlink for Chainlink.Request;
 
     uint256 private fee;
-    bytes32 public responseBytes;
 
     address private oracle;
-    string private jobId;
 
-    event RequestBytesFullfiled(
-        bytes32 indexed requestId,
-        bytes32 indexed response
+    event RequestFullfiled(
+        bytes32 indexed _requestId,
+        uint256 indexed _govRequestId,
+        bytes32 indexed _checkId,
+        bool _success
     );
 
     function setOracle(address _oracle) public onlyOwner {
         oracle = _oracle;
     }
 
-    function setJob(string memory _job) public onlyOwner {
-        jobId = _job;
-    }
-
     function setFee(uint256 _fee) public onlyOwner {
         fee = _fee;
     }
 
-    constructor(
-        address _oracle,
-        string memory _jobId,
-        uint256 _fee
-    ) ConfirmedOwner(msg.sender) {
+    constructor(address _oracle, address _registry) ConfirmedOwner(msg.sender) {
         setPublicChainlinkToken();
         oracle = _oracle;
-        jobId = _jobId;
-        fee = _fee;
+        fee = 10**17;
+
+        _setRegistry(_registry);
     }
 
-    function requestBytes(int256 x, int256 y) public onlyOwner {
-        Chainlink.Request memory req = buildChainlinkRequest(
-            stringToBytes32(jobId),
-            address(this),
-            this.fulfillBytes.selector
-        );
-        req.addInt("x", x);
-        req.addInt("y", y);
-        sendChainlinkRequestTo(oracle, req, fee);
-        responseBytes = 0x3900000000000000000000000000000000000000000000000000000000000000;
-    }
-
-    function fulfillBytes(bytes32 _requestId, bytes32 data)
+    function tryApprove(bytes32 _jobId, bytes memory _params)
         public
-        recordChainlinkFulfillment(_requestId)
+        onlyOwner
+        returns (bytes32)
     {
-        emit RequestBytesFullfiled(_requestId, data);
+        Chainlink.Request memory req = buildChainlinkRequest(
+            _jobId,
+            address(this),
+            this.approveCheck.selector
+        );
+        req.addBytes("params", _params);
+
+        return sendChainlinkRequestTo(oracle, req, fee);
+    }
+
+    function approveCheck(
+        bytes32 _requestId, //oracle
+        bool _data,
+        bytes32 _checkId,
+        uint256 _govRequestId
+    ) public recordChainlinkFulfillment(_requestId) {
+        Governor(_getAddress("GOVERNOR")).approveCheck(
+            _govRequestId,
+            _checkId,
+            _data
+        );
+
+        emit RequestFullfiled(_requestId, _govRequestId, _checkId, _data);
     }
 
     function getChainlinkToken() public view returns (address) {
@@ -86,21 +92,5 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner {
             _callbackFunctionId,
             _expiration
         );
-    }
-
-    function stringToBytes32(string memory source)
-        private
-        pure
-        returns (bytes32 result)
-    {
-        bytes memory tempEmptyStringTest = bytes(source);
-        if (tempEmptyStringTest.length == 0) {
-            return 0x0;
-        }
-
-        assembly {
-            // solhint-disable-line no-inline-assembly
-            result := mload(add(source, 32))
-        }
     }
 }
