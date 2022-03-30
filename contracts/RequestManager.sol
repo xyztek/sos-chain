@@ -13,6 +13,10 @@ import {FundManager} from "./FundManager.sol";
 import {Registry} from "./Registry.sol";
 import {Registered} from "./Registered.sol";
 import {OracleConsumer as Oracle} from "./hybrid/newOracleConsumer.sol";
+import "./FundV1.sol";
+import "./FundManager.sol";
+import "./Registry.sol";
+import {OracleConsumer as Oracle} from "./hybrid/OracleConsumer.sol";
 import {Checks} from "./libraries/Checks.sol";
 
 import "hardhat/console.sol";

@@ -3,6 +3,9 @@ import { ethers } from "hardhat";
 import { FactoryOptions } from "hardhat/types";
 
 import { DeploymentsExtension } from "hardhat-deploy/types";
+
+import { deployOracleStack } from "./Deployments/oracle";
+import { deployGnosisStack } from "./Deployments/gnosisSafe";
 export type ContractName =
   | "Descriptor"
   | "Donation"
@@ -141,49 +144,6 @@ export async function deployERC20(
   ]);
 }
 
-export async function deployGnosisSafeProxyFactory(): Promise<Contract> {
-  return deployContract(
-    "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol:GnosisSafeProxyFactory",
-    {},
-    []
-  );
-}
-
-export async function deployGnosisSafe(): Promise<Contract> {
-  return deployContract(
-    "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol:GnosisSafe",
-    {},
-    []
-  );
-}
-
-export async function deployMockOracleConsumer(
-  chainLink: string,
-  oracle: string,
-  jobId = "834f1c7da06e4df6854b5880488598e0",
-  fee = ethers.utils.parseEther("0.1")
-): Promise<Contract> {
-  return deployContract(
-    "contracts/mock/mockOracleConsumer.sol:MockOracleConsumer",
-    {},
-    [oracle, jobId, fee, chainLink]
-  );
-}
-
-export async function deployMockChainLinkToken(): Promise<Contract> {
-  return deployContract(
-    "contracts/mock/mockChainLinkToken.sol:LinkToken",
-    {},
-    []
-  );
-}
-
-export async function deployOracleArgcis(chainLink: string): Promise<Contract> {
-  return deployContract("contracts/hybrid/OracleArgcis.sol:OracleArgcis", {}, [
-    chainLink,
-  ]);
-}
-
 export async function deployRegistry(): Promise<Contract> {
   return deployContract("contracts/Registry.sol:Registry");
 }
@@ -221,7 +181,7 @@ export async function deployDonation(registry: Contract): Promise<Contract> {
   return deployContract("Donation", {}, [registry.address]);
 }
 
-interface DeploymentOptions {
+export interface DeploymentOptions {
   governorInitialChecks?: string[];
   SOSMinter?: string;
 }
@@ -235,17 +195,13 @@ export async function deployStack(
   const Descriptor = await deployDescriptor();
   const Donation = await deployDonation(Registry);
   const SOS = await deploySOS(Registry, options.SOSMinter || Donation.address);
-  const GnosisSafe = await deployGnosisSafe();
-  const GnosisSafeProxyFactory = await deployGnosisSafeProxyFactory();
+
+  const { GnosisSafe, GnosisSafeProxyFactory } = await deployGnosisStack();
 
   const Governor = await deployGovernor(Registry);
 
-  const MockChainLinkToken = await deployMockChainLinkToken();
-  const OracleArgcis = await deployOracleArgcis(MockChainLinkToken.address);
-  const MockOracleConsumer = await deployMockOracleConsumer(
-    MockChainLinkToken.address,
-    OracleArgcis.address
-  );
+  const { MockChainLinkToken, OracleArgcis, MockOracleConsumer } =
+    await deployOracleStack();
 
   const checks =
     options.governorInitialChecks ||

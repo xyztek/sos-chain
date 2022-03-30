@@ -1,11 +1,30 @@
 import { BytesLike, ethers } from "ethers";
 import * as dotenv from "dotenv";
 
-import * as apiConsumer from "../artifacts/contracts/hybrid/APIConsumer.sol/APIConsumer.json";
-
 dotenv.config();
 
+const process = require("process");
+
+const argv = () => {
+  const values = [];
+  for (const key of process.argv) {
+    const value: string = key.startsWith("--") ? key.replace("--", "") : null;
+    value != null && values.push(value);
+  }
+
+  return values.length > 0 ? values : null;
+};
+
 async function main() {
+  const deployNames = argv();
+  deployNames == null && console.log("Warning no file given");
+}
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+
+const test = async () => {
   const provider = new ethers.providers.InfuraProvider("rinkeby", {
     projectId: process.env.INFURA_ID,
   }); // local
@@ -14,19 +33,4 @@ async function main() {
     process.env.PRIVATE_KEY as BytesLike,
     provider
   );
-
-  const abi = apiConsumer.abi;
-  const contract = new ethers.Contract(
-    "0x8d365Cb09b1be792fB1A4654DF0990464A0A8BAF",
-    abi,
-    signer
-  );
-
-  const response = await contract.requestVolumeData({ gasLimit: 100000 });
-  console.log(response);
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+};

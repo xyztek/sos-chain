@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
@@ -9,72 +10,63 @@ contract MockOracleConsumer is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
 
     uint256 public fee;
-    bytes32 public responseBytes;
 
     address public oracle;
-    string public jobId;
+    address public chainlink;
 
-    address public chainLink;
-
-    event RequestBytesFullfiled(
-        bytes32 indexed requestId,
-        bytes32 indexed response
+    event RequestFullfiled(
+        bytes32 indexed _requestId,
+        uint256 indexed _govRequestId,
+        bytes32 indexed _checkId,
+        bool _success
     );
 
     function setOracle(address _oracle) public onlyOwner {
         oracle = _oracle;
     }
 
-    function setJob(string memory _job) public onlyOwner {
-        jobId = _job;
-    }
-
     function setFee(uint256 _fee) public onlyOwner {
         fee = _fee;
     }
 
-    constructor(
-        address _oracle,
-        string memory _jobId,
-        uint256 _fee,
-        address _chainLink
-    ) ConfirmedOwner(msg.sender) {
-        oracle = _oracle;
-        jobId = _jobId;
-        fee = _fee;
-        chainLink = _chainLink;
-    }
-
-    function requestBytes(int256 x, int256 y) public onlyOwner {
-        Chainlink.Request memory req = buildChainlinkRequest(
-            stringToBytes32(jobId),
-            address(this),
-            this.fulfillBytes.selector
-        );
-        req.addInt("x", x);
-        req.addInt("y", y);
-
-        sendChainlinkRequestTo(oracle, req, fee);
-
-        responseBytes = 0x3900000000000000000000000000000000000000000000000000000000000000;
-    }
-
-    function fulfillBytes(bytes32 _requestId, bytes32 data)
-        public
-        recordChainlinkFulfillment(_requestId)
+    constructor(address _oracle, address _chainlink)
+        ConfirmedOwner(msg.sender)
     {
-        emit RequestBytesFullfiled(_requestId, data);
-        responseBytes = data;
-        //request manager
+        chainlink = _chainlink;
+        oracle = _oracle;
+        fee = 10**17;
+    }
+
+    function tryApprove(bytes32 _jobId, bytes memory _params)
+        public
+        onlyOwner
+        returns (bytes32)
+    {
+        Chainlink.Request memory req = buildChainlinkRequest(
+            _jobId,
+            address(this),
+            this.approveCheck.selector
+        );
+        req.addBytes("params", _params);
+
+        return sendChainlinkRequestTo(oracle, req, fee);
+    }
+
+    function approveCheck(
+        bytes32 _requestId, //oracle
+        bool _data,
+        bytes32 _checkId,
+        uint256 _govRequestId
+    ) public recordChainlinkFulfillment(_requestId) {
+        emit RequestFullfiled(_requestId, _govRequestId, _checkId, _data);
     }
 
     function getChainlinkToken() public view returns (address) {
-        return chainLink;
+        return chainlink;
     }
 
     function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainLink);
-
+        LinkTokenInterface link = LinkTokenInterface(chainlink);
         require(
             link.transfer(msg.sender, link.balanceOf(address(this))),
             "Unable to transfer"
