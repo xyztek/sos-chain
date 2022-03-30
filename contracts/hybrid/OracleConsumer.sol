@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
-import "../Registry.sol";
-import "../Governor.sol";
-import "../Registered.sol";
+
+import {Registry} from "../Registry.sol";
+import {Governor} from "../Governor.sol";
+import {Registered} from "../Registered.sol";
+
 import "hardhat/console.sol";
 
 contract OracleConsumer is ChainlinkClient, ConfirmedOwner, Registered {
@@ -18,7 +20,7 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner, Registered {
     event RequestFullfiled(
         bytes32 indexed _requestId,
         uint256 indexed _govRequestId,
-        bytes32 indexed _checkId,
+        uint256 indexed _checkId,
         bool _success
     );
 
@@ -56,7 +58,7 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner, Registered {
     function approveCheck(
         bytes32 _requestId, //oracle
         bool _data,
-        bytes32 _checkId,
+        uint256 _checkId,
         uint256 _govRequestId
     ) public recordChainlinkFulfillment(_requestId) {
         Governor(_getAddress("GOVERNOR")).approveCheck(

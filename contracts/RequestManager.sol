@@ -7,16 +7,13 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import "./libraries/Geo.sol";
 import {FundV1} from "./FundV1.sol";
 import {FundManager} from "./FundManager.sol";
 import {Registry} from "./Registry.sol";
 import {Registered} from "./Registered.sol";
-import {OracleConsumer as Oracle} from "./hybrid/newOracleConsumer.sol";
-import "./FundV1.sol";
-import "./FundManager.sol";
-import "./Registry.sol";
 import {OracleConsumer as Oracle} from "./hybrid/OracleConsumer.sol";
+
+import {Geo} from "./libraries/Geo.sol";
 import {Checks} from "./libraries/Checks.sol";
 
 import "hardhat/console.sol";
