@@ -1,7 +1,6 @@
-import { ContractFactory, Contract, Signer } from "ethers";
-import { ethers } from "hardhat";
-import { FactoryOptions } from "hardhat/types";
-import { deployContract, DeploymentOptions } from "../helpers";
+import { Contract } from "ethers";
+
+import { deployContract } from "../helpers";
 
 export async function deployGnosisSafeProxyFactory(): Promise<Contract> {
   return deployContract(

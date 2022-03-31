@@ -16,8 +16,8 @@ contract MockOracleConsumer is ChainlinkClient, ConfirmedOwner {
 
     event RequestFullfiled(
         bytes32 indexed _requestId,
+        uint256 indexed _checkId,
         uint256 indexed _govRequestId,
-        bytes32 indexed _checkId,
         bool _success
     );
 
@@ -55,10 +55,10 @@ contract MockOracleConsumer is ChainlinkClient, ConfirmedOwner {
     function approveCheck(
         bytes32 _requestId, //oracle
         bool _data,
-        bytes32 _checkId,
+        uint256 _checkId,
         uint256 _govRequestId
     ) public recordChainlinkFulfillment(_requestId) {
-        emit RequestFullfiled(_requestId, _govRequestId, _checkId, _data);
+        emit RequestFullfiled(_requestId, _checkId, _govRequestId, _data);
     }
 
     function getChainlinkToken() public view returns (address) {

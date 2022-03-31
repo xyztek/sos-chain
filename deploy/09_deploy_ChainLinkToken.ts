@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const { deploy, save } = deployments;
 
-  if (hre.network.name != "hardhat") {
+  if (hre.network.name != "hardhat" && hre.network.name != "localhost") {
     save("ChainLinkToken", {
       abi: LinkTokenJSON.abi,
       address: Networks[hre.network.name],

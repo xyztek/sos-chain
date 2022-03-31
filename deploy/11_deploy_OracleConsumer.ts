@@ -17,7 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const OracleArgcis = await get("OracleArgcis");
 
-  if (hre.network.name != "hardhat") {
+  if (hre.network.name != "hardhat" && hre.network.name != "localhost") {
     OracleConsumer = await deploy("OracleConsumer", {
       contract: "OracleConsumer",
       from: deployer,
