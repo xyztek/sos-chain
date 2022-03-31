@@ -182,7 +182,7 @@ contract OracleArgcis is
         bytes4 _callbackFunctionId,
         uint256 _expiration,
         bool _data,
-        bytes32 _checkId,
+        uint256 _checkId,
         uint256 _govRequestId
     ) external onlyAuthorizedNode isValidRequest(_requestId) returns (bool) {
         bytes32 paramsHash = keccak256(
