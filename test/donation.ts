@@ -2,7 +2,12 @@ import { expect } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { ethers } from "hardhat";
 
-import { deployERC20, deployStack, Stack } from "../scripts/helpers";
+import {
+  createFund,
+  deployERC20,
+  deployStack,
+  Stack,
+} from "../scripts/helpers";
 
 describe("Donation.sol", function () {
   let stack: Stack;
@@ -18,12 +23,12 @@ describe("Donation.sol", function () {
 
     DECIMALS = await ERC20.decimals();
 
-    await stack.FundManager.createFund(
-      "Test Fund",
-      "Test Focus",
-      "Test Description Text",
+    await createFund(
+      stack.FundManager,
       [ERC20.address],
-      EOA2.address
+      EOA2.address,
+      false,
+      []
     );
   });
 

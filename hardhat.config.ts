@@ -55,19 +55,35 @@ const TARGET_NETWORK = "avalanche";
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
-    version: "0.8.10",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.6.6",
+        settings: {},
       },
-    },
+      {
+        version: "0.4.24",
+        settings: {},
+      },
+      {
+        version: "0.8.10",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
   },
   namedAccounts: {
     deployer: 0,
     safe: 9,
   },
   networks: {
+    fuji: {
+      url: `https://speedy-nodes-nyc.moralis.io/20bb3a98759a92194f0b3e8a/avalanche/testnet`,
+      accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`],
+    },
     rinkeby: {
       url: `https://speedy-nodes-nyc.moralis.io/20bb3a98759a92194f0b3e8a/eth/rinkeby`,
       accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`],
@@ -77,6 +93,12 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    rinkbery: {
+      url: process.env.RINKBERY_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+
     hardhat: {
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,

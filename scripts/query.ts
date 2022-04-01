@@ -1,7 +1,7 @@
 import { ContractFactory } from "ethers";
 import { ethers } from "hardhat";
 
-import { grantRole } from "./helpers";
+import { hasRole, grantRole } from "./helpers";
 
 async function main() {
   try {
@@ -12,14 +12,27 @@ async function main() {
     );
 
     const contract = factory.attach(
-      "0xF7a81Feb465f25b418f678180084ce4C3652a869"
+      "0xfd3aE3F73714F498B5c31C79D863a39CEb0Ba384"
     );
 
-    await grantRole(
-      contract,
-      "APPROVER_ROLE",
-      "0xEB6BE041000438400816eF46224f4aa17Ca316D7"
-    );
+    // await grantRole(
+    //  contract,
+    //  "APPROVER_ROLE",
+    //"0xEB6BE041000438400816eF46224f4aa17Ca316D7"
+    //   "0x1E15c548161F8a1859a8892dd61d102aD33c4829"
+    //);
+
+    const approvers = [
+      "0x1E15c548161F8a1859a8892dd61d102aD33c4829",
+      "0x12b6272E0EA025EEF30d1C8481C85C2c2Ad57421",
+      "0xEB6BE041000438400816eF46224f4aa17Ca316D7",
+    ];
+
+    for (const approver of approvers) {
+      const roleSet = await hasRole(contract, "APPROVER_ROLE", approver);
+
+      console.log(roleSet);
+    }
   } catch (error) {
     console.log(error);
   }

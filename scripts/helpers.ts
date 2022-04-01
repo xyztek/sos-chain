@@ -3,6 +3,9 @@ import { ethers } from "hardhat";
 import { FactoryOptions } from "hardhat/types";
 
 import { DeploymentsExtension } from "hardhat-deploy/types";
+
+import { deployOracleStack } from "./Deployments/oracle";
+import { deployGnosisStack } from "./Deployments/gnosisSafe";
 export type ContractName =
   | "Descriptor"
   | "Donation"
@@ -12,7 +15,10 @@ export type ContractName =
   | "Registry"
   | "SOS"
   | "GnosisSafe"
-  | "GnosisSafeProxyFactory";
+  | "GnosisSafeProxyFactory"
+  | "MockOracleConsumer"
+  | "MockChainLinkToken"
+  | "OracleArgcis";
 
 export type Stack = Record<ContractName, Contract>;
 
@@ -57,10 +63,47 @@ export async function handleRegistry(
   }
 }
 
+export function hasRole(contract: Contract, role: string, address: string) {
+  return contract.hasRole(
+    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(role)),
+    address
+  );
+}
+
 export function grantRole(contract: Contract, role: string, address: string) {
   return contract.grantRole(
     ethers.utils.keccak256(ethers.utils.toUtf8Bytes(role)),
     address
+  );
+}
+
+export function createFund(
+  contract: Contract,
+  allowedTokenAddresses: string[],
+  underlyingSafeAddress: string,
+  requestable = false,
+  checks = [
+    ["TEST_CHECK_001", ""],
+    ["TEST_CHECK_002", ""],
+    ["TEST_CHECK_003", ""],
+  ].map(([name, jobId]) => [
+    ethers.utils.formatBytes32String(name),
+    ethers.utils.formatBytes32String(jobId),
+  ]),
+  whitelist = [],
+  name = "Test Fund",
+  focus = "Test Focus",
+  description = "Test Description Text"
+) {
+  return contract.createFund(
+    name,
+    focus,
+    description,
+    underlyingSafeAddress,
+    allowedTokenAddresses,
+    requestable,
+    checks,
+    whitelist
   );
 }
 
@@ -101,22 +144,6 @@ export async function deployERC20(
   ]);
 }
 
-export async function deployGnosisSafeProxyFactory(): Promise<Contract> {
-  return deployContract(
-    "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol:GnosisSafeProxyFactory",
-    {},
-    []
-  );
-}
-
-export async function deployGnosisSafe(): Promise<Contract> {
-  return deployContract(
-    "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol:GnosisSafe",
-    {},
-    []
-  );
-}
-
 export async function deployRegistry(): Promise<Contract> {
   return deployContract("contracts/Registry.sol:Registry");
 }
@@ -146,18 +173,15 @@ export async function deploySOS(
   return deployContract("SOS", {}, [registry.address, minter]);
 }
 
-export async function deployGovernor(
-  registry: Contract,
-  initialChecks: string[]
-): Promise<Contract> {
-  return deployContract("Governor", {}, [registry.address, initialChecks]);
+export async function deployGovernor(registry: Contract): Promise<Contract> {
+  return deployContract("Governor", {}, [registry.address]);
 }
 
 export async function deployDonation(registry: Contract): Promise<Contract> {
   return deployContract("Donation", {}, [registry.address]);
 }
 
-interface DeploymentOptions {
+export interface DeploymentOptions {
   governorInitialChecks?: string[];
   SOSMinter?: string;
 }
@@ -171,8 +195,13 @@ export async function deployStack(
   const Descriptor = await deployDescriptor();
   const Donation = await deployDonation(Registry);
   const SOS = await deploySOS(Registry, options.SOSMinter || Donation.address);
-  const GnosisSafe = await deployGnosisSafe();
-  const GnosisSafeProxyFactory = await deployGnosisSafeProxyFactory();
+
+  const { GnosisSafe, GnosisSafeProxyFactory } = await deployGnosisStack();
+
+  const Governor = await deployGovernor(Registry);
+
+  const { MockChainLinkToken, OracleArgcis, MockOracleConsumer } =
+    await deployOracleStack();
 
   const checks =
     options.governorInitialChecks ||
@@ -180,13 +209,18 @@ export async function deployStack(
       ethers.utils.formatBytes32String(check)
     );
 
-  const Governor = await deployGovernor(Registry, checks);
-
   await Registry.register(asBytes32("FUND_MANAGER"), FundManager.address);
   await Registry.register(asBytes32("DONATION"), Donation.address);
   await Registry.register(asBytes32("NFT_DESCRIPTOR"), Descriptor.address);
   await Registry.register(asBytes32("SOS"), SOS.address);
   await Registry.register(asBytes32("GOVERNOR"), Governor.address);
+
+  await Registry.register(
+    asBytes32("ORACLE_CONSUMER"),
+    MockOracleConsumer.address
+  );
+
+  await Registry.register(asBytes32("ORACLE"), OracleArgcis.address);
 
   await Registry.register(
     asBytes32("GNOSIS_SAFE_PROXY_FACTORY"),
@@ -206,5 +240,8 @@ export async function deployStack(
     SOS,
     GnosisSafe,
     GnosisSafeProxyFactory,
+    MockOracleConsumer,
+    MockChainLinkToken,
+    OracleArgcis,
   };
 }

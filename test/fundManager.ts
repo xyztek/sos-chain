@@ -6,11 +6,15 @@ import { ethers } from "hardhat";
 
 import {
   deployContract,
-  deployGnosisSafe,
-  deployGnosisSafeProxyFactory,
+  createFund,
   deployStack,
   Stack,
 } from "../scripts/helpers";
+
+import {
+  deployGnosisSafe,
+  deployGnosisSafeProxyFactory,
+} from "../scripts/Deployments/gnosisSafe";
 
 describe("FundManager.sol", function () {
   let stack: Stack;
@@ -39,12 +43,12 @@ describe("FundManager.sol", function () {
     );
 
     await expect(
-      contract.createFund(
-        "Test Fund",
-        "Test Focus",
-        "Test Description Text",
+      createFund(
+        contract,
         ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        false,
+        []
       )
     ).to.emit(contract, "FundCreated");
   });
@@ -57,35 +61,9 @@ describe("FundManager.sol", function () {
       "Test Focus",
       "Test Description Text",
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-      [owner],
-      1
-    );
-
-    const receipt: ContractReceipt = await fundCreated.wait();
-
-    const event = receipt.events?.find((x) => x.event == "FundCreated");
-
-    const fundAddress = await contract.getFundAddress(event?.args?.id);
-
-    const gnosisSafeAddress = await fundFactory
-      .attach(fundAddress)
-      .getDepositAddressFor("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
-
-    const isOwner = await gnosisFactory
-      .attach(gnosisSafeAddress)
-      .isOwner(owner);
-
-    expect(isOwner).to.equal(true);
-  });
-
-  it("should deploy a governod Gnosis Safe and create a fund", async function () {
-    const owner = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";
-
-    const fundCreated = await contract.createFundWithSafe(
-      "Test Fund",
-      "Test Focus",
-      "Test Description Text",
-      ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
+      false,
+      [],
+      [],
       [owner],
       1
     );
@@ -116,10 +94,13 @@ describe("FundManager.sol", function () {
         "Test Focus",
         "Test Description Text",
         ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
+        false,
+        [],
+        [],
         [owner],
         5
       )
-    ).to.be.reverted;
+    ).to.be.revertedWith("NotAllowed()");
   });
 
   it("should create a fund given an ordinary EOA address", async function () {
@@ -127,8 +108,11 @@ describe("FundManager.sol", function () {
       "Test Fund",
       "Test Focus",
       "Test Description Text",
+      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ["0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"],
-      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+      false,
+      [],
+      []
     );
 
     const receipt: ContractReceipt = await fundCreated.wait();
@@ -138,17 +122,6 @@ describe("FundManager.sol", function () {
 
   it("should return addresses of open funds", async function () {
     expect(await contract.getFunds()).to.be.not.empty;
-  });
-
-  it("should return meta of open funds", async function () {
-    const meta = await contract.getFundsMeta();
-    expect(meta).to.be.not.empty;
-
-    expect(meta[0].id).to.be.instanceOf(BigNumber);
-    expect(meta[0].name).to.eq("Test Fund");
-    expect(meta[0].focus).to.eq("Test Focus");
-    expect(meta[0].description).to.eq("Test Description Text");
-    expect(meta[0].status).to.eq(0);
   });
 
   it("should return the address of a fund", async function () {

@@ -8,20 +8,24 @@ import "hardhat/console.sol";
 contract Registered {
     Registry registry;
 
-    constructor(address _registry) {
-        registry = Registry(_registry);
-    }
-
     // -----------------------------------------------------------------
     // INTERNAL API
     // -----------------------------------------------------------------
 
     /**
-     * @dev           get and address from registry
+     * @dev           get an address from registry
      * @param  _name  registered name
      * @return        registered address
      */
-    function getAddress(bytes32 _name) internal view returns (address) {
+    function _getAddress(bytes32 _name) internal view returns (address) {
         return registry.get(_name);
+    }
+
+    /**
+     * @dev               set registry
+     * @param  _registry  registry address
+     */
+    function _setRegistry(address _registry) internal {
+        registry = Registry(_registry);
     }
 }

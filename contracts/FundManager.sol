@@ -10,10 +10,13 @@ import "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol";
 import "./FundV1.sol";
 import "./Registered.sol";
 import "./TokenControl.sol";
+import {Checks} from "./libraries/Checks.sol";
 
 import "hardhat/console.sol";
 
 contract FundManager is AccessControl, Registered {
+    error NotAllowed();
+
     address public baseFund;
     address[] private funds;
 
@@ -22,61 +25,40 @@ contract FundManager is AccessControl, Registered {
         address at;
         string name;
         string focus;
-        string description;
         uint256 status;
     }
 
-    constructor(address _registry, address _impl) Registered(_registry) {
+    constructor(address _registry, address _impl) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
         baseFund = _impl;
+
+        _setRegistry(_registry);
     }
 
     // -----------------------------------------------------------------
     // PUBLIC API
     // -----------------------------------------------------------------
 
+    /**
+     * @dev         get a fund's name and focus
+     * @param  _id  unique identifier of the fund
+     * @return      fund name and focus
+     */
     function getFundMeta(uint256 _id)
         public
         view
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            uint256
-        )
+        returns (string memory, string memory)
     {
         return FundV1(funds[_id]).getMeta();
     }
 
+    /**
+     * @dev     get all fund addresses
+     * @return  fund addresses
+     */
     function getFunds() public view returns (address[] memory) {
         return funds;
-    }
-
-    function getFundsMeta() public view returns (Fund[] memory) {
-        uint256 length = funds.length;
-        Fund[] memory meta = new Fund[](length);
-        for (uint256 i = 0; i < length; i++) {
-            address fundAddress = funds[i];
-            FundV1 fund = FundV1(fundAddress);
-            (
-                string memory name,
-                string memory focus,
-                string memory description,
-                uint256 status
-            ) = fund.getMeta();
-
-            if (status == 0) {
-                meta[i] = Fund({
-                    id: i,
-                    at: fundAddress,
-                    name: name,
-                    focus: focus,
-                    description: description,
-                    status: uint256(status)
-                });
-            }
-        }
-        return meta;
     }
 
     /**
@@ -130,7 +112,7 @@ contract FundManager is AccessControl, Registered {
     }
 
     // -----------------------------------------------------------------
-    // ADMIN API
+    // ACCESS CONTROLLED
     // -----------------------------------------------------------------
 
     /**
@@ -138,15 +120,20 @@ contract FundManager is AccessControl, Registered {
      * @param  _name           name of the fund
      * @param  _focus          focus of the fund
      * @param  _description    description of the fund
+     * @param  _safeAddress    address of underlying Gnosis Safe
      * @param  _allowedTokens  array of allowed token addresses
-     * @param  _safeAddress    address of the fund
+     * @param  _requestable    boolean indicating if fund is requestable
+     * @param  _checks         a list of checks if fund is requestable
      */
     function createFund(
         string memory _name,
         string memory _focus,
         string memory _description,
+        address _safeAddress,
         address[] memory _allowedTokens,
-        address _safeAddress
+        bool _requestable,
+        bytes32[2][] memory _checks,
+        address[] memory _whitelist
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
 
@@ -155,10 +142,12 @@ contract FundManager is AccessControl, Registered {
         FundV1(cloneAddress).initialize(
             _name,
             _focus,
-            _description,
-            _allowedTokens,
             _safeAddress,
-            msg.sender
+            msg.sender,
+            _allowedTokens,
+            _requestable,
+            _checks,
+            _whitelist
         );
 
         funds.push(cloneAddress);
@@ -180,36 +169,28 @@ contract FundManager is AccessControl, Registered {
         string memory _focus,
         string memory _description,
         address[] memory _allowedTokens,
-        address[] calldata _owners,
+        bool _requestable,
+        bytes32[2][] memory _checks,
+        address[] memory _whitelist,
+        address[] memory _owners,
         uint256 _threshold
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_threshold > _owners.length) revert NotAllowed();
         uint256 index = funds.length;
 
         address cloneAddress = Clones.clone(baseFund);
 
-        bytes memory safeParams = _encodeSetup(
-            _owners,
-            _threshold,
-            address(0),
-            "0x",
-            address(0),
-            address(0),
-            0,
-            payable(address(0))
-        );
-
-        address _safeAddress = address(
-            GnosisSafeProxyFactory(getAddress("GNOSIS_SAFE_PROXY_FACTORY"))
-                .createProxy(getAddress("GNOSIS_SAFE"), safeParams)
-        );
+        address _safeAddress = _setupSafe(_owners, _threshold);
 
         FundV1(cloneAddress).initialize(
             _name,
             _focus,
-            _description,
-            _allowedTokens,
             _safeAddress,
-            msg.sender
+            msg.sender,
+            _allowedTokens,
+            _requestable,
+            _checks,
+            _whitelist
         );
 
         funds.push(cloneAddress);
@@ -235,6 +216,28 @@ contract FundManager is AccessControl, Registered {
     // INTERNAL API
     // -----------------------------------------------------------------
 
+    function _setupSafe(address[] memory _owners, uint256 _threshold)
+        internal
+        returns (address)
+    {
+        bytes memory safeParams = _encodeSetup(
+            _owners,
+            _threshold,
+            address(0),
+            "0x",
+            address(0),
+            address(0),
+            0,
+            payable(address(0))
+        );
+
+        return
+            address(
+                GnosisSafeProxyFactory(_getAddress("GNOSIS_SAFE_PROXY_FACTORY"))
+                    .createProxy(_getAddress("GNOSIS_SAFE"), safeParams)
+            );
+    }
+
     /**
      * @dev Encodes params and function for proxy creation
      * @param _owners List of Safe owners.
@@ -248,7 +251,7 @@ contract FundManager is AccessControl, Registered {
      * @return encoded Bytes representation of the params with setup signature
      */
     function _encodeSetup(
-        address[] calldata _owners,
+        address[] memory _owners,
         uint256 _threshold,
         address to,
         bytes memory data,

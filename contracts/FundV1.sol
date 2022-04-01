@@ -6,24 +6,34 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-import "./TokenControl.sol";
+import {Checks} from "./libraries/Checks.sol";
+import {TokenControl} from "./TokenControl.sol";
 
 import "hardhat/console.sol";
-
-error Forbidden();
-error NotAllowed();
 
 // Master Fund (v1) Contract
 // FundManager create clones of this contract.
 contract FundV1 is AccessControl, TokenControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    error NotAllowed();
+    error NoZeroChecks();
+    error Forbidden();
+
+    bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
+    bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
+    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+    bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
+
     Status public status;
     address private factory;
     address private safeAddress;
+    bool public requestable;
     string public name;
     string public focus;
-    string public description;
+
+    bytes32[2][] public checks;
+    EnumerableSet.AddressSet private whitelist;
 
     enum Status {
         Open,
@@ -36,27 +46,39 @@ contract FundV1 is AccessControl, TokenControl {
     function initialize(
         string memory _name,
         string memory _focus,
-        string memory _description,
-        address[] memory _allowedTokens,
         address _safeAddress,
-        address _owner
+        address _owner,
+        address[] memory _allowedTokens,
+        bool _requestable,
+        bytes32[2][] memory _checks,
+        address[] memory _whitelist
     ) external {
         if (factory != address(0)) revert Forbidden();
+        if (_requestable) {
+            require(
+                _checks.length > 0,
+                "A set of initial checks are required for a requestable Fund."
+            );
+        }
+
+        if (_whitelist.length > 0 || _checks.length > 0) {
+            require(_requestable, "Fund must be set as requestable.");
+        }
+
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
         factory = msg.sender;
 
+        requestable = _requestable;
         name = _name;
         focus = _focus;
-        description = _description;
         safeAddress = _safeAddress;
         status = Status.Open;
 
-        uint256 i = 0;
-        while (i < _allowedTokens.length) {
-            allowedTokens.add(_allowedTokens[i]);
-            i++;
-        }
+        _setChecks(_checks);
+
+        _batchSet(whitelist, _whitelist);
+        _batchSet(allowedTokens, _allowedTokens);
     }
 
     // -----------------------------------------------------------------
@@ -67,17 +89,8 @@ contract FundV1 is AccessControl, TokenControl {
      * @dev                   get metadata for a fund
      * @return                metadata of the fund
      */
-    function getMeta()
-        external
-        view
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            uint256
-        )
-    {
-        return (name, focus, description, uint256(status));
+    function getMeta() external view returns (string memory, string memory) {
+        return (name, focus);
     }
 
     /**
@@ -127,8 +140,17 @@ contract FundV1 is AccessControl, TokenControl {
         return status == Status.Open;
     }
 
+    /**
+     * @dev                   check if address is whitelisted
+     * @return                boolean indicating status
+     */
+    function isWhitelisted(address _address) external view returns (bool) {
+        if (whitelist.length() == 0) return true;
+        return whitelist.contains(_address);
+    }
+
     // -----------------------------------------------------------------
-    // ADMIN API
+    // ACCESS CONTROLLED
     // -----------------------------------------------------------------
 
     /**
@@ -162,7 +184,7 @@ contract FundV1 is AccessControl, TokenControl {
     }
 
     // -----------------------------------------------------------------
-    // INTERNAL API
+    // INTERNAL
     // -----------------------------------------------------------------
 
     /**
@@ -178,9 +200,69 @@ contract FundV1 is AccessControl, TokenControl {
         return true;
     }
 
+    /**
+     * @dev             batch set insertion
+     * @param  _set     pointer to storage EnumerableSet
+     * @param  _values  array of values to insert
+     */
+    function _batchSet(
+        EnumerableSet.AddressSet storage _set,
+        address[] memory _values
+    ) internal {
+        uint256 length = _values.length;
+        uint256 i = 0;
+        while (i < length) {
+            _set.add(_values[i]);
+            i++;
+        }
+    }
+
     // -----------------------------------------------------------------
     // EVENTS
     // -----------------------------------------------------------------
 
     event StatusChange(uint256 indexed id);
+
+    function getCheck(uint256 _index) public view returns (bytes32[2] memory) {
+        return checks[_index];
+    }
+
+    function allChecks() public view returns (bytes32[2][] memory) {
+        return checks;
+    }
+
+    function addCheck(bytes32[2] memory _check)
+        public
+        onlyRole(AUDIT_ROLE)
+        returns (bool)
+    {
+        checks.push(_check);
+
+        return true;
+    }
+
+    function removeCheck(uint256 _index)
+        public
+        onlyRole(AUDIT_ROLE)
+        returns (bool)
+    {
+        if (checks.length <= 1) revert NoZeroChecks();
+
+        _shiftPop(checks, _index);
+        return true;
+    }
+
+    function _setChecks(bytes32[2][] memory _initialChecks) internal {
+        checks = _initialChecks;
+    }
+
+    function _shiftPop(bytes32[2][] storage _array, uint256 _index) internal {
+        require(_array.length > 0);
+        require(_index <= _array.length - 1);
+
+        _array[_index] = _array[_array.length - 1];
+        _array.pop();
+
+        // TODO: ENSURE _array IS PASSED AS REFERENCE IN TESTS
+    }
 }

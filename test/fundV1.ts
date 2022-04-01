@@ -2,7 +2,12 @@ import { assert, expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract, ContractFactory } from "ethers";
 
-import { deployERC20, deployStack, Stack } from "../scripts/helpers";
+import {
+  createFund,
+  deployERC20,
+  deployStack,
+  Stack,
+} from "../scripts/helpers";
 
 describe("FundV1.sol", function () {
   let stack: Stack;
@@ -22,25 +27,21 @@ describe("FundV1.sol", function () {
 
     factory = await ethers.getContractFactory("FundV1");
 
-    await stack.FundManager.createFund(
-      "Test Fund",
-      "Test Focus",
-      "Test Description Text",
+    await createFund(
+      stack.FundManager,
       [USDC.address],
-      EOA1.address
+      EOA1.address,
+      false,
+      []
     );
 
     funds = await stack.FundManager.getFunds();
   });
 
   it("should return meta information", async function () {
-    const [name, focus, description, status] = await factory
-      .attach(funds[0])
-      .getMeta();
+    const [name, focus] = await factory.attach(funds[0]).getMeta();
     expect(name).to.equal("Test Fund");
     expect(focus).to.equal("Test Focus");
-    expect(description).to.equal("Test Description Text");
-    expect(status).to.equal(0);
   });
 
   it("should return deposit address", async function () {
@@ -59,7 +60,6 @@ describe("FundV1.sol", function () {
 
   it("should return safe balances", async function () {
     const balances = await factory.attach(funds[0]).getBalances();
-    console.log(balances);
     assert(balances[0].length == balances[1].length);
   });
 
