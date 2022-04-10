@@ -12,7 +12,6 @@ contract MockOracleConsumer is ChainlinkClient, ConfirmedOwner {
     uint256 public fee;
 
     address public oracle;
-    address public chainlink;
 
     event RequestFullfiled(
         bytes32 indexed _requestId,
@@ -29,10 +28,10 @@ contract MockOracleConsumer is ChainlinkClient, ConfirmedOwner {
         fee = _fee;
     }
 
-    constructor(address _oracle, address _chainlink)
+    constructor(address _oracle, address _linkAddress)
         ConfirmedOwner(msg.sender)
     {
-        chainlink = _chainlink;
+        setChainlinkToken(_linkAddress);
         oracle = _oracle;
         fee = 10**17;
     }
@@ -62,11 +61,11 @@ contract MockOracleConsumer is ChainlinkClient, ConfirmedOwner {
     }
 
     function getChainlinkToken() public view returns (address) {
-        return chainlink;
+        return chainlinkTokenAddress();
     }
 
     function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainlink);
+        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
         require(
             link.transfer(msg.sender, link.balanceOf(address(this))),
             "Unable to transfer"
