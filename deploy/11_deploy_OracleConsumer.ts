@@ -16,12 +16,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const Registry = await get("Registry");
 
   const OracleArgcis = await get("OracleArgcis");
+  const Governor = await get("Governor");
 
   if (hre.network.name != "hardhat" && hre.network.name != "localhost") {
     OracleConsumer = await deploy("OracleConsumer", {
       contract: "OracleConsumer",
       from: deployer,
-      args: [OracleArgcis.address, Registry.address, ChainLinkToken.address],
+      args: [
+        OracleArgcis.address,
+        Registry.address,
+        ChainLinkToken.address,
+        Governor.address,
+      ],
       log: true,
     });
   } else {
@@ -36,7 +42,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await handleRegistry(
     deployer,
     deployments,
-    "OracleConsumer",
+    "ORACLE_CONSUMER",
     OracleConsumer.address
   );
 };

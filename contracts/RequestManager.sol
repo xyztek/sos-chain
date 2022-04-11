@@ -11,7 +11,7 @@ import {FundV1} from "./FundV1.sol";
 import {FundManager} from "./FundManager.sol";
 import {Registry} from "./Registry.sol";
 import {Registered} from "./Registered.sol";
-import {OracleConsumer as Oracle} from "./hybrid/OracleConsumer.sol";
+import {OracleConsumer} from "./hybrid/OracleConsumer.sol";
 
 import {Geo} from "./libraries/Geo.sol";
 import {Checks} from "./libraries/Checks.sol";
@@ -180,10 +180,8 @@ contract RequestManager is AccessControl, Registered {
 
         bytes memory data = _packRequestWithCheck(_requestId, _checkId);
 
-        bytes32 oracleRequestId = Oracle(_getAddress("SOS_ORACLE")).tryApprove(
-            check[1],
-            data
-        );
+        bytes32 oracleRequestId = OracleConsumer(_getAddress("ORACLE_CONSUMER"))
+            .tryApprove(check[1], data);
 
         emit OracleRequest(_requestId, check[1], oracleRequestId, data);
 

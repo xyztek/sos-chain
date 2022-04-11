@@ -1,5 +1,5 @@
 import { ContractFactory, Contract, Signer } from "ethers";
-import { ethers } from "hardhat";
+import { deployments, ethers } from "hardhat";
 import { FactoryOptions } from "hardhat/types";
 
 import { DeploymentsExtension } from "hardhat-deploy/types";
@@ -184,6 +184,18 @@ export async function deployDonation(registry: Contract): Promise<Contract> {
 export interface DeploymentOptions {
   governorInitialChecks?: string[];
   SOSMinter?: string;
+}
+
+export async function setFulfillmentPermission(nodeAddress: string) {
+  const { get } = deployments;
+
+  const details = await get("OracleArgcis");
+
+  const oracleArgcis: Contract = (
+    await ethers.getContractFactory("OracleArgcis")
+  ).attach(details.address);
+
+  await oracleArgcis.setFulfillmentPermission(nodeAddress , true)
 }
 
 export async function deployStack(

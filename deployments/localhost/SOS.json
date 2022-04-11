@@ -621,10 +621,14 @@
     "gasUsed": "1966155",
     "logsBloom": "0x00000004000000000000000000000000000000000000000000000000000000000000000000000000400000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000020000000000000100000800000000000000000000000000001000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000080040000000000000000000001000000000008000000000000000200000000000000000001000002000000100000000000020000000000000000000000000000000000000000000000000000000000000000000",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "blockHash": "0x3c3c28ebeb94255e1bc7039cf4d972154c779b63dfd226ca8749e0d67634ac10",
     "transactionHash": "0x9e07eb10be5c2bafb7e83a39b3b4ce6909043e4cd32c6836ad0fe8e9f651771d",
 =======
     "blockHash": "0xecf66cd280434a0009fbbbeb03c3a7a1cc494f7b38076b019f82b30a3a677b45",
+=======
+    "blockHash": "0xbf3340bd06c7c0378c09b30d105ca4f33357f560c7ff6576ea58419f78ac2fc3",
+>>>>>>> minor revisions
     "transactionHash": "0xb8bee194910b7ee2fbfe37f00ae3e8c0c13ba60bdaf7cae5fa3599c52209419e",
 >>>>>>> changed chainlink token set for evm chains other than ethereum (#26)
     "logs": [
@@ -646,10 +650,14 @@
         "data": "0x",
         "logIndex": 0,
 <<<<<<< HEAD
+<<<<<<< HEAD
         "blockHash": "0x3c3c28ebeb94255e1bc7039cf4d972154c779b63dfd226ca8749e0d67634ac10"
 =======
         "blockHash": "0xecf66cd280434a0009fbbbeb03c3a7a1cc494f7b38076b019f82b30a3a677b45"
 >>>>>>> changed chainlink token set for evm chains other than ethereum (#26)
+=======
+        "blockHash": "0xbf3340bd06c7c0378c09b30d105ca4f33357f560c7ff6576ea58419f78ac2fc3"
+>>>>>>> minor revisions
       },
       {
         "transactionIndex": 0,
@@ -669,10 +677,14 @@
         "data": "0x",
         "logIndex": 1,
 <<<<<<< HEAD
+<<<<<<< HEAD
         "blockHash": "0x3c3c28ebeb94255e1bc7039cf4d972154c779b63dfd226ca8749e0d67634ac10"
 =======
         "blockHash": "0xecf66cd280434a0009fbbbeb03c3a7a1cc494f7b38076b019f82b30a3a677b45"
 >>>>>>> changed chainlink token set for evm chains other than ethereum (#26)
+=======
+        "blockHash": "0xbf3340bd06c7c0378c09b30d105ca4f33357f560c7ff6576ea58419f78ac2fc3"
+>>>>>>> minor revisions
       }
     ],
     "blockNumber": 9,

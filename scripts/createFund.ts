@@ -12,8 +12,8 @@ async function main() {
 
     const REGISTRY_ADDRESSES: Record<string, string> = {
       rinkeby: "0x9543127f4483364200aA99b6C10B8c8C9Ce364Cb",
-      localhost: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      fuji: "0xCE43F7B45BbBe0E9f4c4E4EDa11ed9bdbED562Bf",
+      localhost: "0x3262A1f3948c171725B254e2ff69aE40904F5a37",
+      fuji: "0x3262A1f3948c171725B254e2ff69aE40904F5a37",
     };
 
     const registry: Contract = (
@@ -47,14 +47,17 @@ async function main() {
     };
 
     const defaultChecks = [
-      ["VERIFY RECIPIENT", ""],
-      ["VERIFY RECIPIENT ADDRESS", ""],
-      ["VERIFY LOCATION", ""],
-    ].map(([checkName, jobId]) => [asBytes32(checkName), asBytes32(jobId)]);
+      "VERIFY RECIPIENT",
+      "VERIFY RECIPIENT ADDRESS",
+      "VERIFY LOCATION",
+    ].map((check) => [
+      asBytes32(check),
+      "0x3563623638623961653932303438623339616163626536333036623135363033",
+    ]);
 
     const funds = [
       {
-        name: "SOS Wildfires Fund",
+        name: "SOS Oracle",
         focus: "Natural Disaster",
         description: `
 SOS Wildfires Fund is a contribution raised to reduce the causes of wildfires, compensate their effects and carry out relevant field missions to take precautions.
@@ -62,22 +65,9 @@ A wildfire, forest fire, bush fire, wild-land fire or rural fire is an unplanned
 Depending on the type of vegetation present, a wildfire can also be classified more specifically as a forest fire, brush fire, desert fire, grass fire, hill fire, peat fire, prairie fire, vegetation fire, or veld fire. Wildfires are distinct from beneficial uses of fire, called controlled burns; though controlled burns can turn into wildfires.
 `,
       },
-      {
-        name: "UNICEF - Save the Children",
-        focus: "War",
-        description: `
-UNICEF is working around the clock to scale up life-saving programmes for children. This includes:
-* Ramping up efforts to meet critical and escalating needs for safe water, health care, education and protection.
-* Delivering midwifery, obstetrics, surgical medical kits, first aid kits and diagnostic and treatment equipment to temporary storage facilities.
-* Delivering family hygiene kits, baby diapers, maternal health kits, institutional hygiene kits, disinfectants and bottled water to health and social institutions.
-* Working with municipalities to ensure that there is immediate help for children and families in need.
-* Supporting mobile teams providing child protection services and psychosocial care to children traumatized by the chronic insecurity.
-* Setting up Blue Dot hubs in partnership with UNHCR and local authorities, to provide critical support and protection services for children and families. 
-* Continuing emergency response efforts to address the COVID-19 outbreak, including by working with municipalities to increase COVID-19 vaccination rates, and by strengthening awareness-raising and capacity-building efforts.
-`.trim(),
-      },
     ];
 
+    const whitelist = "0xeeAfBc6271834926F016c08318d28258Ca63b931";
     for (const [i, fund] of funds.entries()) {
       await fundManager.createFund(
         fund.name,
@@ -87,7 +77,7 @@ UNICEF is working around the clock to scale up life-saving programmes for childr
         [USDC[hre.network.name]],
         true,
         defaultChecks,
-        []
+        [whitelist]
       );
 
       const fundAddress = await fundManager.getFundAddress(i);

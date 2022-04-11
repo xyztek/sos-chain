@@ -35,8 +35,9 @@ contract OracleConsumer is ChainlinkClient, ConfirmedOwner, Registered {
     constructor(
         address _oracle,
         address _registry,
-        address _linkAddress
-    ) ConfirmedOwner(msg.sender) {
+        address _linkAddress,
+        address _governor
+    ) ConfirmedOwner(_governor) {
         setChainlinkToken(_linkAddress);
         oracle = _oracle;
         fee = 10**17;
