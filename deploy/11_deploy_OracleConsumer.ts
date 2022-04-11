@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     OracleConsumer = await deploy("OracleConsumer", {
       contract: "OracleConsumer",
       from: deployer,
-      args: [OracleArgcis.address, Registry.address],
+      args: [OracleArgcis.address, Registry.address, ChainLinkToken.address],
       log: true,
     });
   } else {
