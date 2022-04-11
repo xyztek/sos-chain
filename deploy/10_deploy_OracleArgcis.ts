@@ -18,11 +18,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [ChainLinkToken.address],
     log: true,
   });
-  /* 
-  if (Networks[hre.network.name]) {
-    await setFulfillmentPermission(Networks[hre.network.name]);
-    nonce;
-  } */
 
   await handleRegistry(
     deployer,
