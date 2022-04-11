@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
@@ -13,17 +13,17 @@ import "hardhat/console.sol";
 
 // Master Fund (v1) Contract
 // FundManager create clones of this contract.
-contract FundV1 is AccessControl, TokenControl {
+contract FundV1 is AccessControlEnumerable, TokenControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     error NotAllowed();
     error NoZeroChecks();
     error Forbidden();
 
+    bytes32 public constant AUDITOR_ROLE = keccak256("AUDITOR_ROLE");
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-    bytes32 public constant AUDIT_ROLE = keccak256("AUDIT_ROLE");
 
     Status public status;
     address private factory;
@@ -233,7 +233,7 @@ contract FundV1 is AccessControl, TokenControl {
 
     function addCheck(bytes32[2] memory _check)
         public
-        onlyRole(AUDIT_ROLE)
+        onlyRole(AUDITOR_ROLE)
         returns (bool)
     {
         checks.push(_check);
@@ -243,7 +243,7 @@ contract FundV1 is AccessControl, TokenControl {
 
     function removeCheck(uint256 _index)
         public
-        onlyRole(AUDIT_ROLE)
+        onlyRole(AUDITOR_ROLE)
         returns (bool)
     {
         if (checks.length <= 1) revert NoZeroChecks();

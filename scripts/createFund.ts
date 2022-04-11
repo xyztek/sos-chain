@@ -47,10 +47,10 @@ async function main() {
     };
 
     const defaultChecks = [
-      "VERIFY RECIPIENT",
-      "VERIFY RECIPIENT ADDRESS",
-      "VERIFY LOCATION",
-    ].map((check) => asBytes32(check));
+      ["VERIFY RECIPIENT", ""],
+      ["VERIFY RECIPIENT ADDRESS", ""],
+      ["VERIFY LOCATION", ""],
+    ].map(([checkName, jobId]) => [asBytes32(checkName), asBytes32(jobId)]);
 
     const funds = [
       {
@@ -85,11 +85,14 @@ UNICEF is working around the clock to scale up life-saving programmes for childr
         fund.description,
         SAFE[hre.network.name][i],
         [USDC[hre.network.name]],
-        defaultChecks
+        true,
+        defaultChecks,
+        []
       );
 
       const fundAddress = await fundManager.getFundAddress(i);
 
+      const auditors = ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"];
       const approvers = [
         "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
         "0x1E15c548161F8a1859a8892dd61d102aD33c4829",
@@ -110,13 +113,13 @@ UNICEF is working around the clock to scale up life-saving programmes for childr
         ).wait();
       }
 
-      for (const approver of approvers) {
-        const isGranted = await FundV1.hasRole(
-          ethers.utils.keccak256(ethers.utils.toUtf8Bytes("APPROVER_ROLE")),
-          approver
-        );
-
-        console.log(`APPROVER ROLE CHECK for ${approver}: `, isGranted);
+      for (const auditor of auditors) {
+        await (
+          await FundV1.grantRole(
+            ethers.utils.keccak256(ethers.utils.toUtf8Bytes("AUDITOR_ROLE")),
+            auditor
+          )
+        ).wait();
       }
     }
   } catch (error) {
