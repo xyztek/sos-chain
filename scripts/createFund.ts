@@ -10,6 +10,8 @@ async function main() {
     const { getNamedAccounts } = hre;
     const { safe } = await getNamedAccounts();
 
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
+
     const REGISTRY_ADDRESSES: Record<string, string> = {
       rinkeby: "0x9543127f4483364200aA99b6C10B8c8C9Ce364Cb",
       localhost: "0x3262A1f3948c171725B254e2ff69aE40904F5a37",
@@ -21,6 +23,7 @@ async function main() {
     ).attach(REGISTRY_ADDRESSES[hre.network.name]);
 
     const fundManagerAddress = await registry.get(asBytes32("FUND_MANAGER"));
+    const oracleConsumer = await registry.get(asBytes32("ORACLE_CONSUMER"));
 
     const fundManager: Contract = (
       await ethers.getContractFactory("FundManager")
@@ -70,14 +73,13 @@ Depending on the type of vegetation present, a wildfire can also be classified m
     const whitelist = "0xeeAfBc6271834926F016c08318d28258Ca63b931";
     for (const [i, fund] of funds.entries()) {
       await fundManager.createFund(
-        fund.name,
-        fund.focus,
-        fund.description,
+        [fund.name, fund.focus, fund.description],
         SAFE[hre.network.name][i],
         [USDC[hre.network.name]],
         true,
         defaultChecks,
-        [whitelist]
+        [whitelist],
+        oracleConsumer
       );
 
       const fundAddress = await fundManager.getFundAddress(i);

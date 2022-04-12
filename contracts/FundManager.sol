@@ -117,33 +117,32 @@ contract FundManager is AccessControl, Registered {
 
     /**
      * @dev                    setup a new fund
-     * @param  _name           name of the fund
-     * @param  _focus          focus of the fund
-     * @param  _description    description of the fund
+     * @param  _details[0]           name of the fund
+     * @param  _details[1]          focus of the fund
+     * @param  _details[2]    description of the fund
      * @param  _safeAddress    address of underlying Gnosis Safe
      * @param  _allowedTokens  array of allowed token addresses
      * @param  _requestable    boolean indicating if fund is requestable
      * @param  _checks         a list of checks if fund is requestable
      */
     function createFund(
-        string memory _name,
-        string memory _focus,
-        string memory _description,
+        string[3] memory _details,
         address _safeAddress,
         address[] memory _allowedTokens,
         bool _requestable,
         bytes32[2][] memory _checks,
-        address[] memory _whitelist
+        address[] memory _whitelist,
+        address _oracleConsumer
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
 
         address cloneAddress = Clones.clone(baseFund);
 
         FundV1(cloneAddress).initialize(
-            _name,
-            _focus,
+            _details[0],
+            _details[1],
             _safeAddress,
-            [msg.sender, _getAddress("ORACLE_CONSUMER")],
+            [msg.sender, _oracleConsumer],
             _allowedTokens,
             _requestable,
             _checks,
@@ -152,41 +151,44 @@ contract FundManager is AccessControl, Registered {
 
         funds.push(cloneAddress);
 
-        emit FundCreated(index, cloneAddress, _name, _focus, _description);
+        emit FundCreated(
+            index,
+            cloneAddress,
+            _details[0],
+            _details[1],
+            _details[2]
+        );
     }
 
     /**
      * @dev                    setup a new fund
-     * @param  _name           name of the fund
-     * @param  _focus          focus of the fund
-     * @param  _description    description of the fund
+     * @param  _details[0]           name of the fund
+     * @param  _details[1]          focus of the fund
+     * @param  _details[2]    description of the fund
      * @param  _allowedTokens  array of allowed token addresses
      * @param  _owners         owners of the safe
        @param  _threshold      number of confirmations that the safe would need before a transaction
      */
     function createFundWithSafe(
-        string memory _name,
-        string memory _focus,
-        string memory _description,
+        string[3] memory _details,
         address[] memory _allowedTokens,
         bool _requestable,
         bytes32[2][] memory _checks,
         address[] memory _whitelist,
         address[] memory _owners,
-        uint256 _threshold
+        uint256 _threshold,
+        address _oracleConsumer
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_threshold > _owners.length) revert NotAllowed();
         uint256 index = funds.length;
 
         address cloneAddress = Clones.clone(baseFund);
 
-        address _safeAddress = _setupSafe(_owners, _threshold);
-
         FundV1(cloneAddress).initialize(
-            _name,
-            _focus,
-            _safeAddress,
-            [msg.sender, _getAddress("ORACLE_CONSUMER")],
+            _details[0],
+            _details[1],
+            _setupSafe(_owners, _threshold),
+            [msg.sender, _oracleConsumer],
             _allowedTokens,
             _requestable,
             _checks,
@@ -195,7 +197,13 @@ contract FundManager is AccessControl, Registered {
 
         funds.push(cloneAddress);
 
-        emit FundCreated(index, cloneAddress, _name, _focus, _description);
+        emit FundCreated(
+            index,
+            cloneAddress,
+            _details[0],
+            _details[1],
+            _details[2]
+        );
     }
 
     /**

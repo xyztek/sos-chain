@@ -29,33 +29,31 @@ async function main() {
   const fund: Contract = (await ethers.getContractFactory("FundV1")).attach(
     fundAdd
   );
-  const oracleArgcis = await registry.get(asBytes32("SOS_ORACLE"));
 
   const governer: Contract = (
     await ethers.getContractFactory("Governor")
   ).attach(await registry.get(asBytes32("GOVERNOR")));
 
-  /*   const oracleArgcis: Contract = (
+  /*  const oracleArgcis: Contract = (
     await ethers.getContractFactory("OracleArgcis")
   ).attach(await registry.get(asBytes32("SOS_ORACLE")));
 
   await oracleArgcis.setFulfillmentPermission(
     "0xDC67B2eb21C480d019abEC4b53ac012eAFF1b328",
     true
-  ); */
-  /*   await fund.grantRole(
+  );
+  await fund.grantRole(
     ethers.utils.keccak256(ethers.utils.toUtf8Bytes("APPROVER_ROLE")),
     "0x19DB128f0E2f04b185e72Aabdd3664D0217210c6"
   ); */
   await governer.callOracle(0, 0);
-  // 3 , 0
 
-  /*   console.log(
+  console.log(
     await fund.hasRole(
       ethers.utils.keccak256(ethers.utils.toUtf8Bytes("APPROVER_ROLE")),
       "0x19DB128f0E2f04b185e72Aabdd3664D0217210c6"
     )
-  ); */
+  );
 }
 main().catch((error) => {
   console.error(error);

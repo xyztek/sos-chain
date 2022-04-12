@@ -66,7 +66,9 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         }
 
         _setupRole(DEFAULT_ADMIN_ROLE, _ownerConsumer[0]);
-        _setupRole(APPROVER_ROLE, _ownerConsumer[1]);
+        if (_ownerConsumer[1] != address(0)) {
+            _setupRole(APPROVER_ROLE, _ownerConsumer[1]);
+        }
 
         factory = msg.sender;
 
