@@ -19,7 +19,7 @@ const argv = () => {
 };
 
 async function main() {
-  const REGISTRY_ADDRESSES = "0x3262A1f3948c171725B254e2ff69aE40904F5a37";
+  const REGISTRY_ADDRESSES = "0x5472cdcfc4af5d3E40ddf0a6747CA1104AEF5165";
   const fundAdd = "0x99181264252aB558eC7D7754868411AE67f4469F";
 
   const registry: Contract = (

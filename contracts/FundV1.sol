@@ -47,7 +47,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         string memory _name,
         string memory _focus,
         address _safeAddress,
-        address _owner,
+        address[2] memory _ownerConsumer,
         address[] memory _allowedTokens,
         bool _requestable,
         bytes32[2][] memory _checks,
@@ -65,7 +65,8 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
             require(_requestable, "Fund must be set as requestable.");
         }
 
-        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+        _setupRole(DEFAULT_ADMIN_ROLE, _ownerConsumer[0]);
+        _setupRole(APPROVER_ROLE, _ownerConsumer[1]);
 
         factory = msg.sender;
 

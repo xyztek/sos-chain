@@ -13,7 +13,7 @@ async function main() {
     const REGISTRY_ADDRESSES: Record<string, string> = {
       rinkeby: "0x9543127f4483364200aA99b6C10B8c8C9Ce364Cb",
       localhost: "0x3262A1f3948c171725B254e2ff69aE40904F5a37",
-      fuji: "0x3262A1f3948c171725B254e2ff69aE40904F5a37",
+      fuji: "0x5472cdcfc4af5d3E40ddf0a6747CA1104AEF5165",
     };
 
     const registry: Contract = (

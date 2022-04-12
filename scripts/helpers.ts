@@ -186,16 +186,20 @@ export interface DeploymentOptions {
   SOSMinter?: string;
 }
 
-export async function setFulfillmentPermission(nodeAddress: string) {
-  const { get } = deployments;
+export async function setFulfillmentPermission(
+  nodeAddress: string,
+  deployments: DeploymentsExtension,
+  deployer: string
+) {
+  const { execute } = deployments;
 
-  const details = await get("OracleArgcis");
-
-  const oracleArgcis: Contract = (
-    await ethers.getContractFactory("OracleArgcis")
-  ).attach(details.address);
-
-  await oracleArgcis.setFulfillmentPermission(nodeAddress , true)
+  await execute(
+    "OracleArgcis",
+    { from: deployer, log: true },
+    "setFulfillmentPermission",
+    nodeAddress,
+    true
+  );
 }
 
 export async function deployStack(

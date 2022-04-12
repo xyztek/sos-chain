@@ -25,6 +25,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "SOS_ORACLE",
     OracleArgcis.address
   );
+  if (Networks[hre.network.name]) {
+    await setFulfillmentPermission(
+      Networks[hre.network.name],
+      deployments,
+      deployer
+    );
+  }
 };
 
 export default func;
