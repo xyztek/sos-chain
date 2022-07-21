@@ -32,8 +32,6 @@ contract RequestManager is AccessControl, Registered {
 
     Request[] private requests;
 
-    error MissingRole(bytes32);
-
     enum Status {
         Pending,
         Approved,

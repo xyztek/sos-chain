@@ -35,8 +35,6 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     bytes32[2][] public checks;
     EnumerableSet.AddressSet private whitelist;
 
-    bool public requestable;
-
     enum Status {
         Open,
         Paused,
@@ -76,7 +74,6 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         focus = _focus;
         safeAddress = _safeAddress;
         status = Status.Open;
-        setChecks(_checks);
 
         _setChecks(_checks);
 
