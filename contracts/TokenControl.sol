@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 import "hardhat/console.sol";
 
-contract TokenControl is AccessControl {
+contract TokenControl is AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     error TokenNotAllowed();
