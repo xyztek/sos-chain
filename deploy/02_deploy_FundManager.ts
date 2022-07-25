@@ -2,7 +2,11 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { DeployFunction } from "hardhat-deploy/types";
 
-import { handleRegistry } from "../scripts/helpers";
+import {
+  fundDataCreator,
+  fundManagerDataCreator,
+  handleRegistry,
+} from "../scripts/helpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts } = hre;
@@ -13,23 +17,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const Registry = await get("Registry");
 
-  const implementation = await deploy("FundV1", {
+  const implementationFund = await deploy("FundV1", {
     from: deployer,
     args: [],
     log: true,
   });
 
+  const implementationFundManager = await deploy("FundManagerV1", {
+    from: deployer,
+    args: [Registry.address, implementationFund.address], // empty ?
+    log: true,
+  });
+
   const FundManager = await deploy("FundManager", {
     from: deployer,
-    args: [Registry.address, implementation.address],
+    args: [
+      implementationFundManager.address,
+      fundManagerDataCreator(Registry.address, implementationFund.address),
+    ],
     log: true,
   });
 
   await handleRegistry(
     deployer,
     deployments,
-    "FUND_MANAGER",
-    FundManager.address
+    "FUND_MANAGERV1",
+    implementationFundManager.address
   );
 };
 
