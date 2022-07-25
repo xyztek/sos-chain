@@ -78,9 +78,9 @@ export function grantRole(contract: Contract, role: string, address: string) {
 }
 
 export function fundManagerDataCreator(_registry: string, _impl: string) {
-  return contract.hasRole(
-    ethers.utils.keccak256(ethers.utils.toUtf8Bytes(role)),
-    address
+  return ethers.utils.defaultAbiCoder.encode(
+    ["address", "address"],
+    [_registry, _impl]
   );
 }
 

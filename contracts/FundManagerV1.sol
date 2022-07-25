@@ -32,21 +32,33 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         uint256 status;
     }
 
-    function initialize( bytes memory data) initializer public {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+        uint8 i = 0;
+        while(i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        return string(bytesArray);
+    }
 
-        uint midpoint = data.length / 2;
-      bytes memory _registry = new bytes(midpoint);
-      for (uint i = 0; i < midpoint; i++) {
-          _registry[i] = data[i];
-      }
-      bytes memory _impl = new bytes(data.length - midpoint);
-      for (i = 0; i < data.length - midpoint; i++) {
-          _impl[i] = data[i + midpoint];
-      }
+    function initialize(bytes memory data) public initializer {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        
+        uint256 midpoint = data.length / 2;
+        bytes memory _registry = new bytes(midpoint);
+        for (uint256 i = 0; i < midpoint; i++) {
+            _registry[i] = data[i];
+        }
+        bytes memory _impl = new bytes(data.length - midpoint);
+        for (uint256 i = 0; i < data.length - midpoint; i++) {
+            _impl[i] = data[i + midpoint];
+        }
 
         _setRegistry(_registry);
-        baseFund =_impl;
+        baseFund = _impl;
     }
 
     // -----------------------------------------------------------------

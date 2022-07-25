@@ -3,7 +3,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 import {
-  fundDataCreator,
   fundManagerDataCreator,
   handleRegistry,
 } from "../scripts/helpers";
