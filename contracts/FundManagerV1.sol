@@ -32,23 +32,17 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         uint256 status;
     }
 
-    function initialize( bytes memory data) initializer public {
+    function initialize(bytes memory data) external initializer {
+
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        
+        console.logAddress(msg.sender);
 
-        uint midpoint = data.length / 2;
-      bytes memory _registry = new bytes(midpoint);
-      for (uint i = 0; i < midpoint; i++) {
-          _registry[i] = data[i];
-      }
-      bytes memory _impl = new bytes(data.length - midpoint);
-      for (i = 0; i < data.length - midpoint; i++) {
-          _impl[i] = data[i + midpoint];
-      }
-
+        (address _registry,address _impl) = abi.decode(data, (address,address));
         _setRegistry(_registry);
-        baseFund =_impl;
-    }
+        baseFund = _impl;
 
+}
     // -----------------------------------------------------------------
     // PUBLIC API
     // -----------------------------------------------------------------
@@ -164,8 +158,8 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         );
 
         funds.push(cloneAddress);
-
-        emit FundCreated(index, cloneAddress, _name, _focus, _description);
+        ///
+        emit FundCreated(index, cloneAddress, _name, _focus, _description,_requestable);
     }
 
     /**
