@@ -46,7 +46,9 @@ contract Donation is Registered, Ownable {
         );
 
         uint256 donationId = _recordDonation(_fundId, _tokenAddress, _amount);
-
+        
+        address fundAddress = FundManagerV1(_getAddress("FUND_MANAGER")).getFundAddress(_fundId);
+        FundV1(fundAddress).updateTotalBalance(_tokenAddress, _amount);
         emit Donated(msg.sender, donationId, _fundId, _amount, _tokenAddress);
 
         _mint(msg.sender, donationId);

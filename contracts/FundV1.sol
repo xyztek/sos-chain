@@ -31,6 +31,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     bool public requestable;
     string public name;
     string public focus;
+    mapping(address => uint256) private balanceMap;
 
     bytes32[2][] public checks;
     EnumerableSet.AddressSet private whitelist;
@@ -62,7 +63,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         }
 
         if (_whitelist.length > 0 || _checks.length > 0) {
-            require(_requestable, "Fund must be set as requestable.");
+            //require(_requestable, "Fund must be set as requestable.");
         }
 
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
@@ -113,6 +114,35 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         }
 
         return (addresses, balances);
+    }
+
+    /**
+     * @dev                   get fund total balances
+     * @return                tuple of (tokenAddress[], balance[])
+     */
+    function getTotalBalances()
+        external
+        view
+        returns (address[] memory, uint256[] memory)
+    {
+        uint256 length = allowedTokens.length();
+
+        address[] memory addresses = new address[](length);
+        uint256[] memory balances = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            addresses[i] = allowedTokens.at(i);
+            balances[i] = balanceMap[addresses[i]];
+        }
+
+        return (addresses, balances);
+    }
+
+    /**
+     * @dev                   called from Donation.sol and updates total balance for the given token address
+     */
+    function updateTotalBalance(address _tokenAddress, uint256 _amount ) external {
+        balanceMap[_tokenAddress] += _amount;
     }
 
     /**
