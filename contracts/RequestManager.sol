@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {FundV1} from "./FundV1.sol";
-import {FundManager} from "./FundManager.sol";
+import {FundManagerV1} from "./FundManagerV1.sol";
 import {Registry} from "./Registry.sol";
 import {Registered} from "./Registered.sol";
 import {OracleConsumer as Oracle} from "./hybrid/OracleConsumer.sol";
@@ -285,7 +285,7 @@ contract RequestManager is AccessControl, Registered {
     }
 
     function _getFund(uint256 _fundId) internal view returns (FundV1) {
-        FundManager manager = FundManager(_getAddress("FUND_MANAGER"));
+        FundManagerV1 manager = FundManagerV1(_getAddress("FUND_MANAGER"));
         address fundAddress = manager.getFundAddress(_fundId);
 
         return FundV1(fundAddress);

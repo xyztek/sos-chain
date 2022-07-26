@@ -2,14 +2,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { DeployFunction } from "hardhat-deploy/types";
 
-import {
-  fundDataCreator,
-  fundManagerDataCreator,
-  handleRegistry,
-} from "../scripts/helpers";
+import { fundManagerDataCreator, handleRegistry } from "../scripts/helpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts } = hre;
+  const { deployments, getNamedAccounts, ethers } = hre;
 
   const { deploy, get } = deployments;
 
@@ -17,32 +13,41 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const Registry = await get("Registry");
 
-  const implementationFund = await deploy("FundV1", {
+  const implementation = await deploy("FundV1", {
     from: deployer,
     args: [],
     log: true,
   });
 
-  const implementationFundManager = await deploy("FundManagerV1", {
+  // const FundManagerV1 = await deploy("FundManagerV1", {
+  //   from: deployer,
+  //   args: [],
+  //   log: true,
+  // });
+  // const factory = await ethers.getContractAt("FundManagerV1", FundManagerV1.address);
+  // await factory.deployed();
+  // await FundManagerV1.deployed();
+  const FundManager = await deploy("FundManagerV1", {
     from: deployer,
-    args: [Registry.address, implementationFund.address], // empty ?
+    args: [],
     log: true,
-  });
-
-  const FundManager = await deploy("FundManager", {
-    from: deployer,
-    args: [
-      implementationFundManager.address,
-      fundManagerDataCreator(Registry.address, implementationFund.address),
-    ],
-    log: true,
+    proxy: {
+      owner: deployer,
+      proxyContract: "FundManager",
+      execute: {
+        methodName: "initialize",
+        args: [
+          fundManagerDataCreator(Registry.address, implementation.address),
+        ],
+      },
+    },
   });
 
   await handleRegistry(
     deployer,
     deployments,
-    "FUND_MANAGERV1",
-    implementationFundManager.address
+    "FUND_MANAGER",
+    FundManager.address
   );
 };
 

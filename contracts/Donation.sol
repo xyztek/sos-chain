@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./libraries/Donations.sol";
-import "./FundManager.sol";
+import "./FundManagerV1.sol";
 import "./FundV1.sol";
 import "./Registered.sol";
 import "./SOS.sol";
@@ -78,7 +78,7 @@ contract Donation is Registered, Ownable {
         returns (address)
     {
         return
-            FundManager(_getAddress("FUND_MANAGER")).getDepositAddressFor(
+            FundManagerV1(_getAddress("FUND_MANAGER")).getDepositAddressFor(
                 _fundId,
                 _tokenAddress
             );

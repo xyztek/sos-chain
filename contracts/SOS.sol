@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "./libraries/Donations.sol";
 import "./Donation.sol";
-import "./FundManager.sol";
+import "./FundManagerV1.sol";
 import "./FundV1.sol";
 import "./NFTDescriptor.sol";
 import "./Registered.sol";
@@ -150,6 +150,6 @@ contract SOS is AccessControl, ERC721, Registered {
         view
         returns (string memory, string memory)
     {
-        return FundManager(_getAddress("FUND_MANAGER")).getFundMeta(_fundId);
+        return FundManagerV1(_getAddress("FUND_MANAGER")).getFundMeta(_fundId);
     }
 }
