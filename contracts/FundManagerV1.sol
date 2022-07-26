@@ -156,9 +156,8 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _checks,
             _whitelist
         );
-
+        
         funds.push(cloneAddress);
-        ///
         emit FundCreated(index, cloneAddress, _name, _focus, _description,_requestable);
     }
 
@@ -202,7 +201,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
 
         funds.push(cloneAddress);
 
-        emit FundCreated(index, cloneAddress, _name, _focus, _description);
+        emit FundCreated(index, cloneAddress, _name, _focus, _description,_requestable);
     }
 
     /**
@@ -289,6 +288,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         address indexed at,
         string name,
         string focus,
-        string description
+        string description,
+        bool requestable
     );
 }

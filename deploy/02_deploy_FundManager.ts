@@ -2,7 +2,11 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { DeployFunction } from "hardhat-deploy/types";
 
-import { fundManagerDataCreator, handleRegistry } from "../scripts/helpers";
+import {
+  deployERC20,
+  fundManagerDataCreator,
+  handleRegistry,
+} from "../scripts/helpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers } = hre;
@@ -42,6 +46,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       },
     },
   });
+
+  const USDC = await deployERC20("USD Coin", "USDC");
+  console.log(`Fake USDC contract deployed at ${USDC.address}`);
 
   await handleRegistry(
     deployer,
