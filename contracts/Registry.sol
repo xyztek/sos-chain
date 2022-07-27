@@ -25,6 +25,8 @@ contract Registry is Ownable {
      * @return           address of the queried contract
      */
     function get(bytes32 _name) public view returns (address) {
+        console.log("--------------------------------------------------------------------------");
+        console.logBytes32(_name);
         if (registry[_name] == address(0x0)) revert NotFound();
 
         return registry[_name];

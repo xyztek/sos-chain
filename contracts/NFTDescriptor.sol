@@ -18,6 +18,15 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
     using SafeMath for uint256;
     using Strings for uint256;
     using HexStrings for uint256;
+    using Strings for uint256;
+
+    function division(uint256 decimalPlaces, uint256 numerator, uint256 denominator) public pure returns(string memory) {
+        uint256 factor = 10**decimalPlaces;
+        uint256 quotient  = numerator / denominator;
+        uint256 remainder = (numerator * factor / denominator) % factor;
+        string memory result = string(abi.encodePacked(quotient.toString(), '.', remainder.toString()));
+        return result;
+    }
 
     function encodeSVG(
         uint256 _tokenId,
@@ -70,13 +79,12 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         string memory _fundFocus
     ) public view returns (bytes memory) {
         bytes[3] memory colors = [
-            tokenToColorHex(_ownerAddress, 77),
-            tokenToColorHex(_ownerAddress, 136),
-            tokenToColorHex(_ownerAddress, 17)
+            tokenToColorHex(_ownerAddress, 3),
+            tokenToColorHex(_ownerAddress, 57),
+            tokenToColorHex(_ownerAddress, 122)
         ];
 
-        string memory supportAmount = (_supportAmount /
-            10**ERC20(_tokenAddress).decimals()).toString();
+        string memory supportAmount = division(ERC20(_tokenAddress).decimals(),_supportAmount, 10**ERC20(_tokenAddress).decimals());
 
         bytes memory dynamicLayer = abi.encodePacked(
             sideText(_tokenId.toString(), "rotate(90 132.5 142.5)", "start"),
