@@ -48,7 +48,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const USDC = await deployERC20("USD Coin", "USDC");
-  console.log(`Fake USDC contract deployed at ${USDC.address}`);
 
   await handleRegistry(
     deployer,

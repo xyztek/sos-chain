@@ -20,7 +20,7 @@ import "hardhat/console.sol";
 
 contract FundManagerV1 is AccessControl, Registered, Initializable {
     error NotAllowed();
-
+    bytes32 public constant CREATOR_ROLE  = keccak256("CREATOR_ROLE ");
     address public baseFund;
     address[] private funds;
 
@@ -156,7 +156,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _checks,
             _whitelist
         );
-        
+
         funds.push(cloneAddress);
         emit FundCreated(index, cloneAddress, _name, _focus, _description,_requestable);
     }
@@ -216,6 +216,17 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
     {
         baseFund = _impl;
         return true;
+    }
+
+    /**
+     * @dev           set creator role
+     * @param  _roleAddress  address of underlying Gnosis Safe
+     */
+    function setCreatorRole(address _roleAddress)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _setupRole(CREATOR_ROLE, _roleAddress);
     }
 
     // -----------------------------------------------------------------
