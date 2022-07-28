@@ -20,7 +20,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
     using Strings for uint256;
 
     function amountFormatter(uint256 fixValue, uint256 decimalAmount, uint256 amount
-    ) public view returns (string memory) {
+    ) public pure returns (string memory) {
         string memory left = (amount / ( 10 ** decimalAmount)).toString();
         string memory right = ((amount / (10 ** (decimalAmount - fixValue))) % (10 ** (fixValue - 1))).toString();
         uint256 length = fixValue - bytes(string(right)).length;

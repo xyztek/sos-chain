@@ -17,9 +17,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const Registry = await get("Registry");
 
+  const Donation = await get("Donation");
+
   const implementation = await deploy("FundV1", {
     from: deployer,
-    args: [],
+    args: [Donation.address],
     log: true,
   });
 
