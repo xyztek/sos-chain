@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import {Checks} from "./libraries/Checks.sol";
 import {TokenControl} from "./TokenControl.sol";
 
+import "./Registered.sol";
+
 import "hardhat/console.sol";
 
 // Master Fund (v1) Contract
@@ -24,6 +26,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+    bytes32 public constant UPDATER_ROLE  = keccak256("UPDATER_ROLE");
 
     Status public status;
     address private factory;
@@ -32,16 +35,22 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     string public name;
     string public focus;
 
-    address[] private allowedTokensArray;
-    uint256[] private balancesArray;
+    address[] private donatedTokensArray;
+    mapping(address => uint256) private balancesMap;
+
 
     bytes32[2][] public checks;
     EnumerableSet.AddressSet private whitelist;
-
+    
     enum Status {
         Open,
         Paused,
         Closed
+    }
+
+    constructor(address _updaterAddress)
+    {
+        _setupRole(UPDATER_ROLE, _updaterAddress);
     }
 
     // called once by the factory at time of deployment
@@ -68,7 +77,6 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
             //require(_requestable, "Fund must be set as requestable.");
         }
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
-
         factory = msg.sender;
 
         requestable = _requestable;
@@ -78,11 +86,6 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         status = Status.Open;
 
         _setChecks(_checks);
-
-        for (uint256 i = 0; i < _allowedTokens.length; i++) {
-            allowedTokensArray.push(_allowedTokens[i]);
-            balancesArray.push(0);
-        }
 
         _batchSet(whitelist, _whitelist);
         _batchSet(allowedTokens, _allowedTokens);
@@ -124,25 +127,34 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
 
     /**
      * @dev                   get fund total balances
-     * @return                tuple of (tokenAddress[], balance[])
+     * @return                array of tokenAddress[]
      */
-    function getTotalBalances()
+    function getDonatedTokens()
         external
         view
-        returns (address[] memory, uint256[] memory)
+        returns (address[] memory)
     {
-        return (allowedTokensArray, balancesArray);
+        return (donatedTokensArray);
+    }
+
+    /**
+     * @dev                   get fund total balances
+     * @return                uint256 balance of the given token
+     */
+    function getBalanceForToken(address _tokenAddress)
+        external
+        view
+        returns (uint256)
+    {
+        return (balancesMap[_tokenAddress]);
     }
 
     /**
      * @dev                   called from Donation.sol and updates total balance for the given token address
      */
-    function updateTotalBalance(address _tokenAddress, uint256 _amount ) external {
-        for (uint256 i = 0; i < allowedTokensArray.length; i++) {
-            if(allowedTokensArray[i] == _tokenAddress){
-                balancesArray[i] = balancesArray[i] + _amount;
-            }
-        }
+    function updateTotalBalance(address _tokenAddress, uint256 _amount ) external onlyRole(UPDATER_ROLE) {
+        if(balancesMap[_tokenAddress] == 0) donatedTokensArray.push(_tokenAddress);
+        balancesMap[_tokenAddress]+= _amount;
     }
 
     /**

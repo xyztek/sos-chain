@@ -218,7 +218,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
 
     /**
      * @dev           set creator role
-     * @param  _roleAddress  address of underlying Gnosis Safe
+     * @param  _roleAddress  address of creator 
      */
     function setCreatorRole(address _roleAddress)
         external
