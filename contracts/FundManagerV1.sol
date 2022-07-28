@@ -35,8 +35,6 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
     function initialize(bytes memory data) external initializer {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        
-        console.logAddress(msg.sender);
 
         (address _registry,address _impl) = abi.decode(data, (address,address));
         _setRegistry(_registry);

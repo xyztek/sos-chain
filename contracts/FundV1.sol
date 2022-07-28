@@ -31,7 +31,9 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     bool public requestable;
     string public name;
     string public focus;
-    mapping(address => uint256) private balanceMap;
+
+    address[] private allowedTokensArray;
+    uint256[] private balancesArray;
 
     bytes32[2][] public checks;
     EnumerableSet.AddressSet private whitelist;
@@ -65,7 +67,6 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         if (_whitelist.length > 0 || _checks.length > 0) {
             //require(_requestable, "Fund must be set as requestable.");
         }
-
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
         factory = msg.sender;
@@ -77,6 +78,11 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         status = Status.Open;
 
         _setChecks(_checks);
+
+        for (uint256 i = 0; i < _allowedTokens.length; i++) {
+            allowedTokensArray.push(_allowedTokens[i]);
+            balancesArray.push(0);
+        }
 
         _batchSet(whitelist, _whitelist);
         _batchSet(allowedTokens, _allowedTokens);
@@ -125,24 +131,18 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         view
         returns (address[] memory, uint256[] memory)
     {
-        uint256 length = allowedTokens.length();
-
-        address[] memory addresses = new address[](length);
-        uint256[] memory balances = new uint256[](length);
-
-        for (uint256 i = 0; i < length; i++) {
-            addresses[i] = allowedTokens.at(i);
-            balances[i] = balanceMap[addresses[i]];
-        }
-
-        return (addresses, balances);
+        return (allowedTokensArray, balancesArray);
     }
 
     /**
      * @dev                   called from Donation.sol and updates total balance for the given token address
      */
     function updateTotalBalance(address _tokenAddress, uint256 _amount ) external {
-        balanceMap[_tokenAddress] += _amount;
+        for (uint256 i = 0; i < allowedTokensArray.length; i++) {
+            if(allowedTokensArray[i] == _tokenAddress){
+                balancesArray[i] = balancesArray[i] + _amount;
+            }
+        }
     }
 
     /**
