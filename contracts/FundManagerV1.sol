@@ -141,9 +141,9 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         address[] memory _whitelist
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
-
+        console.log("1");
         address cloneAddress = Clones.clone(baseFund);
-
+        console.log("2");
         FundV1(cloneAddress).initialize(
             _name,
             _focus,
@@ -152,9 +152,10 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _allowedTokens,
             _requestable,
             _checks,
-            _whitelist
+            _whitelist,
+            _getAddress("DONATION")
         );
-
+        console.log("3");
         funds.push(cloneAddress);
         emit FundCreated(index, cloneAddress, _name, _focus, _description,_requestable);
     }
@@ -194,7 +195,8 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _allowedTokens,
             _requestable,
             _checks,
-            _whitelist
+            _whitelist,
+            _getAddress("DONATION")
         );
 
         funds.push(cloneAddress);

@@ -26,7 +26,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-    bytes32 public constant UPDATER_ROLE  = keccak256("UPDATER_ROLE");
+    bytes32 public constant UPDATER_ROLE = keccak256("UPDATER_ROLE");
 
     Status public status;
     address private factory;
@@ -38,19 +38,13 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     address[] private donatedTokensArray;
     mapping(address => uint256) private balancesMap;
 
-
     bytes32[2][] public checks;
     EnumerableSet.AddressSet private whitelist;
-    
+
     enum Status {
         Open,
         Paused,
         Closed
-    }
-
-    constructor(address _updaterAddress)
-    {
-        _setupRole(UPDATER_ROLE, _updaterAddress);
     }
 
     // called once by the factory at time of deployment
@@ -63,8 +57,10 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         address[] memory _allowedTokens,
         bool _requestable,
         bytes32[2][] memory _checks,
-        address[] memory _whitelist
+        address[] memory _whitelist,
+        address _updaterAddress
     ) external {
+        console.log("11");
         if (factory != address(0)) revert Forbidden();
         if (_requestable) {
             require(
@@ -76,6 +72,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         if (_whitelist.length > 0 || _checks.length > 0) {
             //require(_requestable, "Fund must be set as requestable.");
         }
+        _setupRole(UPDATER_ROLE, _updaterAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         factory = msg.sender;
 
@@ -86,7 +83,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         status = Status.Open;
 
         _setChecks(_checks);
-
+        console.log("22");
         _batchSet(whitelist, _whitelist);
         _batchSet(allowedTokens, _allowedTokens);
     }
@@ -112,16 +109,20 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         view
         returns (address[] memory, uint256[] memory)
     {
+        console.log(1);
         uint256 length = allowedTokens.length();
-
+        console.log(2);
         address[] memory addresses = new address[](length);
         uint256[] memory balances = new uint256[](length);
-
+        console.log(length);
         for (uint256 i = 0; i < length; i++) {
+            console.log(allowedTokens.at(i));
             addresses[i] = allowedTokens.at(i);
+            console.log("------------------");
             balances[i] = IERC20(allowedTokens.at(i)).balanceOf(safeAddress);
+            console.log(balances[i]);
         }
-
+        console.log(4);
         return (addresses, balances);
     }
 
@@ -129,11 +130,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
      * @dev                   get fund total balances
      * @return                array of tokenAddress[]
      */
-    function getDonatedTokens()
-        external
-        view
-        returns (address[] memory)
-    {
+    function getDonatedTokens() external view returns (address[] memory) {
         return (donatedTokensArray);
     }
 
@@ -152,9 +149,13 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     /**
      * @dev                   called from Donation.sol and updates total balance for the given token address
      */
-    function updateTotalBalance(address _tokenAddress, uint256 _amount ) external onlyRole(UPDATER_ROLE) {
-        if(balancesMap[_tokenAddress] == 0) donatedTokensArray.push(_tokenAddress);
-        balancesMap[_tokenAddress]+= _amount;
+    function updateTotalBalance(address _tokenAddress, uint256 _amount)
+        external
+        onlyRole(UPDATER_ROLE)
+    {
+        if (balancesMap[_tokenAddress] == 0)
+            donatedTokensArray.push(_tokenAddress);
+        balancesMap[_tokenAddress] += _amount;
     }
 
     /**
