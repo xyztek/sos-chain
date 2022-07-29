@@ -12,6 +12,7 @@ import "./libraries/HexStrings.sol";
 import "./SVGConstants.sol";
 import "./SVGComponents.sol";
 
+import "hardhat/console.sol";
 
 contract NFTDescriptor is SVGConstants, SVGComponents {
     using SafeMath for uint256;
@@ -19,13 +20,21 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
     using HexStrings for uint256;
     using Strings for uint256;
 
-    function amountFormatter(uint256 fixValue, uint256 decimalAmount, uint256 amount
-    ) public pure returns (string memory) {
-        string memory left = (amount / ( 10 ** decimalAmount)).toString();
-        string memory right = ((amount / (10 ** (decimalAmount - fixValue))) % (10 ** (fixValue - 1))).toString();
+    function amountFormatter(
+        uint256 fixValue,
+        uint256 decimalAmount,
+        uint256 amount
+    ) public view returns (string memory) {
+        console.log(fixValue);
+        console.log(decimalAmount);
+        console.log(amount);
+
+        string memory left = (amount / (10**decimalAmount)).toString();
+        string memory right = ((amount / (10**(decimalAmount - fixValue))) %
+            (10**(fixValue - 1))).toString();
         uint256 length = fixValue - bytes(string(right)).length;
-        if(length == 4) return string(left);
-        for(uint i = 0; i < length; i++){
+        if (length == 4) return string(left);
+        for (uint256 i = 0; i < length; i++) {
             right = string(abi.encodePacked("0", right));
         }
         return string(abi.encodePacked(left, ".", right));
@@ -86,8 +95,11 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             tokenToColorHex(_ownerAddress, 57),
             tokenToColorHex(_ownerAddress, 122)
         ];
-       
-        string memory supportAmount = amountFormatter(5, ERC20(_tokenAddress).decimals(), _supportAmount);
+
+        console.log("1111");
+        string memory supportAmount = amountFormatter(5, 18, _supportAmount);
+
+        console.log("supportAmount = ", supportAmount);
 
         bytes memory dynamicLayer = abi.encodePacked(
             sideText(_tokenId.toString(), "rotate(90 132.5 142.5)", "start"),
@@ -110,6 +122,8 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             ),
             colorToGridAnim(colors)
         );
+
+        console.logBytes(dynamicLayer);
 
         return
             abi.encodePacked(

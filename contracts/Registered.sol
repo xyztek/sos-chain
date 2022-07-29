@@ -18,7 +18,6 @@ contract Registered {
      * @return        registered address
      */
     function _getAddress(bytes32 _name) internal view returns (address) {
-        console.log("2------------2");
         return registry.get(_name);
     }
 

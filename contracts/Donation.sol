@@ -45,9 +45,14 @@ contract Donation is Registered, Ownable {
             _tokenAddress
         );
 
+        console.log("Amount in donation ", _amount);
+
         uint256 donationId = _recordDonation(_fundId, _tokenAddress, _amount);
-        
-        address fundAddress = FundManagerV1(_getAddress("FUND_MANAGER")).getFundAddress(_fundId);
+
+        console.log("Donation id ", donationId);
+
+        address fundAddress = FundManagerV1(_getAddress("FUND_MANAGER"))
+            .getFundAddress(_fundId);
         FundV1(fundAddress).updateTotalBalance(_tokenAddress, _amount);
         emit Donated(msg.sender, donationId, _fundId, _amount, _tokenAddress);
 
@@ -102,6 +107,12 @@ contract Donation is Registered, Ownable {
 
         uint256 donationId = donationIds.current();
 
+        console.log("_record_Dontaion ***********");
+        console.log("Donation id ", donationId);
+        console.log("Fund id ", _fundId);
+        console.log("Token address ", _token);
+        console.log("Amount ", _amount);
+        console.log("***********");
         donations[donationId] = Donations.Record({
             donator: msg.sender,
             fundId: _fundId,

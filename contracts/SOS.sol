@@ -75,6 +75,12 @@ contract SOS is AccessControl, ERC721, Registered {
     {
         Donations.Record memory record = _getDonationRecord(_tokenId);
 
+        console.log("_tokenID", _tokenId);
+        console.log("donator", record.donator);
+        console.log("fundId", record.fundId);
+        console.log("amount", record.amount);
+        console.log("token", record.token);
+
         (string memory fundName, string memory fundFocus) = _getFundMeta(
             record.fundId
         );
@@ -91,6 +97,8 @@ contract SOS is AccessControl, ERC721, Registered {
             fundName,
             fundFocus
         );
+
+        console.log("Image = ", image);
 
         return
             string(
@@ -142,6 +150,8 @@ contract SOS is AccessControl, ERC721, Registered {
         returns (Donations.Record memory)
     {
         uint256 donationId = donations[_tokenId];
+        address test = _getAddress("DONATION");
+        console.log("Donation address => ", test);
         return Donation(_getAddress("DONATION")).getRecord(donationId);
     }
 

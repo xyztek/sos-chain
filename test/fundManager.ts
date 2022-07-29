@@ -9,6 +9,7 @@ import {
   createFund,
   deployStack,
   Stack,
+  fundManagerDataCreator,
 } from "../scripts/helpers";
 
 import {
@@ -37,9 +38,14 @@ describe("FundManager.sol", function () {
 
   beforeEach(async () => {
     contract = await deployContract(
-      "contracts/FundManager.sol:FundManager",
-      {},
-      [stack.Registry.address, stack.FundImplementation.address]
+      "contracts/FundManagerV1.sol:FundManagerV1"
+    );
+
+    await contract.initialize(
+      fundManagerDataCreator(
+        stack.Registry.address,
+        stack.FundImplementation.address
+      )
     );
 
     await expect(

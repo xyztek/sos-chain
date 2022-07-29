@@ -165,13 +165,15 @@ export async function deployFundManager(
 ): Promise<Contract[]> {
   const implementation = await deployContract("contracts/FundV1.sol:FundV1");
 
-  const manager = await deployContract(
-    "contracts/FundManager.sol:FundManager",
-    {},
-    [registry.address, implementation.address]
+  const FundManager = await deployContract(
+    "contracts/FundManagerV1.sol:FundManagerV1"
   );
 
-  return [manager, implementation];
+  await FundManager.initialize(
+    fundManagerDataCreator(registry.address, implementation.address)
+  );
+
+  return [FundManager, implementation];
 }
 
 export async function deployDescriptor(): Promise<Contract> {

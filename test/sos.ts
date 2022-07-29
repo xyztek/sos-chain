@@ -52,11 +52,14 @@ describe("SOS.sol", function () {
     await stack.Donation.connect(EOA1).donate(0, ERC20.address, donationAmount);
 
     const filter: EventFilter = stack.SOS.filters.Transfer(null, EOA1.address);
-    await new Promise(async (resolve, reject) => {
+
+    await new Promise((resolve, reject) => {
       stack.SOS.once(filter, async (_from, _to, tokenId) => {
         try {
           const tokenURI = await stack.SOS.tokenURI(tokenId);
-          const encodedSVG = Buffer.from(testSVG(EOA1.address)).toString(
+          console.log("tokenURI", tokenURI);
+
+          const encodedSVG = Buffer.from(testSVG(EOA1.address, "1")).toString(
             "base64"
           );
           const buffer = Buffer.from(

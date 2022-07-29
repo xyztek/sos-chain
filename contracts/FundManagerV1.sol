@@ -20,7 +20,7 @@ import "hardhat/console.sol";
 
 contract FundManagerV1 is AccessControl, Registered, Initializable {
     error NotAllowed();
-    bytes32 public constant CREATOR_ROLE  = keccak256("CREATOR_ROLE ");
+    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE ");
     address public baseFund;
     address[] private funds;
 
@@ -33,14 +33,16 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
     }
 
     function initialize(bytes memory data) external initializer {
-
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-        (address _registry,address _impl) = abi.decode(data, (address,address));
+        (address _registry, address _impl) = abi.decode(
+            data,
+            (address, address)
+        );
         _setRegistry(_registry);
         baseFund = _impl;
+    }
 
-}
     // -----------------------------------------------------------------
     // PUBLIC API
     // -----------------------------------------------------------------
@@ -152,11 +154,19 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _allowedTokens,
             _requestable,
             _checks,
-            _whitelist
+            _whitelist,
+            _getAddress("DONATION")
         );
 
         funds.push(cloneAddress);
-        emit FundCreated(index, cloneAddress, _name, _focus, _description,_requestable);
+        emit FundCreated(
+            index,
+            cloneAddress,
+            _name,
+            _focus,
+            _description,
+            _requestable
+        );
     }
 
     /**
@@ -194,12 +204,20 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _allowedTokens,
             _requestable,
             _checks,
-            _whitelist
+            _whitelist,
+            _getAddress("DONATION")
         );
 
         funds.push(cloneAddress);
 
-        emit FundCreated(index, cloneAddress, _name, _focus, _description,_requestable);
+        emit FundCreated(
+            index,
+            cloneAddress,
+            _name,
+            _focus,
+            _description,
+            _requestable
+        );
     }
 
     /**
@@ -218,7 +236,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
 
     /**
      * @dev           set creator role
-     * @param  _roleAddress  address of creator 
+     * @param  _roleAddress  address of creator
      */
     function setCreatorRole(address _roleAddress)
         external

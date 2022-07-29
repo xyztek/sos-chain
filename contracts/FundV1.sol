@@ -26,7 +26,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-    bytes32 public constant UPDATER_ROLE  = keccak256("UPDATER_ROLE");
+    bytes32 public constant UPDATER_ROLE = keccak256("UPDATER_ROLE");
 
     Status public status;
     address private factory;
@@ -38,19 +38,13 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     address[] private donatedTokensArray;
     mapping(address => uint256) private balancesMap;
 
-
     bytes32[2][] public checks;
     EnumerableSet.AddressSet private whitelist;
-    
+
     enum Status {
         Open,
         Paused,
         Closed
-    }
-
-    constructor(address _updaterAddress)
-    {
-        _setupRole(UPDATER_ROLE, _updaterAddress);
     }
 
     // called once by the factory at time of deployment
@@ -63,7 +57,8 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         address[] memory _allowedTokens,
         bool _requestable,
         bytes32[2][] memory _checks,
-        address[] memory _whitelist
+        address[] memory _whitelist,
+        address _updaterAddress
     ) external {
         if (factory != address(0)) revert Forbidden();
         if (_requestable) {
@@ -89,6 +84,8 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
 
         _batchSet(whitelist, _whitelist);
         _batchSet(allowedTokens, _allowedTokens);
+
+        _setupRole(UPDATER_ROLE, _updaterAddress);
     }
 
     // -----------------------------------------------------------------
@@ -129,11 +126,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
      * @dev                   get fund total balances
      * @return                array of tokenAddress[]
      */
-    function getDonatedTokens()
-        external
-        view
-        returns (address[] memory)
-    {
+    function getDonatedTokens() external view returns (address[] memory) {
         return (donatedTokensArray);
     }
 
@@ -152,9 +145,13 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     /**
      * @dev                   called from Donation.sol and updates total balance for the given token address
      */
-    function updateTotalBalance(address _tokenAddress, uint256 _amount ) external onlyRole(UPDATER_ROLE) {
-        if(balancesMap[_tokenAddress] == 0) donatedTokensArray.push(_tokenAddress);
-        balancesMap[_tokenAddress]+= _amount;
+    function updateTotalBalance(address _tokenAddress, uint256 _amount)
+        external
+        onlyRole(UPDATER_ROLE)
+    {
+        if (balancesMap[_tokenAddress] == 0)
+            donatedTokensArray.push(_tokenAddress);
+        balancesMap[_tokenAddress] += _amount;
     }
 
     /**
