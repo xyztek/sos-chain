@@ -24,7 +24,6 @@ describe("NFTDescriptor.sol", function () {
       "Test Fund",
       "Test Focus"
     );
-
     expect(tokenSVG).to.equal(testSVG(EOA1.address));
   });
 
