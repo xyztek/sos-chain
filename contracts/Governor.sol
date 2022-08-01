@@ -12,8 +12,6 @@ import "./DynamicChecks.sol";
 import "./Registered.sol";
 import "./RequestManager.sol";
 
-import "hardhat/console.sol";
-
 contract Governor is AccessControl, DynamicChecks, Registered, RequestManager {
     using SafeMath for uint256;
 

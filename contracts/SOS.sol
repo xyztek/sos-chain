@@ -14,8 +14,6 @@ import "./FundV1.sol";
 import "./NFTDescriptor.sol";
 import "./Registered.sol";
 
-import "hardhat/console.sol";
-
 contract SOS is AccessControl, ERC721, Registered {
     using Counters for Counters.Counter;
 

@@ -11,8 +11,6 @@ import {TokenControl} from "./TokenControl.sol";
 
 import "./Registered.sol";
 
-import "hardhat/console.sol";
-
 // Master Fund (v1) Contract
 // FundManager create clones of this contract.
 contract FundV1 is AccessControlEnumerable, TokenControl {
@@ -60,7 +58,6 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         address[] memory _whitelist,
         address _updaterAddress
     ) external {
-        console.log("11");
         if (factory != address(0)) revert Forbidden();
         if (_requestable) {
             require(
@@ -83,7 +80,6 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         status = Status.Open;
 
         _setChecks(_checks);
-        console.log("22");
         _batchSet(whitelist, _whitelist);
         _batchSet(allowedTokens, _allowedTokens);
     }
@@ -109,20 +105,13 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         view
         returns (address[] memory, uint256[] memory)
     {
-        console.log(1);
         uint256 length = allowedTokens.length();
-        console.log(2);
         address[] memory addresses = new address[](length);
         uint256[] memory balances = new uint256[](length);
-        console.log(length);
         for (uint256 i = 0; i < length; i++) {
-            console.log(allowedTokens.at(i));
             addresses[i] = allowedTokens.at(i);
-            console.log("------------------");
             balances[i] = IERC20(allowedTokens.at(i)).balanceOf(safeAddress);
-            console.log(balances[i]);
         }
-        console.log(4);
         return (addresses, balances);
     }
 

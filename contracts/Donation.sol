@@ -11,8 +11,6 @@ import "./FundV1.sol";
 import "./Registered.sol";
 import "./SOS.sol";
 
-import "hardhat/console.sol";
-
 contract Donation is Registered, Ownable {
     using Counters for Counters.Counter;
     using SafeERC20 for IERC20;

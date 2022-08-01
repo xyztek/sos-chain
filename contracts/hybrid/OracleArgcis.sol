@@ -9,8 +9,6 @@ import "@chainlink/contracts/src/v0.6/interfaces/WithdrawalInterface.sol";
 import "@chainlink/contracts/src/v0.6/vendor/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/vendor/SafeMathChainlink.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title The Chainlink Oracle contract replicated for extra oracle fullfill methods
  */

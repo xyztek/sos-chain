@@ -16,8 +16,6 @@ import {OracleConsumer as Oracle} from "./hybrid/OracleConsumer.sol";
 import {Geo} from "./libraries/Geo.sol";
 import {Checks} from "./libraries/Checks.sol";
 
-import "hardhat/console.sol";
-
 contract RequestManager is AccessControl, Registered {
     using SafeMath for uint256;
     using EnumerableMap for EnumerableMap.UintToAddressMap;

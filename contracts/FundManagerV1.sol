@@ -16,8 +16,6 @@ import "./Registered.sol";
 import "./TokenControl.sol";
 import {Checks} from "./libraries/Checks.sol";
 
-import "hardhat/console.sol";
-
 contract FundManagerV1 is AccessControl, Registered, Initializable {
     error NotAllowed();
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE ");
@@ -143,9 +141,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         address[] memory _whitelist
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 index = funds.length;
-        console.log("1");
         address cloneAddress = Clones.clone(baseFund);
-        console.log("2");
         FundV1(cloneAddress).initialize(
             _name,
             _focus,
@@ -157,7 +153,6 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _whitelist,
             _getAddress("DONATION")
         );
-        console.log("3");
         funds.push(cloneAddress);
         emit FundCreated(
             index,
