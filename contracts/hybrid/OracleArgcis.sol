@@ -78,7 +78,6 @@ contract OracleArgcis is
         uint256 _dataVersion,
         bytes calldata _data
     ) external override onlyLINK checkCallbackAddress(_callbackAddress) {
-        console.log("request here");
         bytes32 requestId = keccak256(abi.encodePacked(_sender, _nonce));
         require(commitments[requestId] == 0, "Must use a unique ID");
         // solhint-disable-next-line not-rely-on-time

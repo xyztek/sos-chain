@@ -166,11 +166,11 @@ export async function deployFundManager(
   const implementation = await deployContract("contracts/FundV1.sol:FundV1");
 
   const manager = await deployContract(
-    "contracts/FundManager.sol:FundManager",
-    {},
-    [registry.address, implementation.address]
+    "contracts/FundManagerV1.sol:FundManagerV1"
   );
-
+  manager.initialize(
+    fundManagerDataCreator(registry.address, implementation.address)
+  );
   return [manager, implementation];
 }
 
