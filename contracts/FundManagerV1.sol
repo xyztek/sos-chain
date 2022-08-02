@@ -18,7 +18,7 @@ import {Checks} from "./libraries/Checks.sol";
 
 contract FundManagerV1 is AccessControl, Registered, Initializable {
     error NotAllowed();
-    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE ");
+    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     address public baseFund;
     address[] private funds;
 
@@ -32,12 +32,15 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
 
     function initialize(bytes memory data) external initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(CREATOR_ROLE, msg.sender);
 
         (address _registry, address _impl) = abi.decode(
             data,
             (address, address)
         );
+
         _setRegistry(_registry);
+
         baseFund = _impl;
     }
 
@@ -139,7 +142,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         bool _requestable,
         bytes32[2][] memory _checks,
         address[] memory _whitelist
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(CREATOR_ROLE) {
         uint256 index = funds.length;
         address cloneAddress = Clones.clone(baseFund);
         FundV1(cloneAddress).initialize(
@@ -183,7 +186,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         address[] memory _whitelist,
         address[] memory _owners,
         uint256 _threshold
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(CREATOR_ROLE) {
         if (_threshold > _owners.length) revert NotAllowed();
         uint256 index = funds.length;
 
