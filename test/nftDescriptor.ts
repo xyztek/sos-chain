@@ -42,4 +42,23 @@ describe("NFTDescriptor.sol", function () {
       Buffer.from(testSVG(EOA1.address)).toString("base64")
     );
   });
+
+  it("should format a uint256 as fixed point", async function () {
+    const [_owner, EOA1] = await ethers.getSigners();
+    const decimals = await ERC20.decimals();
+
+    const cases = [
+      [ethers.utils.parseUnits("120", decimals), "120"],
+      [ethers.utils.parseUnits("120.3", decimals), "120.30000"],
+      [ethers.utils.parseUnits("1.20", decimals), "1.20000"],
+      [ethers.utils.parseUnits("1.2", decimals), "1.20000"],
+      [ethers.utils.parseUnits("0.20", decimals), "0.20000"],
+      [ethers.utils.parseUnits("0.0020", decimals), "0.00200"],
+    ];
+
+    for (const [amount, expected] of cases) {
+      const formatted = await stack.Descriptor.formatUint(5, decimals, amount);
+      expect(formatted).to.equal(expected);
+    }
+  });
 });

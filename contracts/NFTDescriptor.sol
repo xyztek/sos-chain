@@ -11,6 +11,7 @@ import "./libraries/HexStrings.sol";
 
 import "./SVGConstants.sol";
 import "./SVGComponents.sol";
+import "hardhat/console.sol";
 
 contract NFTDescriptor is SVGConstants, SVGComponents {
     using SafeMath for uint256;
@@ -18,20 +19,30 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
     using HexStrings for uint256;
     using Strings for uint256;
 
-    function amountFormatter(
-        uint256 fixValue,
-        uint256 decimalAmount,
+    function formatUint(
+        uint256 precision,
+        uint256 decimals,
         uint256 amount
-    ) public pure returns (string memory) {
-        string memory left = (amount / (10**decimalAmount)).toString();
-        string memory right = ((amount / (10**(decimalAmount - fixValue))) %
-            (10**(fixValue - 1))).toString();
-        uint256 length = fixValue - bytes(string(right)).length;
-        if (length == 4) return string(left);
-        for (uint256 i = 0; i < length; i++) {
-            right = string(abi.encodePacked("0", right));
+    ) public view returns (string memory) {
+        uint lExponent = 10 ** decimals;
+        uint left = (amount / lExponent);
+
+        uint rExponent = 10 ** (decimals - precision);
+        uint mod = 10 ** precision;
+        uint right = (amount / rExponent) % mod;
+
+        string memory leftStr = left.toString();
+        string memory rightStr = right.toString();
+
+        uint256 fill = precision - bytes(rightStr).length;
+
+        if (fill == 4) return string(leftStr);
+
+        for (uint256 i = 0; i < fill; i++) {
+          rightStr = string(abi.encodePacked("0", rightStr));
         }
-        return string(abi.encodePacked(left, ".", right));
+
+        return string(abi.encodePacked(leftStr, ".", rightStr));
     }
 
     function encodeSVG(
@@ -90,7 +101,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
             tokenToColorHex(_ownerAddress, 122)
         ];
 
-        string memory supportAmount = amountFormatter(
+        string memory supportAmount = formatUint(
             5,
             ERC20(_tokenAddress).decimals(),
             _supportAmount
