@@ -23,14 +23,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
-  // const FundManagerV1 = await deploy("FundManagerV1", {
-  //   from: deployer,
-  //   args: [],
-  //   log: true,
-  // });
-  // const factory = await ethers.getContractAt("FundManagerV1", FundManagerV1.address);
-  // await factory.deployed();
-  // await FundManagerV1.deployed();
   const FundManager = await deploy("FundManagerV1", {
     from: deployer,
     args: [],
@@ -47,7 +39,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   });
 
-  const USDC = await deployERC20("USD Coin", "USDC");
+  if (hre.network.name === "localhost" || hre.network.name === "hardhat") {
+    const USDC = await deployERC20("USD Coin", "USDC");
+    console.log(`Deployed fake USDC ERC20 Contract at ${USDC.address}..`);
+  }
 
   await handleRegistry(
     deployer,
