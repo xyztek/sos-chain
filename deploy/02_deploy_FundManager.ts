@@ -8,10 +8,12 @@ import {
   handleRegistry,
 } from "../scripts/helpers";
 
+const SHOULD_DEPLOY_ERC20 = ["hardhat", "localhost", "fuji"];
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers } = hre;
 
-  const { deploy, get } = deployments;
+  const { deploy, execute, get } = deployments;
 
   const { deployer } = await getNamedAccounts();
 
@@ -39,9 +41,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   });
 
-  if (hre.network.name === "localhost" || hre.network.name === "hardhat") {
-    const USDC = await deployERC20("USD Coin", "USDC");
-    console.log(`Deployed fake USDC ERC20 Contract at ${USDC.address}..`);
+  if (SHOULD_DEPLOY_ERC20.includes(hre.network.name)) {
+    const USDC = await deploy("BasicERC20", {
+      from: deployer,
+      args: ["USD Coin", "USDC", ethers.utils.parseUnits("10000000", 18)],
+    });
+
+    console.log(
+      "\n\n",
+      `Deployed fake USDC ERC20 Contract at: ${USDC.address}`,
+      "\n\n"
+    );
   }
 
   await handleRegistry(
