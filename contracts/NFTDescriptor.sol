@@ -23,7 +23,7 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         uint256 precision,
         uint256 decimals,
         uint256 amount
-    ) public view returns (string memory) {
+    ) public pure returns (string memory) {
         uint lExponent = 10 ** decimals;
         uint left = (amount / lExponent);
 
