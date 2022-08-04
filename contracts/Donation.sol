@@ -37,6 +37,8 @@ contract Donation is Registered, Ownable {
         address _tokenAddress,
         uint256 _amount
     ) external returns (bool) {
+        require(_amount > 0, "amount must be greater than 0");
+
         _depositToSafe(
             _getDepositAddress(_fundId, _tokenAddress),
             _amount,
