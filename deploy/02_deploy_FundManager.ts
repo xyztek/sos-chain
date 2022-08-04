@@ -9,11 +9,12 @@ import {
 } from "../scripts/helpers";
 
 const SHOULD_DEPLOY_ERC20 = ["hardhat", "localhost", "fuji"];
+const SHOULD_SETUP_FUND = ["hardhat", "localhost", "fuji"];
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers } = hre;
 
-  const { deploy, execute, get } = deployments;
+  const { deploy, get } = deployments;
 
   const { deployer } = await getNamedAccounts();
 
@@ -52,6 +53,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       `Deployed fake USDC ERC20 Contract at: ${USDC.address}`,
       "\n\n"
     );
+
   }
 
   await handleRegistry(
