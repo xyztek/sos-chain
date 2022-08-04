@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 library Donations {
     struct Record {
-        address donator;
+        address donor;
         uint256 fundId;
         uint256 amount;
         address token;

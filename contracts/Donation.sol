@@ -6,20 +6,20 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./libraries/Donations.sol";
+import "./DonationStorage.sol";
 import "./FundManagerV1.sol";
 import "./FundV1.sol";
 import "./Registered.sol";
 import "./SOS.sol";
 
 contract Donation is Registered, Ownable {
-    using Counters for Counters.Counter;
     using SafeERC20 for IERC20;
 
-    Counters.Counter private donationIds;
-    mapping(uint256 => Donations.Record) private donations;
+    DonationStorage store;
 
-    constructor(address _registry) {
+    constructor(address _registry, address _storage) {
         _setRegistry(_registry);
+        store = DonationStorage(_storage);
     }
 
     // -----------------------------------------------------------------
@@ -39,18 +39,23 @@ contract Donation is Registered, Ownable {
     ) external returns (bool) {
         require(_amount > 0, "amount must be greater than 0");
 
-        _depositToSafe(
+        _deposit(
             _getDepositAddress(_fundId, _tokenAddress),
             _amount,
             _tokenAddress
         );
 
-        uint256 donationId = _recordDonation(_fundId, _tokenAddress, _amount);
+        uint256 donationId = store.recordDonation(
+          msg.sender,
+          _fundId,
+          _tokenAddress,
+          _amount
+        );
 
         address fundAddress = FundManagerV1(_getAddress("FUND_MANAGER"))
             .getFundAddress(_fundId);
+
         FundV1(fundAddress).updateTotalBalance(_tokenAddress, _amount);
-        emit Donated(msg.sender, donationId, _fundId, _amount, _tokenAddress);
 
         _mint(msg.sender, donationId);
 
@@ -62,7 +67,7 @@ contract Donation is Registered, Ownable {
         view
         returns (Donations.Record memory)
     {
-        return donations[_id];
+        return store.getRecord(_id);
     }
 
     // -----------------------------------------------------------------
@@ -88,38 +93,12 @@ contract Donation is Registered, Ownable {
     }
 
     /**
-     * @dev              donate to the fund
-     * @param  _fundId   fund id
-     * @param  _token    ERC20 address
-     * @param  _amount   amount donated
-     * @return           donation record id
-     */
-    function _recordDonation(
-        uint256 _fundId,
-        address _token,
-        uint256 _amount
-    ) internal returns (uint256) {
-        donationIds.increment();
-
-        uint256 donationId = donationIds.current();
-
-        donations[donationId] = Donations.Record({
-            donator: msg.sender,
-            fundId: _fundId,
-            amount: _amount,
-            token: _token
-        });
-
-        return donationId;
-    }
-
-    /**
      * @dev                   transfer to safe
      * @param  _to            deposit address of the fund
      * @param  _amount        amount to donate
      * @param  _tokenAddress  ERC20 address
      */
-    function _depositToSafe(
+    function _deposit(
         address _to,
         uint256 _amount,
         address _tokenAddress
@@ -139,16 +118,4 @@ contract Donation is Registered, Ownable {
     {
         return SOS(_getAddress("SOS")).mint(_recipient, _donationId);
     }
-
-    // -----------------------------------------------------------------
-    // EVENTS
-    // -----------------------------------------------------------------
-
-    event Donated(
-        address indexed donator,
-        uint256 indexed donationId,
-        uint256 indexed fundId,
-        uint256 value,
-        address tokenAddress
-    );
 }
