@@ -67,7 +67,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         }
 
         if (_whitelist.length > 0 || _checks.length > 0) {
-            //require(_requestable, "Fund must be set as requestable.");
+            require(_requestable, "Fund must be set as requestable.");
         }
         _setupRole(UPDATER_ROLE, _updaterAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
