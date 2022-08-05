@@ -11,13 +11,39 @@ import "./libraries/HexStrings.sol";
 
 import "./SVGConstants.sol";
 import "./SVGComponents.sol";
-
 import "hardhat/console.sol";
 
 contract NFTDescriptor is SVGConstants, SVGComponents {
     using SafeMath for uint256;
     using Strings for uint256;
     using HexStrings for uint256;
+    using Strings for uint256;
+
+    function formatUint(
+        uint256 precision,
+        uint256 decimals,
+        uint256 amount
+    ) public pure returns (string memory) {
+        uint lExponent = 10 ** decimals;
+        uint left = (amount / lExponent);
+
+        uint rExponent = 10 ** (decimals - precision);
+        uint mod = 10 ** precision;
+        uint right = (amount / rExponent) % mod;
+
+        string memory leftStr = left.toString();
+        string memory rightStr = right.toString();
+
+        uint256 fill = precision - bytes(rightStr).length;
+
+        if (fill == 4) return string(leftStr);
+
+        for (uint256 i = 0; i < fill; i++) {
+          rightStr = string(abi.encodePacked("0", rightStr));
+        }
+
+        return string(abi.encodePacked(leftStr, ".", rightStr));
+    }
 
     function encodeSVG(
         uint256 _tokenId,
@@ -70,13 +96,16 @@ contract NFTDescriptor is SVGConstants, SVGComponents {
         string memory _fundFocus
     ) public view returns (bytes memory) {
         bytes[3] memory colors = [
-            tokenToColorHex(_ownerAddress, 77),
-            tokenToColorHex(_ownerAddress, 136),
-            tokenToColorHex(_ownerAddress, 17)
+            tokenToColorHex(_ownerAddress, 3),
+            tokenToColorHex(_ownerAddress, 57),
+            tokenToColorHex(_ownerAddress, 122)
         ];
 
-        string memory supportAmount = (_supportAmount /
-            10**ERC20(_tokenAddress).decimals()).toString();
+        string memory supportAmount = formatUint(
+            5,
+            ERC20(_tokenAddress).decimals(),
+            _supportAmount
+        );
 
         bytes memory dynamicLayer = abi.encodePacked(
             sideText(_tokenId.toString(), "rotate(90 132.5 142.5)", "start"),

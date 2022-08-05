@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import {Checks} from "./libraries/Checks.sol";
 
-import "hardhat/console.sol";
-
 contract DynamicChecks is AccessControl {
     error NoZeroChecks();
     error Forbidden();

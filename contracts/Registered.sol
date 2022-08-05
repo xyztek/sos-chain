@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./Registry.sol";
 
-import "hardhat/console.sol";
-
 contract Registered {
     Registry registry;
 

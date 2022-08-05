@@ -8,8 +8,6 @@ import {Registry} from "../Registry.sol";
 import {Governor} from "../Governor.sol";
 import {Registered} from "../Registered.sol";
 
-import "hardhat/console.sol";
-
 contract OracleConsumer is ChainlinkClient, ConfirmedOwner, Registered {
     using Chainlink for Chainlink.Request;
 
