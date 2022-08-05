@@ -67,8 +67,12 @@ describe("Donation.sol", function () {
     await ERC20.connect(EOA1).approve(stack.Donation.address, donationAmount);
 
     await expect(
-      stack.Donation.connect(EOA1).donate(0, ERC20.address, donationAmount)
-    ).to.emit(stack.Donation, "Donated");
+      stack.Donation.connect(EOA1).donate(
+        0,
+        ERC20.address,
+        donationAmount
+      )
+    ).to.emit(stack.DonationStorage, "Donated");
   });
 
   it("should revert early if allowance is insufficient", async function () {

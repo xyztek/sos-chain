@@ -28,6 +28,7 @@ describe("Governor.sol", function () {
       "Description"
     );
   };
+    console.log(createRequest)
 
   before(async () => {
     const [_owner, _EOA1, EOA2] = await ethers.getSigners();
@@ -110,10 +111,36 @@ describe("Governor.sol", function () {
   });
 
   it("should pack a request into bytes", async function () {
+    const [_owner, _EOA1, EOA2] = await ethers.getSigners();
     const packed = await stack.Governor._packRequestWithCheck(0, 0);
 
-    expect(packed).to.hexEqual(
-      "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025458cc6a600000000000000000000000000000000000000000000000000000011f81c846400000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003635c9adc5dea00000000000000000000000000000ca8c8688914e0f7096c920146cd0ad85cd7ae8b9"
+    const decoded = ethers.utils.defaultAbiCoder.decode(
+      [
+        "uint",
+        "uint",
+        "uint8",
+        "uint",
+        "uint",
+        "address",
+        "uint",
+        "uint",
+        "address",
+      ],
+      packed
     );
+
+    const expected = [
+      BigNumber.from("0"),
+      BigNumber.from("0"),
+      0,
+      BigNumber.from("2561290300000"),
+      BigNumber.from("1234833000000"),
+      EOA2.address,
+      BigNumber.from("0"),
+      BigNumber.from("1000000000000000000000"),
+      ERC20.address,
+    ];
+
+    expect(decoded).to.have.deep.members(expected);
   });
 });

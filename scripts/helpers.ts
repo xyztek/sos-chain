@@ -9,6 +9,7 @@ import { deployGnosisStack } from "./Deployments/gnosisSafe";
 export type ContractName =
   | "Descriptor"
   | "Donation"
+  | "DonationStorage"
   | "FundManager"
   | "FundImplementation"
   | "Governor"
@@ -189,8 +190,17 @@ export async function deployGovernor(registry: Contract): Promise<Contract> {
   return deployContract("Governor", {}, [registry.address]);
 }
 
-export async function deployDonation(registry: Contract): Promise<Contract> {
-  return deployContract("Donation", {}, [registry.address]);
+export async function deployDonationStorage(
+  registry: Contract
+): Promise<Contract> {
+  return deployContract("DonationStorage", {}, [registry.address]);
+}
+
+export async function deployDonation(
+  registry: Contract,
+  storage: Contract
+): Promise<Contract> {
+  return deployContract("Donation", {}, [registry.address, storage.address]);
 }
 
 export interface DeploymentOptions {
@@ -205,7 +215,10 @@ export async function deployStack(
 
   const [FundManager, FundImplementation] = await deployFundManager(Registry);
   const Descriptor = await deployDescriptor();
-  const Donation = await deployDonation(Registry);
+
+  const DonationStorage = await deployDonationStorage(Registry);
+  const Donation = await deployDonation(Registry, DonationStorage);
+
   const SOS = await deploySOS(Registry, options.SOSMinter || Donation.address);
 
   const { GnosisSafe, GnosisSafeProxyFactory } = await deployGnosisStack();
@@ -240,6 +253,7 @@ export async function deployStack(
   );
   await Registry.register(asBytes32("GNOSIS_SAFE"), GnosisSafe.address);
 
+  await grantRole(DonationStorage, "STORE_ROLE", Donation.address);
   await grantRole(SOS, "MINTER_ROLE", Donation.address);
 
   return {
@@ -247,6 +261,7 @@ export async function deployStack(
     FundImplementation,
     Descriptor,
     Donation,
+    DonationStorage,
     Governor,
     Registry,
     SOS,
