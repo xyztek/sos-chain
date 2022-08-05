@@ -28,7 +28,6 @@ describe("Governor.sol", function () {
       "Description"
     );
   };
-    console.log(createRequest)
 
   before(async () => {
     const [_owner, _EOA1, EOA2] = await ethers.getSigners();
