@@ -6,6 +6,7 @@ import { DeploymentsExtension } from "hardhat-deploy/types";
 
 import { deployOracleStack } from "./Deployments/oracle";
 import { deployGnosisStack } from "./Deployments/gnosisSafe";
+import { FundManagerV1 } from "../typechain";
 export type ContractName =
   | "Descriptor"
   | "Donation"
@@ -169,9 +170,11 @@ export async function deployFundManager(
   const manager = await deployContract(
     "contracts/FundManagerV1.sol:FundManagerV1"
   );
+
   manager.initialize(
     fundManagerDataCreator(registry.address, implementation.address)
   );
+
   return [manager, implementation];
 }
 
@@ -254,6 +257,7 @@ export async function deployStack(
   await Registry.register(asBytes32("GNOSIS_SAFE"), GnosisSafe.address);
 
   await grantRole(DonationStorage, "STORE_ROLE", Donation.address);
+  await grantRole(FundManager, "DONATION_ROLE", Donation.address);
   await grantRole(SOS, "MINTER_ROLE", Donation.address);
 
   return {

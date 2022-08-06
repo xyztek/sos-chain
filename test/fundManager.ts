@@ -8,6 +8,7 @@ import {
   deployContract,
   createFund,
   deployStack,
+  deployERC20,
   Stack,
   fundManagerDataCreator,
 } from "../scripts/helpers";
@@ -20,6 +21,7 @@ import {
 describe("FundManager.sol", function () {
   let stack: Stack;
   let contract: Contract;
+  let ERC20: Contract;
 
   let mockGnosisProxyFactory: Contract;
   let mockGnosisSafe: Contract;
@@ -29,6 +31,7 @@ describe("FundManager.sol", function () {
 
   before(async () => {
     stack = await deployStack();
+    ERC20 = await deployERC20();
 
     mockGnosisProxyFactory = await deployGnosisSafeProxyFactory();
     mockGnosisSafe = await deployGnosisSafe();
@@ -154,5 +157,13 @@ describe("FundManager.sol", function () {
         "0xC250f11eD2989BB9A64f0BEDA9310CC33FD10D06"
       )
     ).to.be.reverted;
+  });
+
+  it("should not allow call to upgradeFundBalance method", async function () {
+    const donationAmount = ethers.utils.parseUnits("12", 18);
+
+    await expect(
+      contract.updateFundBalance(0, ERC20.address, donationAmount)
+    ).to.be.revertedWith("AccessControl");
   });
 });

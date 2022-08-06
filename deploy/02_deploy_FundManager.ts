@@ -45,14 +45,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   if (SHOULD_DEPLOY_ERC20.includes(hre.network.name)) {
     const USDC = await deploy("BasicERC20", {
       from: deployer,
+      log: true,
       args: ["USD Coin", "USDC", ethers.utils.parseUnits("10000000", 18)],
     });
-
-    console.log(
-      "\n\n",
-      `Deployed fake USDC ERC20 Contract at: ${USDC.address}`,
-      "\n\n"
-    );
 
   }
 

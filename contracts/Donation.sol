@@ -52,10 +52,11 @@ contract Donation is Registered, Ownable {
           _amount
         );
 
-        address fundAddress = FundManagerV1(_getAddress("FUND_MANAGER"))
-            .getFundAddress(_fundId);
-
-        FundV1(fundAddress).updateTotalBalance(_tokenAddress, _amount);
+        FundManagerV1(_getAddress("FUND_MANAGER")).updateFundBalance(
+          _fundId,
+          _tokenAddress,
+          _amount
+        );
 
         _mint(msg.sender, donationId);
 

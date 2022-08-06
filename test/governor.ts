@@ -60,7 +60,7 @@ describe("Governor.sol", function () {
     ).to.revertedWith(`MissingRole("${role}")`);
   });
 
-  it("should approve a check if msg.send has APPROVER_ROLE", async function () {
+  it("should approve a check if msg.sender has APPROVER_ROLE", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
     const fundAddress = await stack.FundManager.getFundAddress(0);

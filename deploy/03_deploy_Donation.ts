@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { DeployFunction } from "hardhat-deploy/types";
 
-import { handleRegistry } from "../scripts/helpers";
+import { handleRegistry, hasRole } from "../scripts/helpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, ethers, getNamedAccounts } = hre;
@@ -30,6 +30,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     { from: deployer, log: true },
     "grantRole",
     ethers.utils.keccak256(ethers.utils.toUtf8Bytes("STORE_ROLE")),
+    Donation.address
+  );
+
+  await execute(
+    "FundManagerV1",
+    { from: deployer, log: true },
+    "grantRole",
+    ethers.utils.keccak256(ethers.utils.toUtf8Bytes("DONATION_ROLE")),
     Donation.address
   );
 
