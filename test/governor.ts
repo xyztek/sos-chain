@@ -28,7 +28,6 @@ describe("Governor.sol", function () {
       "Description"
     );
   };
-    console.log(createRequest)
 
   before(async () => {
     const [_owner, _EOA1, EOA2] = await ethers.getSigners();
@@ -61,7 +60,7 @@ describe("Governor.sol", function () {
     ).to.revertedWith(`MissingRole("${role}")`);
   });
 
-  it("should approve a check if msg.send has APPROVER_ROLE", async function () {
+  it("should approve a check if msg.sender has APPROVER_ROLE", async function () {
     const [_owner, EOA1] = await ethers.getSigners();
 
     const fundAddress = await stack.FundManager.getFundAddress(0);

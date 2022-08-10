@@ -89,4 +89,12 @@ describe("FundV1.sol", function () {
       "NotAllowed()"
     );
   });
+
+  it("should not allow call to updateBalance method", async function () {
+    const donationAmount = ethers.utils.parseUnits("12", 18);
+
+    await expect(
+      factory.attach(funds[0]).updateBalance(USDC.address, donationAmount)
+    ).to.be.revertedWith("AccessControl");
+  });
 });

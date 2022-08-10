@@ -20,11 +20,13 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     error NoZeroChecks();
     error Forbidden();
 
+    bytes32 public constant FACTORY_ROLE = keccak256("FACTORY_ROLE");
+
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
     bytes32 public constant AUDITOR_ROLE = keccak256("AUDITOR_ROLE");
     bytes32 public constant APPROVER_ROLE = keccak256("APPROVER_ROLE");
     bytes32 public constant FINALIZER_ROLE = keccak256("FINALIZER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-    bytes32 public constant UPDATER_ROLE = keccak256("UPDATER_ROLE");
 
     Status public status;
     address private factory;
@@ -33,7 +35,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     string public name;
     string public focus;
 
-    address[] private donatedTokensArray;
+    address[] private donatedTokens;
     mapping(address => uint256) private balancesMap;
 
     bytes32[2][] public checks;
@@ -56,9 +58,10 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         bool _requestable,
         bytes32[2][] memory _checks,
         address[] memory _whitelist,
-        address _updaterAddress
+        address _factory
     ) external {
         if (factory != address(0)) revert Forbidden();
+
         if (_requestable) {
             require(
                 _checks.length > 0,
@@ -67,11 +70,19 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
         }
 
         if (_whitelist.length > 0 || _checks.length > 0) {
-            //require(_requestable, "Fund must be set as requestable.");
+            require(_requestable, "Fund must be set as requestable.");
         }
-        _setupRole(UPDATER_ROLE, _updaterAddress);
+
+        factory = _factory;
+
+        _setupRole(FACTORY_ROLE, factory);
+
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
-        factory = msg.sender;
+        _setupRole(OWNER_ROLE, _owner);
+        _setupRole(AUDITOR_ROLE, _owner);
+        _setupRole(APPROVER_ROLE, _owner);
+        _setupRole(FINALIZER_ROLE, _owner);
+        _setupRole(EXECUTOR_ROLE, _owner);
 
         requestable = _requestable;
         name = _name;
@@ -120,7 +131,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
      * @return                array of tokenAddress[]
      */
     function getDonatedTokens() external view returns (address[] memory) {
-        return (donatedTokensArray);
+        return (donatedTokens);
     }
 
     /**
@@ -138,12 +149,12 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
     /**
      * @dev                   called from Donation.sol and updates total balance for the given token address
      */
-    function updateTotalBalance(address _tokenAddress, uint256 _amount)
+    function updateBalance(address _tokenAddress, uint256 _amount)
         external
-        onlyRole(UPDATER_ROLE)
+        onlyRole(FACTORY_ROLE)
     {
         if (balancesMap[_tokenAddress] == 0)
-            donatedTokensArray.push(_tokenAddress);
+            donatedTokens.push(_tokenAddress);
         balancesMap[_tokenAddress] += _amount;
     }
 
@@ -189,7 +200,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
      * @dev             pause fund
      * @return          boolean indicating result of the operation
      */
-    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
+    function pause() external onlyRole(OWNER_ROLE) returns (bool) {
         if (status != Status.Open) revert NotAllowed();
 
         return _setStatus(Status.Paused);
@@ -199,7 +210,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
      * @dev             resume fund
      * @return          boolean indicating result of the operation
      */
-    function resume() external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
+    function resume() external onlyRole(OWNER_ROLE) returns (bool) {
         if (status != Status.Paused) revert NotAllowed();
 
         return _setStatus(Status.Open);
@@ -210,7 +221,7 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
      * @dev             close fund
      * @return          boolean indicating result of the operation
      */
-    function close() external onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
+    function close() external onlyRole(OWNER_ROLE) returns (bool) {
         if (status == Status.Closed) revert NotAllowed();
         return _setStatus(Status.Closed);
     }
@@ -294,7 +305,5 @@ contract FundV1 is AccessControlEnumerable, TokenControl {
 
         _array[_index] = _array[_array.length - 1];
         _array.pop();
-
-        // TODO: ENSURE _array IS PASSED AS REFERENCE IN TESTS
     }
 }

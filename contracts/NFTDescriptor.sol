@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./libraries/HexStrings.sol";
@@ -13,7 +14,7 @@ import "./SVGConstants.sol";
 import "./SVGComponents.sol";
 import "hardhat/console.sol";
 
-contract NFTDescriptor is SVGConstants, SVGComponents {
+contract NFTDescriptor is SVGConstants, SVGComponents, Ownable {
     using SafeMath for uint256;
     using Strings for uint256;
     using HexStrings for uint256;

@@ -24,7 +24,8 @@ describe("NFTDescriptor.sol", function () {
       "Test Fund",
       "Test Focus"
     );
-    expect(tokenSVG).to.equal(testSVG(EOA1.address));
+
+    expect(tokenSVG).to.equal(testSVG(EOA1.address, 2));
   });
 
   it("should construct a Base64 encoded SVG representation", async function () {
@@ -39,12 +40,12 @@ describe("NFTDescriptor.sol", function () {
     );
 
     expect(encodedSVG).to.equal(
-      Buffer.from(testSVG(EOA1.address)).toString("base64")
+      Buffer.from(testSVG(EOA1.address, 2)).toString("base64")
     );
   });
 
   it("should format a uint256 as fixed point", async function () {
-    const [_owner, EOA1] = await ethers.getSigners();
+    const [_owner, _EOA1] = await ethers.getSigners();
     const decimals = await ERC20.decimals();
 
     const cases = [

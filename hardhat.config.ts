@@ -47,10 +47,10 @@ const gasPriceConfiguration = {
   },
 };
 
+const gasPriceTargetNetwork = "avalanche";
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
-
-const TARGET_NETWORK = "avalanche";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -81,24 +81,17 @@ const config: HardhatUserConfig = {
   },
   networks: {
     fuji: {
-      url: `https://speedy-nodes-nyc.moralis.io/20bb3a98759a92194f0b3e8a/avalanche/testnet`,
-      accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`],
+      url: process.env.FUJI_NODE,
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
     },
-    rinkeby: {
-      url: `https://speedy-nodes-nyc.moralis.io/20bb3a98759a92194f0b3e8a/eth/rinkeby`,
-      accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`],
+    avalanche: {
+      url: process.env.AVALANCHE_NODE,
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
     },
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    rinkbery: {
-      url: process.env.RINKBERY_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-
     hardhat: {
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
@@ -108,8 +101,8 @@ const config: HardhatUserConfig = {
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     coinmarketcap: process.env.COINMARKETCAP_APIKEY,
-    gasPriceApi: gasPriceConfiguration[TARGET_NETWORK].api,
-    token: gasPriceConfiguration[TARGET_NETWORK].token,
+    gasPriceApi: gasPriceConfiguration[gasPriceTargetNetwork].api,
+    token: gasPriceConfiguration[gasPriceTargetNetwork].token,
     currency: "USD",
     excludeContracts: ["BasicToken", "BasicERC20", "ERC20", "ERC721"],
   },

@@ -18,7 +18,10 @@ import {Checks} from "./libraries/Checks.sol";
 
 contract FundManagerV1 is AccessControl, Registered, Initializable {
     error NotAllowed();
+
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
+    bytes32 public constant DONATION_ROLE = keccak256("DONATION_ROLE");
+
     address public baseFund;
     address[] private funds;
 
@@ -145,6 +148,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
     ) external onlyRole(CREATOR_ROLE) {
         uint256 index = funds.length;
         address cloneAddress = Clones.clone(baseFund);
+
         FundV1(cloneAddress).initialize(
             _name,
             _focus,
@@ -154,9 +158,11 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _requestable,
             _checks,
             _whitelist,
-            _getAddress("DONATION")
+            address(this)
         );
+
         funds.push(cloneAddress);
+
         emit FundCreated(
             index,
             cloneAddress,
@@ -203,7 +209,7 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
             _requestable,
             _checks,
             _whitelist,
-            _getAddress("DONATION")
+            address(this)
         );
 
         funds.push(cloneAddress);
@@ -241,6 +247,13 @@ contract FundManagerV1 is AccessControl, Registered, Initializable {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         _setupRole(CREATOR_ROLE, _roleAddress);
+    }
+
+    function updateFundBalance(uint256 _id, address _tokenAddress, uint256 _amount) 
+        external
+        onlyRole(DONATION_ROLE)
+    {
+        return FundV1(funds[_id]).updateBalance(_tokenAddress, _amount);
     }
 
     // -----------------------------------------------------------------
