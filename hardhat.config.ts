@@ -80,6 +80,12 @@ const config: HardhatUserConfig = {
     safe: 9,
   },
   networks: {
+    ethereum: {
+      url: process.env.ETHEREUM_NODE,
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
+    },
     fuji: {
       url: process.env.FUJI_NODE,
       accounts: {
